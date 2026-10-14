@@ -1400,7 +1400,7 @@ const ASPECTS={'9:16':[9,16],'16:9':[16,9],'1:1':[1,1],'4:5':[4,5]};
 function aspectWH(a){return ASPECTS[a]||(String(a).includes(':')?String(a).split(':').map(Number):[9,16])}
 const view=$('#view'),cwrap=$('#cwrap'),stage=$('#stage'),bgV=$('#bgVideo');
 let viewCss={w:0,h:0},qScale=1,perfEma=12,lastAdj=0,pendingResize=false,showVid=true,vidURL=null,VFILE=null;
-const vidOn=()=>!!(vidURL&&showVid&&P.video&&!P.video.audioOnly);
+const vidOn=()=>!!(vidURL&&showVid&&P.video&&!P.video.audioOnly&&!P.video.noPreview);
 const hasMedia=()=>!!(vidURL&&P.video);
 function sizeView(){const [aw,ah]=aspectWH(P.aspect);const r=stage.getBoundingClientRect();const pad=isMob()?14:36;const mw=Math.max(40,r.width-pad*2),mh=Math.max(40,r.height-pad*2);
   let w=mw,hh=w*ah/aw;if(hh>mh){hh=mh;w=hh*aw/ah}cwrap.style.width=w+'px';cwrap.style.height=hh+'px';viewCss={w,h:hh};
@@ -1545,16 +1545,119 @@ function reduceAspect(w,hh){const pre=Object.entries(ASPECTS).find(([k,[a,b]])=>
 async function loadVideo(file){if(!file)return;const audioOnly=/^audio\//.test(file.type)||/\.(mp3|m4a|wav|aac)$/i.test(file.name);
   if(vidURL)URL.revokeObjectURL(vidURL);vidURL=URL.createObjectURL(file);VFILE=file;AUDIO=null;WAVE=null;waveW=0;ANA=null;
   bgV.src=vidURL;bgV.muted=false;bgV.playsInline=true;
-  try{await new Promise((res,rej)=>{const to=setTimeout(()=>rej(new Error('timed out')),20000);bgV.onloadedmetadata=()=>{clearTimeout(to);res()};bgV.onerror=()=>{clearTimeout(to);rej(new Error('format not supported'))}})}
-  catch(e){toast('This browser can’t open that video ('+e.message+'). Try an MP4 (H.264).');vidURL=null;bgV.removeAttribute('src');rebuild('video');return}
-  const dur=bgV.duration||0,w=bgV.videoWidth||1080,hh=bgV.videoHeight||1920;
-  P.video={name:file.name,dur,w,h:hh,audioOnly:audioOnly||!bgV.videoWidth};
+  let playable=true,info=null;
+  try{await new Promise((res,rej)=>{const to=setTimeout(()=>rej(new Error('timed out')),15000);bgV.onloadedmetadata=()=>{clearTimeout(to);res()};bgV.onerror=()=>{clearTimeout(to);rej(new Error('format not supported'))}})}
+  catch(e){playable=false}
+  if(playable&&!audioOnly&&!bgV.videoWidth){try{const i2=await mp4Info(file);if(i2&&i2.w){info=i2;playable=false}}catch(e){}}
+  if(!info&&(!playable||!isFinite(bgV.duration)||!bgV.duration)){try{info=await mp4Info(file)}catch(e){console.warn(e)}
+    if(!info){toast('This file couldn’t be opened. Try an MP4 or MOV.');vidURL=null;bgV.removeAttribute('src');rebuild('video');return}}
+  const dur=info?info.dur:bgV.duration,w=info?info.w:(bgV.videoWidth||0),hh=info?info.h:(bgV.videoHeight||0);
+  P.video={name:file.name,dur,w:w||1080,h:hh||1920,audioOnly:audioOnly||!w,noPreview:!playable};
+  if(!playable){showVid=false;bgV.removeAttribute('src');toast('This browser can’t show this video’s picture (e.g. ProRes or 10-bit HEVC). Captions, timing and export still work.')}
   if(!P.video.audioOnly){P.aspect=reduceAspect(w,hh);linkProject()}
   showVid=true;seek(0);setPlaying(false);updAspect();updBg();rebuild('video');changed();
   toast(`${file.name} loaded · ${fmtT(dur)}`);
-  decodeAudioFile(file).then(ab=>{AUDIO=ab;WAVE=peaks(ab,4000);waveW=0;updTimeline();rebuild('video',true)}).catch(e=>{AUDIO=false;console.warn(e);rebuild('video',true);toast('Couldn’t read the audio track in this browser. Captions need audio.')})}
-async function decodeAudioFile(file){const buf=await file.arrayBuffer();const AC=window.AudioContext||window.webkitAudioContext;const ac=new AC();
-  try{return await new Promise((res,rej)=>{const p=ac.decodeAudioData(buf,res,rej);if(p&&p.then)p.then(res,rej)})}finally{try{ac.close()}catch(e){}}}
+  if(vidOn()){try{bgV.currentTime=.04}catch(e){}}
+  AUDIO_P=decodeAudioFile(file).then(ab=>{AUDIO=ab;WAVE=peaks(ab,4000);waveW=0;updTimeline();rebuild('video',true)}).catch(e=>{AUDIO=false;console.warn('audio',e);rebuild('video',true)})}
+bgV.addEventListener('error',()=>{if(vidURL)toast('This browser can’t show this video’s picture (often 4K HEVC 10-bit or ProRes). Timing, captions and export still work.')});
+/* ---------- audio extraction that works on any browser ----------
+   1) MP4/MOV/M4A: read only the audio track straight from the file (no full load):
+      AAC → ADTS stream → decodeAudioData (Safari, Chrome, Firefox) or WebCodecs;
+      PCM (lpcm, twos, sowt, in24, in32, fl32, ipcm…) → decoded here.
+   2) Other files: browser decodeAudioData.
+   3) Last resort: record the audio while the video plays (silently, at 2× speed). */
+let AUDIO_P=null;
+function makeAB(chs,sr){const len=chs[0]?chs[0].length:0;return{sampleRate:sr,numberOfChannels:chs.length,length:len,duration:len/sr,getChannelData:i=>chs[Math.min(i,chs.length-1)]}}
+const fcc=(dv,o)=>String.fromCharCode(dv.getUint8(o),dv.getUint8(o+1),dv.getUint8(o+2),dv.getUint8(o+3));
+async function readRange(file,a,b){return new DataView(await file.slice(a,b).arrayBuffer())}
+async function topBoxes(file){const out=[];let off=0,guard=0;while(off+8<=file.size&&guard++<4000){const dv=await readRange(file,off,Math.min(file.size,off+16));let size=dv.getUint32(0);const type=fcc(dv,4);
+    if(size===1&&dv.byteLength>=16)size=Number(dv.getBigUint64?dv.getBigUint64(8):(dv.getUint32(8)*4294967296+dv.getUint32(12)));else if(size===0)size=file.size-off;
+    if(size<8)break;out.push({type,off,size});off+=size}return out}
+function kids(dv,start,end){const out=[];let o=start;while(o+8<=end){let size=dv.getUint32(o);const type=fcc(dv,o+4);let hdr=8;if(size===1){size=dv.getUint32(o+8)*4294967296+dv.getUint32(o+12);hdr=16}else if(size===0)size=end-o;if(size<8||o+size>end)break;out.push({type,o,size,body:o+hdr,end:o+size});o+=size}return out}
+const find=(dv,box,path)=>{let cur=[box];for(const t of path){const nx=[];cur.forEach(b=>kids(dv,b.body,b.end).forEach(k=>{if(k.type===t)nx.push(k)}));cur=nx;if(!cur.length)return[]}return cur};
+function descLen(dv,o){let n=0,i=0,b;do{b=dv.getUint8(o+i);n=(n<<7)|(b&127);i++}while(b&128&&i<4);return[n,i]}
+function parseESDS(dv,start,end){let o=start+4;while(o<end){const tag=dv.getUint8(o);const [len,ls]=descLen(dv,o+1);const body=o+1+ls;
+    if(tag===3){o=body+3;const fl=dv.getUint8(body+2);if(fl&128)o+=2;if(fl&64)o+=1+dv.getUint8(o);if(fl&32)o+=2;continue}
+    if(tag===4){o=body+13;continue}if(tag===5)return new Uint8Array(dv.buffer,dv.byteOffset+body,len);o=body+len}return null}
+function audioTrack(dv,moov){
+  for(const trak of find(dv,moov,['trak'])){const hd=find(dv,trak,['mdia','hdlr'])[0];if(!hd||fcc(dv,hd.body+8)!=='soun')continue;
+    const md=find(dv,trak,['mdia','mdhd'])[0];const v=dv.getUint8(md.body);const timescale=v===1?dv.getUint32(md.body+20):dv.getUint32(md.body+12);
+    const stbl=find(dv,trak,['mdia','minf','stbl'])[0];if(!stbl)continue;const g=t=>kids(dv,stbl.body,stbl.end).find(k=>k.type===t);
+    const stsd=g('stsd');const e=stsd.body+8;const fmt=fcc(dv,e+4);const se=e+8;const ver=dv.getUint16(se+8);
+    let ch=dv.getUint16(se+16),bits=dv.getUint16(se+18),sr=dv.getUint32(se+24)/65536,flags=null,bpf=0,ext=se+28;
+    if(ver===1){bpf=dv.getUint32(se+28+8);ext=se+44}
+    if(ver===2){sr=dv.getFloat64(se+32);ch=dv.getUint32(se+40);bits=dv.getUint32(se+48);flags=dv.getUint32(se+52);bpf=dv.getUint32(se+56);ext=se+64}
+    const entEnd=e+dv.getUint32(e);let asc=null,pcmC=null,enda=null;
+    const scan=(a,b)=>kids(dv,a,b).forEach(k=>{if(k.type==='esds')asc=parseESDS(dv,k.body,k.end);else if(k.type==='pcmC')pcmC={le:dv.getUint8(k.body+4)&1,bits:dv.getUint8(k.body+5)};else if(k.type==='enda')enda=dv.getUint16(k.body);else if(k.type==='wave')scan(k.body,k.end)});
+    scan(ext,entEnd);
+    const stts=g('stts'),stsc=g('stsc'),stsz=g('stsz'),stco=g('stco')||g('co64');if(!stsc||!stsz||!stco)continue;
+    const co64=stco.type==='co64';const nC=dv.getUint32(stco.body+4);const offs=new Array(nC);for(let i=0;i<nC;i++)offs[i]=co64?dv.getUint32(stco.body+8+i*8)*4294967296+dv.getUint32(stco.body+12+i*8):dv.getUint32(stco.body+8+i*4);
+    const nS=dv.getUint32(stsc.body+4);const sc=[];for(let i=0;i<nS;i++)sc.push([dv.getUint32(stsc.body+8+i*12),dv.getUint32(stsc.body+12+i*12)]);
+    const fixed=dv.getUint32(stsz.body+4),cnt=dv.getUint32(stsz.body+8);const sizes=fixed?null:new Uint32Array(cnt);if(!fixed)for(let i=0;i<cnt;i++)sizes[i]=dv.getUint32(stsz.body+12+i*4);
+    return{fmt,ch:Math.max(1,ch),bits,sr:sr||timescale,timescale,flags,bpf,asc,pcmC,enda,offs,sc,fixed,cnt,sizes}}
+  return null}
+function chunkList(t){const out=[];let si=0;for(let c=0;c<t.offs.length;c++){let k=0;for(let j=0;j<t.sc.length;j++)if(t.sc[j][0]<=c+1)k=j;const n=t.sc[k][1];out.push({off:t.offs[c],n,first:si});si+=n}return out}
+async function readChunks(file,list,cb,onP){let done=0;const tot=list.length;
+  for(let i=0;i<list.length;){let a=list[i].off,b=a+list[i].len,j=i+1;while(j<list.length&&list[j].off>=b&&list[j].off-b<65536&&list[j].off+list[j].len-a<8e6){b=list[j].off+list[j].len;j++}
+    const buf=new Uint8Array(await file.slice(a,b).arrayBuffer());for(let k=i;k<j;k++)cb(list[k],buf.subarray(list[k].off-a,list[k].off-a+list[k].len));done+=j-i;i=j;if(onP)onP(done/tot)}}
+const SRI=[96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350];
+async function decodeViaContext(bytes){const AC=window.AudioContext||window.webkitAudioContext;const ac=new AC();try{return await new Promise((res,rej)=>{const p=ac.decodeAudioData(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),res,rej);if(p&&p.then)p.then(res,rej)})}finally{try{ac.close()}catch(e){}}}
+async function extractMP4Audio(file,onP){
+  const boxes=await topBoxes(file);const mb=boxes.find(b=>b.type==='moov');if(!mb)throw new Error('no moov');if(mb.size>200e6)throw new Error('moov too large');
+  const dv=await readRange(file,mb.off,mb.off+mb.size);const t=audioTrack(dv,{body:8,end:dv.byteLength});if(!t)throw new Error('This video has no audio track.');
+  const chunks=chunkList(t);const f=t.fmt;
+  // ---- AAC
+  if(f==='mp4a'&&t.asc){const ot=t.asc[0]>>3,si=((t.asc[0]&7)<<1)|(t.asc[1]>>7),cc=(t.asc[1]>>3)&15;const prof=ot===5||ot===29||ot>4?2:Math.max(1,ot);const srIdx=si<13?si:SRI.indexOf(t.sr);const chn=cc||t.ch;
+    const frames=[];let total=0;
+    await readChunks(file,chunks.map(c=>{let len=0;for(let k=0;k<c.n;k++)len+=t.fixed||t.sizes[c.first+k];return{...c,len}}),(c,buf)=>{let o=0;for(let k=0;k<c.n;k++){const sz=t.fixed||t.sizes[c.first+k];frames.push(buf.slice(o,o+sz));total+=sz+7;o+=sz}},onP);
+    const out=new Uint8Array(total);let o=0;for(const fr of frames){const len=fr.length+7;out[o]=0xFF;out[o+1]=0xF1;out[o+2]=((prof-1)<<6)|((srIdx<0?3:srIdx)<<2)|(chn>>2);out[o+3]=((chn&3)<<6)|(len>>11);out[o+4]=(len>>3)&255;out[o+5]=((len&7)<<5)|31;out[o+6]=0xFC;out.set(fr,o+7);o+=len}
+    window.__lastADTS=out;
+    try{return await decodeViaContext(out)}catch(e){if(typeof AudioDecoder==='undefined')throw e}
+    // WebCodecs fallback
+    const pcm=[];for(let c=0;c<chn;c++)pcm.push([]);let sr=t.sr;
+    await new Promise((res,rej)=>{const dec=new AudioDecoder({output:ad=>{sr=ad.sampleRate;for(let c=0;c<ad.numberOfChannels&&c<chn;c++){const a=new Float32Array(ad.numberOfFrames);ad.copyTo(a,{planeIndex:c,format:'f32-planar'});pcm[c].push(a)}ad.close()},error:rej});
+      dec.configure({codec:'mp4a.40.2',sampleRate:t.sr,numberOfChannels:chn,description:t.asc});let ts=0;for(const fr of frames){dec.decode(new EncodedAudioChunk({type:'key',timestamp:ts,data:fr}));ts+=Math.round(1024/t.sr*1e6)}dec.flush().then(res,rej)});
+    return makeAB(pcm.map(parts=>{const n=parts.reduce((a,p)=>a+p.length,0),o2=new Float32Array(n);let k=0;parts.forEach(p=>{o2.set(p,k);k+=p.length});return o2}),sr)}
+  // ---- PCM
+  const PCM=['lpcm','twos','sowt','in24','in32','fl32','fl64','ipcm','fpcm','raw ','NONE'];
+  if(PCM.includes(f)){let bytesPS=t.bits/8;let float=f==='fl32'||f==='fl64'||f==='fpcm'||(t.flags!=null&&(t.flags&1));let be=f==='twos'||f==='in24'||f==='in32'||f==='fl32'||f==='fl64'||(t.flags!=null&&(t.flags&2));
+    if(f==='sowt'||f==='raw ')be=false;if(t.pcmC){be=!t.pcmC.le;bytesPS=t.pcmC.bits/8}if(t.enda!=null)be=!t.enda;
+    if(f==='in24')bytesPS=3;if(f==='in32'||f==='fl32')bytesPS=4;if(f==='fl64')bytesPS=8;
+    let bpf=t.bpf||(t.fixed>1?t.fixed:0)||t.ch*bytesPS;if(bpf&&bpf/t.ch!==bytesPS&&[2,3,4,8].includes(bpf/t.ch))bytesPS=bpf/t.ch;if(!bytesPS)bytesPS=2;bpf=t.ch*bytesPS;
+    const list=chunks.map(c=>({...c,len:t.fixed&&t.fixed<=1?c.n*bpf:(()=>{let l=0;for(let k=0;k<c.n;k++)l+=t.fixed||t.sizes[c.first+k];return l})()}));
+    const frames=list.reduce((a,c)=>a+Math.floor(c.len/bpf),0);const chs=[];for(let c=0;c<t.ch;c++)chs.push(new Float32Array(frames));let fi=0;const parts=[];
+    await readChunks(file,list,(c,buf)=>{parts.push([fi,buf.slice()]);fi+=Math.floor(buf.length/bpf)},onP);
+    const rd=(dv,o,little)=>{switch(bytesPS){case 2:return dv.getInt16(o,little)/32768;case 3:{const b0=dv.getUint8(o),b1=dv.getUint8(o+1),b2=dv.getUint8(o+2);let v=little?(b0|b1<<8|b2<<16):(b2|b1<<8|b0<<16);if(v&0x800000)v-=0x1000000;return v/8388608}
+      case 4:return float?dv.getFloat32(o,little):dv.getInt32(o,little)/2147483648;case 8:return dv.getFloat64(o,little);default:return(dv.getUint8(o)-128)/128}};
+    const decode=little=>{for(const [start,buf] of parts){const dv=new DataView(buf.buffer,buf.byteOffset,buf.byteLength);const n=Math.floor(buf.length/bpf);for(let i=0;i<n;i++)for(let c=0;c<t.ch;c++)chs[c][start+i]=rd(dv,i*bpf+c*bytesPS,little)}};
+    const rough=()=>{const a=chs[0];let s=0,n=0;for(let i=1;i<a.length;i+=7){const d=a[i]-a[i-1];if(isFinite(d)){s+=Math.abs(d);n++}}return n?s/n:9};
+    decode(!be);if(t.flags==null&&!t.pcmC&&t.enda==null&&bytesPS>1){const r1=rough();decode(be);const r2=rough();if(r1<r2)decode(!be)}
+    for(const a of chs)for(let i=0;i<a.length;i++){const v=a[i];if(!isFinite(v))a[i]=0;else if(v>1)a[i]=1;else if(v<-1)a[i]=-1}
+    return makeAB(chs,t.sr)}
+  // ---- other codecs (Opus, ALAC, AC-3…) through WebCodecs if available
+  throw new Error('audio codec '+f+' needs playback capture')}
+async function mp4Info(file){const boxes=await topBoxes(file);const mb=boxes.find(b=>b.type==='moov');if(!mb)return null;const dv=await readRange(file,mb.off,mb.off+mb.size);const moov={body:8,end:dv.byteLength};
+  const mv=find(dv,moov,['mvhd'])[0];if(!mv)return null;const v=dv.getUint8(mv.body);const ts=v===1?dv.getUint32(mv.body+20):dv.getUint32(mv.body+12);const du=v===1?dv.getUint32(mv.body+24)*4294967296+dv.getUint32(mv.body+28):dv.getUint32(mv.body+16);
+  let w=0,h=0;for(const trak of find(dv,moov,['trak'])){const hd=find(dv,trak,['mdia','hdlr'])[0];if(!hd||fcc(dv,hd.body+8)!=='vide')continue;const tk=find(dv,trak,['tkhd'])[0];if(!tk)continue;const tv=dv.getUint8(tk.body),o=tk.body+(tv===1?12:0);
+    const b=dv.getInt32(o+44);w=dv.getUint32(o+76)/65536;h=dv.getUint32(o+80)/65536;if(b!==0){const t=w;w=h;h=t}break}
+  return{dur:du/ts,w:Math.round(w),h:Math.round(h)}}
+async function decodeAudioFile(file,onP){
+  const ext=(file.name.split('.').pop()||'').toLowerCase();const mob=/iPhone|iPad|Android/i.test(navigator.userAgent);
+  const isoLike=['mp4','mov','m4a','m4v','3gp','qt'].includes(ext)||/mp4|quicktime|m4a/.test(file.type);
+  let err;
+  if(isoLike){try{return await extractMP4Audio(file,onP)}catch(e){err=e;console.warn('mp4 audio',e)}}
+  if(file.size<(mob?180e6:600e6)){try{return await decodeViaContext(new Uint8Array(await file.arrayBuffer()))}catch(e){err=e;console.warn('decodeAudioData',e)}}
+  throw err||new Error('unreadable audio')}
+async function captureAudioByPlaying(onP,ac){if(!vidURL)throw new Error('no media');const v=document.createElement('video');v.src=vidURL;v.playsInline=true;v.setAttribute('playsinline','');v.preload='auto';
+  v.preservesPitch=false;v.webkitPreservesPitch=false;v.mozPreservesPitch=false;
+  await new Promise((r,j)=>{v.onloadedmetadata=r;v.onerror=()=>j(new Error('this browser can’t play the file'))});
+  const rate=2,src=ac.createMediaElementSource(v),proc=ac.createScriptProcessor(4096,2,2),mute=ac.createGain();mute.gain.value=0;const L=[],Rr=[];
+  proc.onaudioprocess=e=>{L.push(new Float32Array(e.inputBuffer.getChannelData(0)));Rr.push(new Float32Array(e.inputBuffer.getChannelData(Math.min(1,e.inputBuffer.numberOfChannels-1))))};
+  src.connect(proc);proc.connect(mute);mute.connect(ac.destination);try{await ac.resume()}catch(e){}
+  v.playbackRate=rate;await v.play();
+  await new Promise(r=>{const tick=()=>{if(v.ended||v.currentTime>=v.duration-.05){r();return}onP&&onP(v.currentTime/v.duration);setTimeout(tick,200)};tick()});
+  v.pause();src.disconnect();proc.disconnect();const join=parts=>{const n=parts.reduce((a,p)=>a+p.length,0),o=new Float32Array(n);let k=0;parts.forEach(p=>{o.set(p,k);k+=p.length});return o};
+  return makeAB([join(L),join(Rr)],ac.sampleRate/rate)}
 function peaks(ab,n){const ch=ab.getChannelData(0),step=Math.max(1,Math.floor(ch.length/n)),out=new Float32Array(n);let mx=1e-6;
   for(let i=0;i<n;i++){let m=0;const s=i*step,e=Math.min(ch.length,s+step);for(let j=s;j<e;j+=8){const v=Math.abs(ch[j]);if(v>m)m=v}out[i]=m;if(m>mx)mx=m}for(let i=0;i<n;i++)out[i]=Math.pow(out[i]/mx,.7);return out}
 function to16k(ab){const n=ab.numberOfChannels,sr=ab.sampleRate,len=ab.length,ratio=sr/16000,out=new Float32Array(Math.floor(len/ratio));const chs=[];for(let c=0;c<n;c++)chs.push(ab.getChannelData(c));
@@ -1632,11 +1735,12 @@ function makeSRT(){return capClips().map((c,i)=>`${i+1}\n${srtTime(c.start)} -->
 function parseSRT(txt){const cues=[];txt.replace(/\r/g,'').split(/\n\s*\n/).forEach(b=>{const m=b.match(/(\d{1,2}:)?(\d{1,2}):(\d{2})[,.](\d{1,3})\s*-->\s*(\d{1,2}:)?(\d{1,2}):(\d{2})[,.](\d{1,3})/);if(!m)return;
   const ts=(h_,mm,ss,ms)=>(parseInt(h_||'0')*3600)+parseInt(mm)*60+parseInt(ss)+parseInt(ms.padEnd(3,'0'))/1000;const s=ts(m[1]&&m[1].slice(0,-1),m[2],m[3],m[4]),e=ts(m[5]&&m[5].slice(0,-1),m[6],m[7],m[8]);
   const text=b.split('\n').slice(b.split('\n').findIndex(l=>l.includes('-->'))+1).join(' ').replace(/<[^>]+>/g,'').trim();if(text&&e>s)cues.push({s,e,text})});return cues}
-async function runCaptions(){if(ASRBUSY)return;if(!hasMedia()){toast('Add your video first');return}ASRBUSY=true;rebuild('video',true);
+let capAC=null;
+async function runCaptions(){if(ASRBUSY)return;if(!hasMedia()){toast('Add your video first');return}ASRBUSY=true;try{if(!AUDIO){const AC=window.AudioContext||window.webkitAudioContext;if(!capAC)capAC=new AC();capAC.resume&&capAC.resume()}}catch(e){}rebuild('video',true);
   const st=(msg,p)=>{const box=$('#asrStatus');if(!box)return;box.querySelector('span').textContent=msg;const bar=box.querySelector('i');bar.style.width=p<0?'100%':Math.round(clamp(p)*100)+'%';box.classList.toggle('busy',p<0)};
   const t0=performance.now();
-  try{let tries=0;while(!AUDIO&&AUDIO!==false&&tries<60){st('Reading audio…',-1);await new Promise(r=>setTimeout(r,250));tries++}
-    if(AUDIO===false)throw new Error('This browser couldn’t read the video’s audio track.');
+  try{if(!AUDIO&&AUDIO_P){st('Reading the audio track…',-1);await AUDIO_P.catch(()=>{})}
+    if(!AUDIO){st('Reading audio by playing the video silently…',0);AUDIO=await captureAudioByPlaying(q=>st(`Reading audio by playing the video… ${Math.round(q*100)}%`,q),capAC);WAVE=peaks(AUDIO,4000);waveW=0;updTimeline()}
     const words=await transcribe(st);commit();buildCaptions(words);refreshAll();changed();seek(capClips()[0]?capClips()[0].start:0);
     toast(`${words.length} words captioned in ${Math.round((performance.now()-t0)/1000)}s`)}
   catch(e){console.error(e);const blocked=/fetch|network|Failed|CSP|load/i.test(String(e&&e.message||e));
@@ -1674,8 +1778,8 @@ function buildVideo(){const p=h('div',{class:'panel'});const C=P.cap;
   if(!vidURL){const drop=h('label',{class:'drop',for:'vidFile'},h('div',{class:'drop-thumb',html:svg('video',1.6)}),h('div',null,h('b',null,P.video?'Add '+P.video.name+' again':'Upload your video'),h('small',null,'MP4 or MOV. It stays on your device and is only used for timing, captions and preview. It is never part of the export.')),fi);
     drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over')});drop.addEventListener('dragleave',()=>drop.classList.remove('over'));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');loadVideo(e.dataTransfer.files[0])});
     p.append(sec('Video',drop,h('p',{class:'hint'},'Your overlay will be exactly as long as the video, so it lines up when you place it at the start of your edit.')))}
-  else{const v=P.video;p.append(sec('Video',h('div',{class:'vcard'},h('b',null,v.name),h('small',null,`${fmtT(v.dur)}${v.audioOnly?' · audio only':` · ${v.w}×${v.h}`}${AUDIO===null?' · reading audio…':AUDIO===false?' · audio unreadable':''}`)),
-    h('div',{class:'pillrow'},h('label',{class:'pillbtn',for:'vidFile'},'Replace'),AUDIO?h('button',{type:'button',class:'pillbtn',onclick:()=>{saveBlob(wavBlob(AUDIO),slug()+'_audio.wav')}},'Extract audio (WAV)'):null,
+  else{const v=P.video;p.append(sec('Video',h('div',{class:'vcard'},h('b',null,v.name),h('small',null,`${fmtT(v.dur)}${v.audioOnly?' · audio only':` · ${v.w}×${v.h}`}${AUDIO===null?' · reading audio…':AUDIO===false?' · audio will be read when you generate captions':' · audio ready'}`)),
+    h('div',{class:'pillrow'},h('label',{class:'pillbtn',for:'vidFile'},'Replace'),AUDIO?h('button',{type:'button',class:'pillbtn',onclick:()=>{saveBlob(wavBlob(AUDIO),slug()+'_audio.wav')}},'Extract audio (WAV)'):AUDIO===false?h('button',{type:'button',class:'pillbtn',onclick:async()=>{try{const AC=window.AudioContext||window.webkitAudioContext;if(!capAC)capAC=new AC();await capAC.resume();toast('Reading audio… keep this tab open');AUDIO=await captureAudioByPlaying(null,capAC);WAVE=peaks(AUDIO,4000);waveW=0;updTimeline();rebuild('video',true);toast('Audio ready')}catch(e){toast('Couldn’t read audio: '+e.message)}}},'Read audio'):null,
       h('button',{type:'button',class:'pillbtn',onclick:()=>{bgV.pause();bgV.removeAttribute('src');bgV.load();URL.revokeObjectURL(vidURL);vidURL=null;AUDIO=null;WAVE=null;P.video=null;ANA=null;updBg();sizeView();rebuild('video');changed()}},'Remove video'),fi),
     v.audioOnly?null:toggle('Show video under overlays',()=>showVid,x=>{showVid=x;if(!x)bgV.pause();updBg();sizeView()})))}
   // captions
