@@ -429,6 +429,8 @@ input,select,textarea{font:inherit;color:inherit}
   grid-template-areas:"top top top" "lib stage insp" "tl tl tl";
   background:radial-gradient(1200px 600px at 50% -10%,rgba(61,123,255,.10),transparent 60%),var(--bg)}
 @media (max-width:1240px){#app{grid-template-columns:300px minmax(0,1fr) 300px}}
+@media (min-width:1560px){#app{grid-template-columns:400px minmax(0,1fr) 400px}}
+@media (min-width:1840px){#app{grid-template-columns:440px minmax(0,1fr) 450px}}
 
 .card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);min-width:0;min-height:0}
 
@@ -465,9 +467,22 @@ input,select,textarea{font:inherit;color:inherit}
 /* ---------- side columns ---------- */
 .lib{grid-area:lib;display:flex;flex-direction:column;overflow:hidden}
 .insp{grid-area:insp;display:flex;flex-direction:column;overflow:hidden}
-.tabs{display:flex;gap:2px;padding:6px;border-bottom:1px solid var(--line);flex:none}
-.tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 6px;border-radius:10px;color:var(--muted);font-weight:600;font-size:12px;position:relative;transition:.15s}
-.tabs button svg{width:15px;height:15px}
+.tabwrap{position:relative;flex:none;border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:2px;padding:6px;flex:none;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior-x:contain;scroll-behavior:smooth;cursor:default}
+.tabs::-webkit-scrollbar{display:none}
+.tabs.dragging{scroll-behavior:auto;cursor:grabbing}.tabs.dragging button{pointer-events:none}
+.tabs button{flex:1 0 auto;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 6px;border-radius:10px;color:var(--muted);font-weight:600;font-size:12px;position:relative;transition:color .15s,background-color .15s}
+.tabs button svg{width:15px;height:15px;flex:none}
+.tabs.compact button{padding:8px 7px;font-size:11.5px;gap:5px}
+.tabs.rows{display:grid;overflow-x:hidden;gap:3px}
+.tabs.rows button{min-width:0;padding:7px 4px}
+.tabs.icons button:not([aria-selected="true"]) span{display:none}
+.tabs.icons button:not([aria-selected="true"]){padding:8px 9px}
+.tabwrap .tarr{position:absolute;top:6px;bottom:6px;width:30px;display:none;align-items:center;justify-content:center;z-index:3;border-radius:10px;color:var(--text);cursor:pointer;transition:opacity .15s}
+.tabwrap .tarr svg{width:14px;height:14px}
+.tabwrap .tarr.l{left:2px;background:linear-gradient(90deg,var(--panel) 55%,transparent)}
+.tabwrap .tarr.r{right:2px;background:linear-gradient(270deg,var(--panel) 55%,transparent)}
+.tabwrap .tarr:hover{color:#fff}.tabwrap .tarr.on{display:flex}
 .tabs button:hover{color:var(--text)}
 .tabs button[aria-selected="true"]{color:var(--text);background:var(--panel3)}
 .tabs button[aria-selected="true"]::after{content:"";position:absolute;left:30%;right:30%;bottom:2px;height:2px;border-radius:2px;background:var(--tc,var(--accent));box-shadow:0 0 10px var(--tc,var(--accent))}
@@ -2375,7 +2390,31 @@ function ensurePanel(id){if(!panelEls[id]){panelEls[id]=h('div',{'data-panel':id
 function rebuild(id,keepScroll){const el=panelEls[id];if(!el)return;const sc=el.parentElement?el.parentElement.scrollTop:0;el.replaceChildren(PANELS[id].build());if(keepScroll&&el.parentElement)el.parentElement.scrollTop=sc}
 function refreshAll(){Object.keys(panelEls).forEach(k=>{if(k!=='looks')rebuild(k,true)});updAspect();updBg();updTimeline();updKey()}
 const isMob=()=>matchMedia('(max-width:979px)').matches;
-function tabBar(nav,ids,getCur,setCur){nav.replaceChildren(...ids.map(id=>{const b=h('button',{type:'button',role:'tab','aria-selected':String(getCur()===id),style:`--tc:${PANELS[id].c}`,html:svg(id)+`<span>${PANELS[id].t}</span>`});b.addEventListener('click',()=>{setCur(id);placePanels()});return b}))}
+function tabBar(nav,ids,getCur,setCur){const keep=nav.scrollLeft;nav.replaceChildren(...ids.map(id=>{const b=h('button',{type:'button',role:'tab','aria-selected':String(getCur()===id),title:PANELS[id].t,style:`--tc:${PANELS[id].c}`,html:svg(id)+`<span>${PANELS[id].t}</span>`});b.addEventListener('click',()=>{setCur(id);placePanels()});return b}));
+  if(nav.classList.contains('tabs')){tabScroller(nav);nav.style.scrollBehavior='auto';nav.scrollLeft=keep;nav.style.scrollBehavior='';fitTabs(nav)}}
+/* desktop tab rows: shrink to fit; if they still don't fit, scroll with arrows, mouse wheel, trackpad or drag */
+function fitTabs(nav){if(!nav.isConnected||!nav.clientWidth)return;nav.classList.remove('compact','icons','rows');nav.style.gridTemplateColumns='';
+  nav.classList.remove('rows');nav.style.gridTemplateColumns='';const over=()=>nav.scrollWidth>nav.clientWidth+1;
+  if(over())nav.classList.add('compact');
+  if(over()){const n=nav.children.length;nav.classList.add('rows');let ok=false;
+    for(const k of [2,3]){nav.style.gridTemplateColumns=`repeat(${Math.ceil(n/k)},minmax(0,1fr))`;if(![...nav.querySelectorAll('span')].some(sp=>sp.scrollWidth>sp.parentElement.clientWidth-20)){ok=true;break}}
+    if(!ok){nav.classList.remove('rows');nav.style.gridTemplateColumns=''}}
+  if(over())nav.classList.add('icons');
+  const sel=nav.querySelector('[aria-selected="true"]');if(sel&&over()){const l=sel.offsetLeft-36,r=sel.offsetLeft+sel.offsetWidth+36;if(l<nav.scrollLeft||r>nav.scrollLeft+nav.clientWidth){nav.style.scrollBehavior='auto';nav.scrollLeft=l<nav.scrollLeft?l:r-nav.clientWidth;nav.style.scrollBehavior=''}}
+  nav._arr&&nav._arr()}
+function tabScroller(nav){if(nav._sc)return;nav._sc=1;let wrap=nav.parentElement;if(!wrap.classList.contains('tabwrap')){wrap=h('div',{class:'tabwrap'});nav.before(wrap);wrap.append(nav)}
+  const mk=(c,d,lbl)=>{const b=h('button',{type:'button',class:'tarr '+c,'aria-label':lbl,tabindex:'-1',html:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${d<0?'M15 5l-7 7 7 7':'M9 5l7 7-7 7'}"/></svg>`});b.addEventListener('click',()=>nav.scrollBy({left:d*Math.max(120,nav.clientWidth*.6),behavior:'smooth'}));wrap.append(b);return b};
+  const L=mk('l',-1,'Scroll tabs left'),R=mk('r',1,'Scroll tabs right');
+  nav._arr=()=>{const max=nav.scrollWidth-nav.clientWidth;L.classList.toggle('on',nav.scrollLeft>2);R.classList.toggle('on',max>2&&nav.scrollLeft<max-2)};
+  nav.addEventListener('scroll',nav._arr,{passive:true});
+  nav.addEventListener('wheel',e=>{const max=nav.scrollWidth-nav.clientWidth;if(max<=0)return;const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(!d)return;
+    if((d<0&&nav.scrollLeft<=0)||(d>0&&nav.scrollLeft>=max))return;e.preventDefault();nav.style.scrollBehavior='auto';nav.scrollLeft+=d*(e.deltaMode===1?32:1);nav.style.scrollBehavior=''},{passive:false});
+  let dr=null;nav.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0||nav.scrollWidth<=nav.clientWidth)return;dr={x:e.clientX,s:nav.scrollLeft,moved:false,id:e.pointerId}});
+  nav.addEventListener('pointermove',e=>{if(!dr)return;const dx=e.clientX-dr.x;if(!dr.moved&&Math.abs(dx)>5){dr.moved=true;nav.classList.add('dragging');try{nav.setPointerCapture(dr.id)}catch(_){}}if(dr.moved){nav.style.scrollBehavior='auto';nav.scrollLeft=dr.s-dx}});
+  const end=()=>{if(!dr)return;const m=dr.moved;dr=null;nav.style.scrollBehavior='';if(m)setTimeout(()=>nav.classList.remove('dragging'),0)};
+  nav.addEventListener('pointerup',end);nav.addEventListener('pointercancel',end);
+  let lastW=0;if(window.ResizeObserver)new ResizeObserver(()=>{const w=nav.clientWidth;if(Math.abs(w-lastW)<1)return;lastW=w;fitTabs(nav)}).observe(nav);
+  try{document.fonts&&document.fonts.ready.then(()=>fitTabs(nav))}catch(_){}window.addEventListener('resize',()=>requestAnimationFrame(()=>fitTabs(nav)),{passive:true})}
 function placePanels(){
   if(isMob()){tabBar($('#mobTabs'),MOB,()=>mobTab,v=>mobTab=v);$('#mobPanel').replaceChildren(ensurePanel(mobTab));$('#mobPanel').scrollTop=0}
   else{tabBar($('#libTabs'),LIB,()=>libTab,v=>libTab=v);tabBar($('#inspTabs'),INSP,()=>inspTab,v=>inspTab=v);$('#libBody').replaceChildren(ensurePanel(libTab));$('#inspBody').replaceChildren(ensurePanel(inspTab))}
