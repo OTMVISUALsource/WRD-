@@ -1803,10 +1803,16 @@ const Engine=(()=>{
     c.restore()}
 
   function small(sc,key,w,h){let o=sc[key];if(!o||o.c.width!==w||o.c.height!==h){const c=document.createElement('canvas');c.width=w;c.height=h;o=sc[key]={c,x:c.getContext('2d')}}return o}
-  function blurred(sc,src,W,H,r,col,key){const f=clamp(r/(FAST?1.6:2.5),1,40);const w=Math.max(2,Math.round(W/f)),h=Math.max(2,Math.round(H/f));const A=small(sc,key+'a',w,h),B=small(sc,key+'b',w,h);
-    A.x.globalCompositeOperation='source-over';A.x.globalAlpha=1;A.x.imageSmoothingEnabled=true;A.x.imageSmoothingQuality='high';A.x.clearRect(0,0,w,h);A.x.drawImage(src,0,0,w,h);
-    if(f>1.5){for(const [P,Q,offs] of [[A,B,[[-1,0],[1,0],[0,-1],[0,1]]],[B,A,[[-1,-1],[1,1],[1,-1],[-1,1]]]]){Q.x.globalCompositeOperation='source-over';Q.x.globalAlpha=1;Q.x.clearRect(0,0,w,h);Q.x.globalCompositeOperation='lighter';Q.x.globalAlpha=.25;for(const [dx,dy] of offs)Q.x.drawImage(P.c,dx,dy);Q.x.globalAlpha=1;Q.x.globalCompositeOperation='source-over'}}
-    if(col){A.x.globalCompositeOperation='source-in';A.x.fillStyle=col;A.x.fillRect(0,0,w,h)}A.x.globalCompositeOperation='source-over';return A.c}
+  /* smooth Gaussian blur for shadows and glows: the browser's own blur (shadowBlur / filter) on a lightly downscaled copy.
+     The old 4-tap box blur on a heavily shrunk copy left a blotchy, pixelated pattern in soft shadows. */
+  const CANF=(()=>{try{const x=document.createElement('canvas').getContext('2d');return typeof x.filter==='string'}catch(e){return false}})();
+  function blurred(sc,src,W,H,r,col,key){const sig=Math.max(.5,r*.8);const d=clamp(sig/(FAST?3:4.5),1,10);const w=Math.max(2,Math.round(W/d)),h=Math.max(2,Math.round(H/d)),sg=sig*(w/W);
+    const A=small(sc,key+'a',w,h),x=A.x;x.setTransform(1,0,0,1,0,0);x.globalCompositeOperation='source-over';x.globalAlpha=1;x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.clearRect(0,0,w,h);
+    if(col){/* draw the shape just off-canvas and let its blurred shadow (already in the shadow colour) land on the canvas */
+      x.shadowColor=col;x.shadowBlur=sg*2;x.shadowOffsetX=w+16;x.shadowOffsetY=0;x.drawImage(src,-w-16,0,w,h);x.shadowBlur=0;x.shadowColor='rgba(0,0,0,0)';x.shadowOffsetX=0;return A.c}
+    if(CANF){x.filter=`blur(${sg.toFixed(2)}px)`;x.drawImage(src,0,0,w,h);x.filter='none';return A.c}
+    x.shadowColor='#fff';x.shadowBlur=sg*2;x.shadowOffsetX=w+16;x.drawImage(src,-w-16,0,w,h);x.shadowBlur=0;x.shadowColor='rgba(0,0,0,0)';x.shadowOffsetX=0;
+    x.globalCompositeOperation='source-in';x.drawImage(src,0,0,w,h);x.globalCompositeOperation='source-over';return A.c}
   function strikeEnv(d){if(d<0||d>.42)return 0;if(d<.04)return 1;if(d<.08)return .25;if(d<.13)return .95;if(d<.18)return .2;return .7*(1-(d-.18)/.24)}
   function atmoState(S,A,I,t){const at=S.atmo,o={flash:0,strikes:[]};if(!at||at.type==='none')return o;
     if(at.type==='storm'||at.type==='lightning'){const list=[];if(A.id==='strike')list.push({t:I*.3,seed:77});const ev=Math.max(.4,at.every);
@@ -3259,25 +3265,32 @@ let TF=null,ASR=null,ASRKEY='';
 const MODELS={tiny:'onnx-community/whisper-tiny_timestamped',fast:'onnx-community/whisper-base_timestamped',base:'onnx-community/whisper-small_timestamped',best:'onnx-community/whisper-small_timestamped',turbo:'onnx-community/whisper-large-v3-turbo_timestamped',seg:'Xenova/whisper-base'};
 const MODEL_NAME={tiny:'Whisper Tiny',fast:'Whisper Base',base:'Whisper Small',best:'Whisper Small',turbo:'Whisper Large-v3 Turbo',seg:'Whisper Base (backup)'};
 const isMobileUA=()=>/iPhone|iPad|Android/i.test(navigator.userAgent)||(/Mac/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
-/* GPU check: computers with a graphics card, plus newer phones (iPhone on iOS 26+, recent Android Chrome) that have WebGPU */
+/* Crash-proof speech engine.
+   Phones: WebAssembly only (Safari/Chrome on phones close the whole page when a GPU model runs out of memory).
+   Computers: the graphics card when there is one.
+   If the page ever dies while a model runs, WRD remembers it and steps down to a lighter setup next time. */
+const ASRSAFE_MAX=2;
+function asrLevel(){return Math.max(0,Math.min(ASRSAFE_MAX,+lsGet('wrd.asrSafe','0')||0))}
+let ASR_CRASHED=false;
+(function(){const run=lsGet('wrd.asrRun','');if(run){let lv=0;try{lv=JSON.parse(run).lv||0}catch(e){}lsSet('wrd.asrSafe',String(Math.min(ASRSAFE_MAX,Math.max(asrLevel(),lv+1))));try{localStorage.removeItem('wrd.asrRun')}catch(e){}ASR_CRASHED=true}})();
+function asrBegin(key,dev){lsSet('wrd.asrRun',JSON.stringify({lv:asrLevel(),key,dev,t:Date.now()}))}
+function asrEnd(){try{localStorage.removeItem('wrd.asrRun')}catch(e){}}
 let GPUINFO=null;async function gpuInfo(){if(GPUINFO)return GPUINFO;const mob=isMobileUA();GPUINFO={ok:false,f16:false,mobile:mob,turbo:false};
-  try{if(navigator.gpu){const ad=await navigator.gpu.requestAdapter(mob?{}:{powerPreference:'high-performance'});if(ad){const f16=ad.features.has('shader-f16');const mem=navigator.deviceMemory||0;
-      /* a phone whose last Turbo run never finished (the browser closed the tab) won't try Turbo again */
-      const crashed=mob&&lsGet('wrd.turboTry','')&&!lsGet('wrd.turboOk','');if(crashed)lsSet('wrd.turboBad','1');
-      const big=!mob||(/iPhone|iPad|Mac/.test(navigator.userAgent)?true:mem===0||mem>=6);
-      GPUINFO={ok:true,f16,mobile:mob,turbo:big&&!lsGet('wrd.turboBad','')}}}}catch(e){}return GPUINFO}
-async function loadTF(){if(TF)return TF;let err;for(const u of['https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1','https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/+esm','https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2','https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2/+esm']){try{const m=await import(u);if(m&&m.pipeline){TF=m;return TF}}catch(e){err=e}}throw err||new Error('speech engine did not load')}
+  if(mob||asrLevel()>0)return GPUINFO;
+  try{if(navigator.gpu){const ad=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(ad){const f16=ad.features.has('shader-f16');const lim=ad.limits||{};
+      const big=(lim.maxBufferSize||0)>=1073741824;GPUINFO={ok:true,f16,mobile:false,turbo:f16&&big}}}}catch(e){}return GPUINFO}
+async function loadTF(){if(TF)return TF;let err;const A=['https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1','https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/+esm'],B=['https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2','https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2/+esm'];for(const u of(asrLevel()>=2?B.concat(A):A.concat(B))){try{const m=await import(u);if(m&&m.pipeline){TF=m;return TF}}catch(e){err=e}}throw err||new Error('speech engine did not load')}
 async function getASR(key,onp){const G=await gpuInfo();if(ASR&&ASRKEY===key)return ASR;if(ASR){try{await ASR.dispose()}catch(e){}ASR=null;ASRKEY=''}const tf=await loadTF();
   const mk=(device,dtype)=>tf.pipeline('automatic-speech-recognition',MODELS[key],{device,dtype,progress_callback:onp});
   /* precision per device: computers run Turbo in half precision; phones run a 4-bit Turbo that fits in phone memory (~550 MB);
      Small/Base keep full-precision encoders, the old 4-bit decoder was the main cause of wrong words */
-  const tries=[];
-  if(key==='turbo'){if(!G.ok||!G.turbo)throw new Error('turbo needs WebGPU');
-    if(G.mobile){if(G.f16)tries.push(['webgpu',{encoder_model:'q4f16',decoder_model_merged:'q4f16'}]);tries.push(['webgpu',{encoder_model:'q4',decoder_model_merged:'q4'}])}
-    else{if(G.f16)tries.push(['webgpu',{encoder_model:'fp16',decoder_model_merged:'fp16'}]);tries.push(['webgpu',{encoder_model:'q4',decoder_model_merged:'q4'}])}}
-  else{if(G.ok)tries.push(['webgpu',{encoder_model:'fp32',decoder_model_merged:G.f16?'fp16':'fp32'}]);tries.push(['wasm',{encoder_model:'fp32',decoder_model_merged:'q8'}]);tries.push(['wasm','q8'])}
-  try{if(tf.env&&tf.env.backends&&tf.env.backends.onnx&&tf.env.backends.onnx.wasm)tf.env.backends.onnx.wasm.proxy=!G.ok&&isMobileUA()}catch(e){}
-  let last;for(const [dev,dt] of tries){try{if(key==='turbo'&&G.mobile){lsSet('wrd.turboTry',String(Date.now()));try{localStorage.removeItem('wrd.turboOk')}catch(_){}}ASR=await mk(dev,dt);ASRKEY=key;ASRDT=dev+':'+JSON.stringify(dt);return ASR}catch(e){console.warn('ASR load',key,dev,e);last=e}}throw last||new Error('model did not load')}
+  const tries=[];const mob=isMobileUA();
+  if(key==='turbo'){if(!G.ok||!G.turbo)throw new Error('turbo needs a desktop graphics card');tries.push(['webgpu',{encoder_model:'fp16',decoder_model_merged:'fp16'}])}
+  else{if(G.ok)tries.push(['webgpu',{encoder_model:'fp32',decoder_model_merged:G.f16?'fp16':'fp32'}]);
+    /* phones: 8-bit models (about a quarter of the memory), computers without a GPU: full-precision encoder */
+    tries.push(['wasm',mob?'q8':{encoder_model:'fp32',decoder_model_merged:'q8'}]);if(!mob)tries.push(['wasm','q8'])}
+  try{const W=tf.env&&tf.env.backends&&tf.env.backends.onnx&&tf.env.backends.onnx.wasm;if(W){W.proxy=false;if(mob)W.numThreads=1}}catch(e){}
+  let last;for(const [dev,dt] of tries){try{asrBegin(key,dev);ASR=await mk(dev,dt);ASRKEY=key;ASRDT=dev+':'+JSON.stringify(dt);return ASR}catch(e){asrEnd();console.warn('ASR load',key,dev,e);last=e;try{if(ASR)await ASR.dispose()}catch(_){}ASR=null}}throw last||new Error('model did not load')}
 let ASRDT='';
 /* clean audio for the model: proper anti-aliased resample to 16 kHz, rumble filter, level normalisation */
 async function prepAudio(ab){try{const len=Math.ceil(ab.duration*16000);const oc=new OfflineAudioContext(1,len,16000);const src=oc.createBufferSource();src.buffer=ab;
@@ -3351,8 +3364,7 @@ async function transcribeWith(order,onStatus,audio){const lang={en:'english',es:
   const prog=d=>{if(d&&d.status==='progress'&&d.total)onStatus(`Downloading ${MODEL_NAME[CURK]||'speech model'} · ${Math.round(d.loaded/d.total*100)}% (first time only)`,d.loaded/d.total);else if(d&&d.status==='ready')onStatus('Model ready',1)};
   let lastErr,bestRes=null;
   for(const key of order){CURK=key;try{onStatus(`Loading ${MODEL_NAME[key]}…`,0);const asr=await getASR(key,prog);onStatus(`Listening with ${MODEL_NAME[key]}… (on your device)`,-1);
-      const out=await asr(audio,Object.assign({return_timestamps:key==='seg'?true:'word',chunk_length_s:30,stride_length_s:5,task:'transcribe'},lang?{language:lang}:{}));
-      if(key==='turbo')lsSet('wrd.turboOk','1');
+      asrBegin(key,ASRDT);const out=await asr(audio,Object.assign({return_timestamps:key==='seg'?true:'word',chunk_length_s:30,stride_length_s:5,task:'transcribe'},lang?{language:lang}:{}));asrEnd();
       let words=[];const ch=out&&out.chunks||[];
       if(key==='seg')ch.forEach(c=>{const [s,e]=c.timestamp;words.push(...splitTimed(c.text,s||0,e??((s||0)+2)))});
       else ch.forEach(c=>{const w=(c.text||'').trim();if(!w)return;const [s,e]=c.timestamp;words.push({w,s:s||0,e:e??((s||0)+.3)})});
@@ -3361,25 +3373,28 @@ async function transcribeWith(order,onStatus,audio){const lang={en:'english',es:
       const sc=asrScore(words,audio);console.info('ASR',key,ASRDT,'score',sc.toFixed(2),words.length,'words');
       if(!bestRes||sc>bestRes.sc)bestRes={sc,words,key};
       if(sc>=.8)break;onStatus('Double-checking with a stronger model…',-1)}
-    catch(e){console.warn('ASR',key,e);lastErr=e;if(key==='turbo')lsSet('wrd.turboOk','1')}}
+    catch(e){asrEnd();console.warn('ASR',key,e);lastErr=e}}
+  /* phones: free the model's memory right away so editing and export stay smooth */
+  if(isMobileUA()&&ASR){try{await ASR.dispose()}catch(e){}ASR=null;ASRKEY=''}
   if(!bestRes)throw lastErr||new Error('Transcription failed');return bestRes}
 function finishWords(words,audio,onStatus){if(P.cap.smart){onStatus&&onStatus('Syncing words to your voice…',-1);words=smartSync(words,audio);words=refineOnsets(words,audio)}
   try{const ad=audio.length/16000,vd=P.video&&P.video.dur;if(vd&&ad>1){const k=vd/ad;if(Math.abs(k-1)>.003&&Math.abs(k-1)<.12)words.forEach(w=>{w.s*=k;w.e*=k})}}catch(e){}
   return fixVocab(words)}
-async function strongKey(){const G=await gpuInfo();return G.ok&&G.turbo&&(G.f16||G.mobile||true)?'turbo':'best'}
+async function strongKey(){const G=await gpuInfo();return G.ok&&G.turbo?'turbo':(isMobileUA()&&asrLevel()>0?'fast':'best')}
 let AUDIO16=null;
 async function transcribe(onStatus){
   if(!AUDIO)throw new Error('The audio isn’t ready yet. Give it a second after adding the video.');
   onStatus('Preparing audio…',-1);const audio=await prepAudio(AUDIO);AUDIO16={src:AUDIO,a:audio};
   /* Best = Turbo wherever it can run · Accurate = Small, checked by Turbo if the result looks off · Fast = Base now, upgraded in the background */
   const pick=P.cap.model||'base';const strong=await strongKey();
-  const chain={fast:['fast','base','tiny','seg'],base:['base',strong,'fast','seg'],best:[strong,'base','fast','seg']}[pick]||['base','fast','seg'];
+  const lv=asrLevel(),mob=isMobileUA();
+  const chain=lv>=2||(mob&&lv>=1)?['fast','tiny']:{fast:['fast','tiny'],base:['base',strong,'fast'],best:[strong,'base','fast']}[pick]||['base','fast'];
   const r=await transcribeWith([...new Map(chain.map(k=>[MODELS[k],k])).values()],onStatus,audio);CAPINFO.model=MODEL_NAME[r.key];CAPINFO.key=r.key;
   return finishWords(r.words,audio,onStatus)}
 /* Fast mode: show captions right away, then re-listen with the strongest model the device can run and swap in the better words */
 const UPG={busy:false,result:null,from:'',sig:''};
 const capSig=()=>capClips().map(c=>(c.words||[]).map(w=>w.w).join(' ')+(c.edited?'*':'')).join('|');
-async function upgradeCaptions(){if(UPG.busy||!AUDIO16||P.cap.upgrade===false)return;const target=await strongKey();if(target===CAPINFO.key||(target==='best'&&CAPINFO.key==='base'))return;
+async function upgradeCaptions(){if(UPG.busy||!AUDIO16||P.cap.upgrade===false||asrLevel()>0)return;const target=await strongKey();if(target===CAPINFO.key||(target==='best'&&CAPINFO.key==='base'))return;
   UPG.busy=true;UPG.result=null;UPG.sig=capSig();const from=CAPINFO.model;const st=(m,p)=>{const b=$('#upgStatus');if(b)b.textContent=m};rebuild('video',true);
   toast('Captions ready · improving accuracy with '+MODEL_NAME[target]+' in the background');
   try{const r=await transcribeWith([target],st,AUDIO16.a);const words=finishWords(r.words,AUDIO16.a);
@@ -3585,6 +3600,7 @@ async function readScene(shots,onS){if(!shots||!shots.length)return null;const t
   const sc={},mo={};const add=(o,res,map)=>res.forEach(r=>{const k=map.find(x=>x[1]===r.label);if(k)o[k[0]]=(o[k[0]]||0)+r.score/shots.length});
   for(let i=0;i<shots.length;i++){onS&&onS(`AI is reading the scene… ${i+1}/${shots.length}`);const a=await CLIPP(shots[i],SCENES.map(x=>x[1]),{hypothesis_template:'This is a frame from {}.'});add(sc,a,SCENES);
     const b=await CLIPP(shots[i],MOODS.map(x=>x[1]),{hypothesis_template:'A {} video.'});add(mo,b,MOODS)}
+  if(isMobileUA()){try{await CLIPP.dispose()}catch(e){}CLIPP=null}
   const top=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]);return{scenes:top(sc),moods:top(mo)}}
 /* what fits each kind of video */
 const PROFILE={fitness:{st:['boldpop','neonpop','karaoke','block'],f:['montserrat','anton','archivo'],t:['Thunder','Insane Effects','Electric','1M Views']},
@@ -3672,7 +3688,8 @@ function buildVideo(){const p=h('div',{class:'panel'});const C=P.cap;
     commit();buildCaptions(null,cues.map(q=>splitTimed(q.text,q.s,q.e)));refreshAll();changed();toast(cues.length+' captions imported')});
   p.append(sec('Auto captions',
     h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Language')),seg([{v:'en',label:'English'},{v:'es',label:'Español'},{v:'auto',label:'Auto'}],()=>C.lang,v=>C.lang=v,{label:'Language'})),
-    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Speech model')),seg([{v:'fast',label:'Fast'},{v:'base',label:'Accurate'},{v:'best',label:'Best'}],()=>C.model,v=>{C.model=v;if(v==='best'&&lsGet('wrd.turboBad','')){try{localStorage.removeItem('wrd.turboBad');localStorage.removeItem('wrd.turboTry')}catch(e){}GPUINFO=null}setTimeout(()=>rebuild('video',true),0)},{label:'Speech model'}),h('p',{class:'hint'},{fast:'Whisper Base · captions in seconds, then WRD quietly re-listens with Whisper Large-v3 Turbo (or Small) and swaps in the more accurate words, keeping your style.',base:'Whisper Small · ~250 MB once. Accurate on phones and computers; Turbo double-checks it if the result looks off.',best:'Whisper Large-v3 Turbo · the most accurate. Runs on computers with a graphics card (~1.3 GB once) and on newer phones with WebGPU, iPhone on iOS 26+ and recent Android Chrome (~550 MB once). Older phones use Whisper Small.'}[C.model])),
+    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Speech model')),seg([{v:'fast',label:'Fast'},{v:'base',label:'Accurate'},{v:'best',label:'Best'}],()=>C.model,v=>{C.model=v;setTimeout(()=>rebuild('video',true),0)},{label:'Speech model'}),h('p',{class:'hint'},{fast:'Whisper Base · captions in seconds, then WRD quietly re-listens with a stronger model (Turbo on computers with a graphics card, Small on phones) and swaps in the better words, keeping your style.',base:'Whisper Small · accurate on phones and computers (~250 MB once; ~120 MB on phones).',best:'Whisper Large-v3 Turbo on computers with a graphics card (~1.3 GB once), the most accurate. On phones Best uses Whisper Small: phone browsers don’t have the memory for Turbo and would close the page.'}[C.model])),
+    asrLevel()>0?h('div',{class:'upgbox'},h('span',null,'Safe mode is on: WRD uses a lighter speech setup because this device ran out of memory last time.'),h('button',{type:'button',class:'pillbtn',onclick:()=>{lsSet('wrd.asrSafe','0');GPUINFO=null;TF=TF;rebuild('video',true);toast('Full speech setup is back on')}},'Turn off')):null,
     C.model==='fast'?toggle('Upgrade Fast captions in the background',()=>P.cap.upgrade!==false,v=>{P.cap.upgrade=v},{opts:{tl:false}}):null,
     UPG.busy?h('div',{class:'upgbox busy'},h('i'),h('span',{id:'upgStatus'},'Improving accuracy in the background…')):null,
     UPG.result?h('div',{class:'upgbox'},h('span',null,UPG.result.model+' captions are ready. You edited captions since, so they weren’t swapped in automatically.'),h('button',{type:'button',class:'pillbtn',onclick:()=>{const r=UPG.result;UPG.result=null;commit();buildCaptions(r.words);CAPINFO.model=r.model;CAPINFO.key=r.key;refreshAll();changed();toast('Applied '+r.model+' captions · Undo to go back')}},'Use them')):null,
@@ -4078,6 +4095,7 @@ try{P.clips.forEach(c=>{if(c.kind==='caption'&&!c.gen&&c.words&&c.words.length){
 function fadeHint(el){if(!el||el._fh)return;el._fh=1;const f=()=>{const max=el.scrollWidth-el.clientWidth;el.classList.toggle('fadeR',max>2&&el.scrollLeft<max-2);el.classList.toggle('fadeL',max>2&&el.scrollLeft>2)};el.addEventListener('scroll',f,{passive:true});if(window.ResizeObserver)new ResizeObserver(f).observe(el);new MutationObserver(f).observe(el,{childList:true});setTimeout(f,300)}
 updUndo();updAspect();updBg();updKey();placePanels();fadeHint($('#mobTabs'));fadeHint($('#bgChips'));renderSafe();setPlaying(false);updTimeline();requestAnimationFrame(loopFn);
 if(CLOUD.on&&cloudHas())setTimeout(()=>cloudPull(false),800);
+if(ASR_CRASHED)setTimeout(()=>toast('Your device ran out of memory while making captions. WRD switched to a lighter speech setup so it won’t happen again.'),1800);
 
 /* ===== account: plan + days left, stay signed in, save, sign out (creator edition only) ===== */
 (function(){const btn=$('#acctBtn');if(!btn||!document.getElementById('wrdGate'))return;
@@ -4310,7 +4328,7 @@ const G=[
   work:[['Add the final cut, not raw clips','Captions and titles are timed to the video you add. If you re-cut later, add the new export and regenerate captions.'],['Short on time?','Analyze → Apply best match gives you a style that suits the video in one tap. Then tweak.']],
   go:[['Open Video tab','video']]},
  {id:'captions',ic:'cc',c:'#a35bff',t:'Auto captions',lead:'WRD listens to your video on your device and turns speech into timed, animated captions, word by word.',
-  steps:[['Pick a speech model','Best runs Whisper Large-v3 Turbo, the most accurate open-source model, on computers with a graphics card and on newer phones (iPhone on iOS 26+, recent Android Chrome); older phones use Whisper Small. Accurate runs Whisper Small, double-checked by Turbo when a result looks off. Fast shows Whisper Base captions in seconds, then re-listens with Turbo in the background and swaps in the better words, keeping your style. Models download once, then work offline.'],
+  steps:[['Pick a speech model','Best runs Whisper Large-v3 Turbo, the most accurate open-source model, on computers with a graphics card. Phones use Whisper Small (a phone-sized 8-bit version), because phone browsers close the page when a model is too big for their memory. Accurate runs Whisper Small. Fast shows Whisper Base captions in seconds, then re-listens with a stronger model in the background and swaps in the better words, keeping your style. Models download once, then work offline. If a device ever runs out of memory, WRD switches to a lighter setup automatically.'],
    ['Names & words to get right','Type brand names, places and slang, comma separated. WRD corrects close misses to your spelling, and it learns from words you fix.'],
    ['Smart sync','Snaps each word to the exact moment it’s spoken, so captions hit on the beat of your voice.'],
    ['Edit words','Tap any caption line and type. Changes save automatically (or tap Update). Timing is kept. Use Find & replace to fix a word everywhere.'],
