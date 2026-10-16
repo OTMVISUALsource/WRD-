@@ -914,6 +914,28 @@ input,select,textarea{font:inherit;color:inherit}
 .clip.cap{background:linear-gradient(180deg,#8a4dff,#5a23d6);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
 .clip.cap .cl-l{padding:0 6px;font-size:10.5px;font-weight:600}
 .clip.sel{box-shadow:0 0 0 2px #fff,0 6px 18px -6px rgba(61,123,255,.9);z-index:3}
+.clip.cap.allsel{box-shadow:0 0 0 2px #2ee6c8,0 6px 18px -6px rgba(46,230,200,.8);z-index:3;cursor:grab;opacity:1}
+.clip.cap.pickable{opacity:.5;cursor:crosshair}.clip.cap.picking{opacity:1;box-shadow:0 0 0 2px #ffd166,0 6px 18px -6px rgba(255,209,102,.8);z-index:3}
+#tlC.capick #trk1{touch-action:none;cursor:crosshair}#tlC.capick #trk1::before{content:'';position:absolute;inset:1px 0;border-radius:8px;background:repeating-linear-gradient(90deg,rgba(46,230,200,.06) 0 6px,transparent 6px 12px);pointer-events:none}
+.marq{position:absolute;top:1px;bottom:1px;border:1.5px dashed #2ee6c8;background:rgba(46,230,200,.16);border-radius:6px;pointer-events:none;z-index:6}
+.capallbar .cab-mode{display:inline-flex;border:1px solid rgba(255,255,255,.16);border-radius:10px;overflow:hidden}.capallbar .cab-mode button{border:0;border-radius:0;min-height:32px;display:inline-flex;align-items:center;gap:6px;background:transparent}
+.capallbar .cab-mode button+button{border-left:1px solid rgba(255,255,255,.16)}.capallbar .cab-mode button[aria-pressed="true"]{background:rgba(46,230,200,.24);color:#fff}.capallbar .cab-mode svg{width:15px;height:15px}
+.capallbar button[disabled]{opacity:.4;cursor:default}
+.syncrow .wide{grid-column:1/-1}
+.tlcapall{display:inline-flex;align-items:center;gap:6px;color:#bff7ec;border-color:rgba(46,230,200,.32)}.tlcapall svg{width:15px;height:15px;flex:none}.tlcapall[aria-pressed="true"]{background:rgba(46,230,200,.18);color:#fff;border-color:#2ee6c8}
+@media (max-width:599px){.tl-head .tlcapall .cl{display:none}.tl-head .tlcapall{padding:0 9px}.capallbar .cab-mode{width:100%}.capallbar .cab-mode button{flex:1;justify-content:center}}
+.capallbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:8px 10px;margin:0 8px 6px;border-radius:12px;background:linear-gradient(90deg,rgba(46,230,200,.13),rgba(122,60,255,.13));border:1px solid rgba(46,230,200,.35);font-size:12px}
+.capallbar[hidden]{display:none}.capallbar .cab-t{display:inline-flex;align-items:center;gap:7px;font-weight:700;color:#e9fffb;margin-right:auto;min-width:0}.capallbar .cab-t svg{width:17px;height:17px;color:#2ee6c8;flex:none}
+.capallbar .cab-t small{font-weight:600;color:var(--muted);font-family:var(--f-mono);font-size:11px}
+.capallbar .nud{display:inline-flex;gap:4px;align-items:center}.capallbar button{min-height:34px;min-width:44px;padding:0 10px;border-radius:9px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;font:600 12px var(--f-ui);cursor:pointer;touch-action:manipulation}
+.capallbar button:hover{background:rgba(255,255,255,.12)}.capallbar button.pri{background:#2ee6c8;color:#04201b;border-color:#2ee6c8}.capallbar button.ic{display:inline-flex;align-items:center;gap:6px}.capallbar button.ic svg{width:15px;height:15px}
+.capallbar button{white-space:nowrap}.capallbar .acts{display:inline-flex;gap:6px}
+.capallbar .off{font-family:var(--f-mono);font-size:12px;min-width:62px;text-align:center;color:#bff7ec}
+@media (max-width:599px){.capallbar{margin:0 6px 6px;padding:8px}.capallbar .cab-t{width:100%;margin-right:0}.capallbar .cab-t small{font-size:10px;margin-left:auto}.capallbar .acts button{padding:0 4px;justify-content:center}.capallbar .acts button.ic span{display:none}.capallbar .nud{flex:1;justify-content:space-between}.capallbar .nud button{flex:1;min-width:0;padding:0 4px}.capallbar .acts{display:flex;gap:6px;width:100%}.capallbar .acts button{flex:1}}
+.syncrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.syncbtn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 10px;border-radius:12px;border:1px solid rgba(46,230,200,.35);background:rgba(46,230,200,.08);color:#e9fffb;font:700 13px var(--f-ui);cursor:pointer;text-align:left;touch-action:manipulation}
+.syncbtn svg{width:20px;height:20px;flex:none;color:#2ee6c8}.syncbtn:hover{background:rgba(46,230,200,.15)}.syncbtn[disabled]{opacity:.55;cursor:default}.syncbtn.on{background:rgba(46,230,200,.22);border-color:#2ee6c8}
+.syncbtn.busy svg{animation:wrdSyncPulse 1s ease-in-out infinite}@keyframes wrdSyncPulse{50%{opacity:.35}}
+@media (max-width:360px){.syncrow{grid-template-columns:1fr}}
 .clip .hl,.clip .hr{position:absolute;top:0;bottom:0;width:10px;cursor:ew-resize;z-index:2}
 .clip .hl{left:0}.clip .hr{right:0}
 .clip.sel .hl::after,.clip.sel .hr::after,.clip.shine .hr::after{content:"";position:absolute;top:25%;bottom:25%;left:4px;width:2px;border-radius:2px;background:#fff}
@@ -1109,8 +1131,9 @@ label.pillbtn{cursor:pointer;display:inline-flex;align-items:center}
   <aside class="insp card" id="inspCol"><nav class="tabs" id="inspTabs" role="tablist"></nav><div class="pbody" id="inspBody"></div></aside>
 
   <section class="tl card" id="tl">
-    <div class="tl-head"><button type="button" class="tlbtn" id="tlAdd">+ Text</button><button type="button" class="tlbtn" id="tlDup">Duplicate</button><button type="button" class="tlbtn" id="tlDel">Delete</button><button type="button" class="tlbtn tlclean" id="tlClean" title="Clean up the timeline" aria-label="Clean up timeline"><svg class="ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5h6.5"/><path d="M3 12h4"/><path d="M3 17.5h7.5"/><path d="M11.5 20.5 18.5 7"/><path d="M14.2 20.5h6.3" opacity=".55"/><path d="M19 1.8v3.4M17.3 3.5h3.4" stroke-width="1.6"/></svg><span class="cl">Clean up</span></button><span class="sp"></span><button type="button" class="tltime" id="tlTime" aria-label="Project editing time"></button><span id="tlInfo"></span>
+    <div class="tl-head"><button type="button" class="tlbtn" id="tlAdd">+ Text</button><button type="button" class="tlbtn" id="tlDup">Duplicate</button><button type="button" class="tlbtn" id="tlDel">Delete</button><button type="button" class="tlbtn tlclean" id="tlClean" title="Clean up the timeline" aria-label="Clean up timeline"><svg class="ci" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5h6.5"/><path d="M3 12h4"/><path d="M3 17.5h7.5"/><path d="M11.5 20.5 18.5 7"/><path d="M14.2 20.5h6.3" opacity=".55"/><path d="M19 1.8v3.4M17.3 3.5h3.4" stroke-width="1.6"/></svg><span class="cl">Clean up</span></button><button type="button" class="tlbtn tlcapall" id="tlCapAll" title="Select all captions to move them together" aria-label="Select all captions" aria-pressed="false" hidden><span class="ico"></span><span class="cl">All captions</span></button><button type="button" class="tlbtn tlcapall" id="tlCapPick" title="Drag select: pick just the captions that need moving" aria-label="Drag select captions" aria-pressed="false" hidden><span class="ico"></span><span class="cl">Select</span></button><span class="sp"></span><button type="button" class="tltime" id="tlTime" aria-label="Project editing time"></button><span id="tlInfo"></span>
       <button type="button" class="iconbtn sm" id="zOut" aria-label="Zoom out">−</button><input type="range" id="tlZoom" class="rng zr" min="1" max="60" step="0.1" value="1" aria-label="Timeline zoom"><button type="button" class="iconbtn sm" id="zIn" aria-label="Zoom in">+</button></div>
+    <div class="capallbar" id="capAllBar" hidden></div>
     <div class="tl-body">
       <div class="tl-labels"><div class="rs"></div><div class="tk"><i style="background:#ff3d7f;color:#fff">▶</i><span>Video</span></div><div class="tk"><i style="background:#3d7bff;color:#fff">T</i><span>Titles</span></div><div class="tk"><i style="background:#7a3cff;color:#fff">CC</i><span>Captions</span></div><div class="tk"><i style="background:#ff8a1f">✦</i><span>Shine</span></div><div class="tk tk-sfx"><i style="background:#2ee6c8"><svg viewBox="0 0 24 24" fill="none" stroke="#06110f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></i><span>SFX</span></div></div>
       <div class="tl-scroll" id="tlScroll"><div class="tl-content" id="tlC">
@@ -2116,7 +2139,9 @@ function styleOnto(ns,old){ns.lines=old.lines.map((L,i)=>{const src=ns.lines[Mat
 const $=s=>document.querySelector(s);
 function h(tag,props,...kids){const el=document.createElement(tag);if(props)for(const k in props){const v=props[k];if(v==null||v===false)continue;if(k==='class')el.className=v;else if(k==='style')el.style.cssText=v;else if(k==='html')el.innerHTML=v;else if(k.startsWith('on'))el.addEventListener(k.slice(2),v);else el.setAttribute(k,v===true?'':v)}
   for(const kid of kids.flat())if(kid!=null&&kid!==false)el.append(kid.nodeType?kid:document.createTextNode(String(kid)));return el}
-const ICON={sfx:'<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/>',
+const ICON={dsel:'<rect x="2.5" y="3.5" width="14" height="10" rx="2" stroke-dasharray="2.4 2.2"/><path d="M12.5 11.5l8.5 3.2-3.6 1.4 2.9 3.6-1.9 1.5-2.9-3.6-1.5 3.6z"/>',async:'<path d="M3 9V7M6 10V4M9 9V5.5M12 10V3M15 9V6M18 10V5M21 9V7"/><rect x="2.5" y="14" width="19" height="6.5" rx="2.2"/><path d="M12 12.2v10.3" stroke-dasharray="1.6 1.9" opacity=".7"/><path d="M7 17.3h3M14 17.3h3.5" opacity=".75"/>',
+  capall:'<rect x="2.5" y="4" width="11" height="4" rx="1.4"/><rect x="2.5" y="10" width="11" height="4" rx="1.4"/><rect x="2.5" y="16" width="11" height="4" rx="1.4"/><path d="M16 12h6"/><path d="M18 9.8 15.8 12l2.2 2.2"/><path d="M20 9.8l2.2 2.2-2.2 2.2"/>',
+  sfx:'<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/>',
   gloss:'<circle cx="12" cy="12" r="9"/><path d="M7.5 9.5c.8-2 2.6-3.3 4.7-3.5"/><path d="M8.6 12.6c.2-.6.5-1.1.9-1.6" opacity=".6"/>',
   size:'<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',
   grad:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 15c3-2 6-2 9 0s6 2 9 0"/><path d="M3 10c3-2 6-2 9 0s6 2 9 0" opacity=".55"/>',
@@ -3066,8 +3091,9 @@ function updTimeline(){if(tlDragging)return;
   drawWave(Wc);try{updSfxTrack()}catch(e){}
   $('#vName').textContent=P.video?(P.video.name+(vidURL?'':' · add it again in Video to preview')):'Add a video in the Video tab to line overlays up with it';
   $('#tlInfo').textContent=`${P.clips.length} clip${P.clips.length!==1?'s':''} · ${fmtT(D)}`;
-  $('#tlDel').disabled=false;$('#ph').style.left=tx(T)+'px'}
-function clipEl(c){const s=c.s,k=pps(),isSel=c.id===P.sel,cap=c.kind==='caption';
+  $('#tlDel').disabled=false;$('#ph').style.left=tx(T)+'px';try{const n=capClips().length,b=$('#tlCapAll');if(b&&b.hidden!==!n)updCapAll()}catch(e){}}
+function clipEl(c){const s=c.s,k=pps(),isSel=c.id===P.sel,cap=c.kind==='caption',all=cap&&CAPALL.on;
+  if(all)return capAllEl(c);
   const el=h('div',{class:'clip'+(cap?' cap':'')+(isSel?' sel':''),style:`left:${tx(c.start)}px;width:${Math.max(6,s.dur*k)}px`,title:clipLabel(c)});
   if(isSel&&!cap){const I=Math.min(s.inDur,s.dur),O=s.outMode==='none'?0:Math.min(s.outDur,s.dur-I);el.append(h('div',{class:'zin',style:`width:${I*k}px`}),O?h('div',{class:'zout',style:`width:${O*k}px`}):null,h('div',{class:'hd hin',style:`left:${I*k-6}px`,title:'Intro length'}),O?h('div',{class:'hd hout',style:`left:${(s.dur-O)*k-6}px`,title:'Outro length'}):null)}
   el.append(h('div',{class:'cl-l'},(cap?'':(ANIM_BY[s.anim]?.name||'')+' · ')+clipLabel(c)),h('div',{class:'hl'}),h('div',{class:'hr'}));
@@ -3081,6 +3107,16 @@ function clipEl(c){const s=c.s,k=pps(),isSel=c.id===P.sel,cap=c.kind==='caption'
       else if(o.mode==='out')s.outDur=clamp(Math.round((o.outDur-d)*100)/100,.08,Math.max(.08,s.dur-s.inDur));
       el.style.left=tx(c.start)+'px';el.style.width=Math.max(6,s.dur*pps())+'px';if(o.mode!=='move'&&o.mode!=='l')el.querySelectorAll('.hd').forEach(x=>x.remove())},
     (moved,o)=>{if(c.kind==='caption'&&moved)capRebuild(c,s.dur);if(!moved&&(T<c.start||T>=c.start+s.dur))seek(c.start+Math.min(s.dur*.5,s.inDur+.15));refreshAll()});
+  return el}
+/* caption block while captions are being selected: a selected one drags the whole selection, the others are picked with the drag-select box */
+function capAllEl(c){const k=pps(),on=capIsSel(c);const el=h('div',{class:'clip cap '+(on?'allsel':'pickable'),'data-cid':c.id,style:`left:${tx(c.start)}px;width:${Math.max(6,c.s.dur*k)}px`,title:clipLabel(c)},h('div',{class:'cl-l'},clipLabel(c)));
+  if(!on)return el;
+  dragOn(el,()=>{const sel=capSelList();return{sel,L:capLimits(sel),base:sel.map(x=>({x,start:x.start,words:(x.words||[]).map(w=>({s:w.s,e:w.e}))})),off:CAPALL.off}},
+    (d,o)=>{d=Math.round(clamp(d,o.L.lo,o.L.hi)*100)/100;o.d=d;
+      o.base.forEach(q=>{q.x.start=Math.max(0,Math.round((q.start+d)*1000)/1000);(q.x.words||[]).forEach((w,i)=>{w.s=q.words[i].s+d;w.e=q.words[i].e+d});const e2=document.querySelector('#trk1 .clip[data-cid="'+q.x.id+'"]');if(e2)e2.style.left=tx(q.x.start)+'px'});
+      const off=$('#capAllBar .off');if(off){const t=o.off+d;off.textContent=(t>=0?'+':'−')+Math.abs(t).toFixed(2)+' s'}},
+    (moved,o)=>{if(!moved||!o.d){if(!moved&&CAPALL.mode==='pick'){const s_=new Set(CAPALL.ids);s_.delete(c.id);CAPALL.ids=s_;CAPALL.off=0;updCapAll();return}if(!moved){const f=c.start;if(T<f||T>=f+c.s.dur)seek(f+Math.min(c.s.dur*.5,.3))}return}
+      capFixLayout(o.sel);CAPALL.off=Math.round((o.off+o.d)*1000)/1000;CAPALL.moved=true;refreshAll();updCapAll()});
   return el}
 function snapT(t,c,dur){const k=pps(),thr=8/k;const pts=[T,0];P.clips.forEach(x=>{if(x!==c){pts.push(x.start,x.start+x.s.dur)}});
   for(const p of pts){if(Math.abs(t-p)<thr)return p;if(Math.abs(t+dur-p)<thr)return p-dur}return t}
@@ -3299,20 +3335,96 @@ function asrEnd(){try{localStorage.removeItem('wrd.asrRun')}catch(e){}}
 let GPUINFO=null;async function gpuInfo(){if(GPUINFO)return GPUINFO;const mob=isMobileUA();GPUINFO={ok:false,f16:false,mobile:mob,turbo:false};
   if(mob||asrLevel()>0)return GPUINFO;
   try{if(navigator.gpu){const ad=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(ad){const f16=ad.features.has('shader-f16');const lim=ad.limits||{};
-      const big=(lim.maxBufferSize||0)>=1073741824;GPUINFO={ok:true,f16,mobile:false,turbo:f16&&big}}}}catch(e){}return GPUINFO}
-async function loadTF(){if(TF)return TF;let err;const A=['https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1','https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/+esm'],B=['https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2','https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2/+esm'];for(const u of(asrLevel()>=2?B.concat(A):A.concat(B))){try{const m=await import(u);if(m&&m.pipeline){TF=m;return TF}}catch(e){err=e}}throw err||new Error('speech engine did not load')}
-async function getASR(key,onp){const G=await gpuInfo();if(ASR&&ASRKEY===key)return ASR;if(ASR){try{await ASR.dispose()}catch(e){}ASR=null;ASRKEY=''}const tf=await loadTF();
-  const mk=(device,dtype)=>tf.pipeline('automatic-speech-recognition',MODELS[key],{device,dtype,progress_callback:onp});
-  /* precision per device: computers run Turbo in half precision; phones run a 4-bit Turbo that fits in phone memory (~550 MB);
-     Small/Base keep full-precision encoders, the old 4-bit decoder was the main cause of wrong words */
-  const tries=[];const mob=isMobileUA();
+      const big=(lim.maxBufferSize||0)>=1073741824;GPUINFO={ok:true,f16,mobile:false,turbo:f16&&big}}}}catch(e){}
+  /* the speech worker has to see the graphics card too, otherwise it runs on the processor */
+  if(GPUINFO.ok&&AW.info&&!AW.info.gpu)GPUINFO=Object.assign({},GPUINFO,{ok:false,turbo:false});return GPUINFO}
+function tfURLs(){const A=['https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1','https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/+esm'],B=['https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2','https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2/+esm'];return asrLevel()>=2?B.concat(A):A.concat(B)}
+async function loadTF(){if(TF)return TF;let err;for(const u of tfURLs()){try{const m=await import(u);if(m&&m.pipeline){TF=m;return TF}}catch(e){err=e}}throw err||new Error('speech engine did not load')}
+/* which device + precision to try for a model, best first */
+function asrTries(key,G){const tries=[];const mob=isMobileUA();
+  /* computers run Turbo in half precision on the graphics card; Small/Base keep full-precision encoders (the old 4-bit decoder was the main cause of wrong words) */
   if(key==='turbo'){if(!G.ok||!G.turbo)throw new Error('turbo needs a desktop graphics card');tries.push(['webgpu',{encoder_model:'fp16',decoder_model_merged:'fp16'}])}
   else{if(G.ok)tries.push(['webgpu',{encoder_model:'fp32',decoder_model_merged:G.f16?'fp16':'fp32'}]);
     /* phones: 8-bit models (about a quarter of the memory), computers without a GPU: full-precision encoder */
     tries.push(['wasm',mob?'q8':{encoder_model:'fp32',decoder_model_merged:'q8'}]);if(!mob)tries.push(['wasm','q8'])}
+  return tries}
+let ASRLOAD=null;
+async function getASR(key,onp){if(ASRLOAD&&ASRLOAD.key===key){try{await ASRLOAD.p}catch(e){}}
+  if(ASR&&ASRKEY===key)return ASR;const job={key};job.p=(async()=>{if(useWorker()){try{return await getASRW(key,onp)}catch(e){if(!AW.dead)throw e;console.warn('speech worker unavailable, using the page',e)}}return await getASRMain(key,onp)})();
+  ASRLOAD=job;try{return await job.p}finally{if(ASRLOAD===job)ASRLOAD=null}}
+async function getASRMain(key,onp){const G=await gpuInfo();if(ASR&&ASRKEY===key&&!ASR.w)return ASR;if(ASR){try{await ASR.dispose()}catch(e){}ASR=null;ASRKEY=''}const tf=await loadTF();
+  const mk=(device,dtype)=>tf.pipeline('automatic-speech-recognition',MODELS[key],{device,dtype,progress_callback:onp});
+  const tries=asrTries(key,G);const mob=isMobileUA();
   try{const W=tf.env&&tf.env.backends&&tf.env.backends.onnx&&tf.env.backends.onnx.wasm;if(W){W.proxy=false;if(mob)W.numThreads=1}}catch(e){}
   let last;for(const [dev,dt] of tries){try{asrBegin(key,dev);ASR=await mk(dev,dt);ASRKEY=key;ASRDT=dev+':'+JSON.stringify(dt);return ASR}catch(e){asrEnd();console.warn('ASR load',key,dev,e);last=e;try{if(ASR)await ASR.dispose()}catch(_){}ASR=null}}throw last||new Error('model did not load')}
 let ASRDT='';
+/* ===== Speech worker: Whisper and voice detection run on their own background thread.
+   The editor stays smooth while captions are made, all processor cores are used where the browser allows it,
+   and on phones the whole engine is closed afterwards so its memory goes straight back to the phone. ===== */
+const AW={w:null,ready:null,seq:0,pend:new Map(),info:null,dead:false,q:Promise.resolve(),threads:1,fails:0};
+function useWorker(){return !AW.dead&&typeof Worker!=='undefined'&&typeof Blob!=='undefined'&&lsGet('wrd.asrWorker','1')!=='0'}
+function isIOS(){return /iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Mac/.test(navigator.userAgent)&&navigator.maxTouchPoints>1)}
+/* processor threads for the speech model: several cores where the page is cross-origin isolated (see _headers), one otherwise */
+function asrThreads(){if(!self.crossOriginIsolated||lsGet('wrd.asrThreads1','')==='1'||isIOS())return 1;const hc=navigator.hardwareConcurrency||4,lv=asrLevel();
+  if(isMobileUA())return Math.max(1,Math.min(lv>0?2:4,hc-2));return Math.max(1,Math.min(lv>0?4:8,hc-1))}
+function asrWorkerMain(){
+  let TF=null,ASR=null,KEY='',VADM=null;
+  const post=(m,t)=>self.postMessage(m,t||[]);
+  async function load(urls){if(TF)return TF;let err;for(const u of urls){try{const m=await import(u);if(m&&m.pipeline){TF=m;return TF}}catch(e){err=e}}throw err||new Error('speech engine did not load')}
+  async function vadModel(){if(!VADM)VADM=await TF.AutoModel.from_pretrained('onnx-community/silero-vad',{config:{model_type:'custom'},dtype:'fp32',device:'wasm'});return VADM}
+  const H={
+    async init(d){await load(d.urls);try{const W=TF.env.backends.onnx.wasm;W.proxy=false;W.numThreads=d.threads}catch(e){}try{TF.env.allowLocalModels=false}catch(e){}
+      return{coi:!!self.crossOriginIsolated,gpu:!!(self.navigator&&navigator.gpu),threads:d.threads,auto:!!TF.AutoModel}},
+    async load(d,id){const k=d.model+'|'+d.dev+'|'+JSON.stringify(d.dtype);if(ASR&&KEY===k)return true;if(ASR){try{await ASR.dispose()}catch(e){}ASR=null;KEY=''}
+      ASR=await TF.pipeline('automatic-speech-recognition',d.model,{device:d.dev,dtype:d.dtype,progress_callback:p=>{if(p&&(p.status==='progress'||p.status==='ready'))post({id,progress:{status:p.status,loaded:p.loaded||0,total:p.total||0}})}});KEY=k;return true},
+    async run(d){if(!ASR)throw new Error('model not loaded');const o=await ASR(d.audio,d.opts);return{chunks:((o&&o.chunks)||[]).map(c=>({text:c.text,timestamp:c.timestamp})),text:(o&&o.text)||''}},
+    async dispose(){if(ASR){try{await ASR.dispose()}catch(e){}}ASR=null;KEY='';return true},
+    async vadwarm(){await vadModel();return true},
+    async vad(d,id){if(!TF.AutoModel||!TF.Tensor)throw new Error('no AutoModel');const M=await vadModel();const a16=d.audio,CH=512,CTX=64,N=Math.floor(a16.length/CH);if(N<4)throw new Error('too short');
+      const probs=new Float32Array(N);let state=new TF.Tensor('float32',new Float32Array(256),[2,1,128]);const sr=new TF.Tensor('int64',BigInt64Array.from([16000n]),[]);let ctx=new Float32Array(CTX);
+      for(let i=0;i<N;i++){const buf=new Float32Array(CTX+CH);buf.set(ctx,0);buf.set(a16.subarray(i*CH,(i+1)*CH),CTX);ctx=buf.slice(CH);
+        const out=await M({input:new TF.Tensor('float32',buf,[1,CTX+CH]),sr,state});let pr=null,st=null;
+        for(const k in out){const t=out[k];if(t&&t.dims&&t.dims.length===3&&t.dims[2]===128)st=t;else if(t&&t.data)pr=t}
+        if(!pr||!st)throw new Error('unexpected VAD outputs');probs[i]=pr.data[0];state=st;if(i%500===0)post({id,progress:{status:'vad',p:i/N}})}
+      return probs}};
+  self.onmessage=async e=>{const m=e.data||{};try{const r=await H[m.op](m.data||{},m.id);post({id:m.id,ok:true,result:r},r instanceof Float32Array?[r.buffer]:[])}catch(err){post({id:m.id,ok:false,error:String((err&&err.message)||err)})}};
+}
+function awKill(why){const w=AW.w;AW.w=null;AW.ready=null;AW.info=AW.info&&Object.assign({},AW.info,{gone:true});try{w&&w.terminate()}catch(e){}
+  const err=new Error(why||'speech engine stopped');AW.pend.forEach(p=>p.rej(err));AW.pend.clear();if(ASR&&ASR.w){ASR=null;ASRKEY=''}}
+/* a watchdog per job: if the engine goes quiet for far too long (killed by the system), stop waiting and step down */
+function awRaw(op,data,opt){opt=opt||{};return new Promise((res,rej)=>{if(!AW.w){rej(new Error('speech engine not running'));return}const id=++AW.seq;let tm=0;
+  const arm=()=>{if(!opt.limit)return;clearTimeout(tm);tm=setTimeout(()=>{if(AW.pend.has(id)){console.warn('speech engine stopped responding',op);AW.fails++;awKill('speech engine stopped responding');if(isMobileUA()&&op!=='vad')lsSet('wrd.asrSafe',String(Math.min(ASRSAFE_MAX,asrLevel()+1)))}},opt.limit*(AW.k||1))};
+  const done=f=>v=>{clearTimeout(tm);f(v)};AW.pend.set(id,{res:done(res),rej:done(rej),onp:d=>{arm();opt.onp&&opt.onp(d)}});arm();
+  try{AW.w.postMessage({id,op,data},opt.transfer||[])}catch(e){AW.pend.delete(id);rej(e)}})}
+/* one job at a time in the worker (loading a model while another listens would double the memory) */
+function awCall(op,data,opt){const job=AW.q.then(()=>awRaw(op,data,opt));AW.q=job.catch(()=>{});return job}
+async function awReady(){if(AW.dead)throw new Error('no speech worker');if(AW.ready)return AW.ready;
+  AW.ready=(async()=>{const src='('+asrWorkerMain.toString()+')()';const url=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));let w;
+    try{w=new Worker(url,{type:'module',name:'wrd-speech'})}finally{setTimeout(()=>URL.revokeObjectURL(url),30000)}AW.w=w;AW.q=Promise.resolve();
+    w.onmessage=e=>{const m=e.data||{};const p=AW.pend.get(m.id);if(!p)return;if(m.progress){try{p.onp&&p.onp(m.progress)}catch(x){}return}AW.pend.delete(m.id);if(m.ok)p.res(m.result);else p.rej(new Error(m.error))};
+    w.onerror=e=>{try{e.preventDefault&&e.preventDefault()}catch(x){}console.warn('speech worker error',e&&e.message);AW.fails++;awKill('speech engine stopped');if(AW.fails>=2)AW.dead=true};
+    AW.threads=asrThreads();
+    const info=await Promise.race([awRaw('init',{urls:tfURLs(),threads:AW.threads}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('speech engine timed out')),120000))]);
+    AW.info=info;if(GPUINFO&&GPUINFO.ok&&!info.gpu)GPUINFO=Object.assign({},GPUINFO,{ok:false,turbo:false});console.info('speech worker',info);return info})()
+    .catch(e=>{console.warn('speech worker failed',e);AW.dead=true;awKill('speech worker failed');throw e});
+  return AW.ready}
+async function getASRW(key,onp){await awReady();const G=await gpuInfo();const tries=asrTries(key,G);let last;
+  for(let round=0;round<2;round++){
+    for(const [dev,dt] of tries){try{asrBegin(key,dev);await awCall('load',{model:MODELS[key],dev,dtype:dt},{limit:180000,onp:d=>{if(d.status==='progress'||d.status==='ready')onp&&onp(d)}});
+        const f=(audio,opts)=>awCall('run',{audio,opts},{limit:90000+audio.length/16000*25000});f.w=true;f.dispose=()=>awCall('dispose');ASR=f;ASRKEY=key;ASRDT=dev+':'+JSON.stringify(dt)+(AW.threads>1?' ×'+AW.threads:'');return ASR}
+      catch(e){asrEnd();console.warn('ASR load (worker)',key,dev,e);last=e;if(!AW.w)break}}
+    /* multi-core start-up failed: restart the engine on one core and try once more */
+    if(round===0&&AW.threads>1&&!AW.dead){lsSet('wrd.asrThreads1','1');awKill('restart on one core');await awReady();continue}
+    break}
+  throw last||new Error('model did not load')}
+/* free all speech memory (phones): closing the worker returns every byte, a WebAssembly heap never shrinks otherwise */
+async function asrRelease(){if(ASR&&ASR.w){ASR=null;ASRKEY='';awKill('released')}else if(ASR){try{await ASR.dispose()}catch(e){}ASR=null;ASRKEY=''}}
+/* get the engine (and on computers the speech model you used last) ready while you set up, so Generate starts straight away */
+let ASRWARM='';
+function asrPrewarm(){try{if(ASRBUSY||UPG.busy||!useWorker()||!hasMedia())return;const mob=isMobileUA();const key=(asrChain()[0]);const tag=key+(mob?'m':'');if(ASRWARM===tag)return;ASRWARM=tag;
+  const idle=window.requestIdleCallback||(f=>setTimeout(f,1200));idle(async()=>{try{await awReady();if(AW.info&&AW.info.auto)awCall('vadwarm').catch(()=>{});
+    if(!mob&&asrLevel()===0&&lsGet('wrd.asrUsed','').split(',').includes(key)&&!ASRBUSY){await getASR(key,null);asrEnd()}}catch(e){console.info('prewarm skipped',e&&e.message)}})}catch(e){}}
+
 /* clean audio for the model: proper anti-aliased resample to 16 kHz, rumble filter, level normalisation */
 async function prepAudio(ab){try{const len=Math.ceil(ab.duration*16000);const oc=new OfflineAudioContext(1,len,16000);const src=oc.createBufferSource();src.buffer=ab;
     const hp=oc.createBiquadFilter();hp.type='highpass';hp.frequency.value=70;hp.Q.value=.7;src.connect(hp);hp.connect(oc.destination);src.start();const r=await oc.startRendering();const a=r.getChannelData(0).slice();
@@ -3333,7 +3445,7 @@ function vadSegs(a16){if(SILERO&&SILERO.a===a16)return SILERO.v;const hop=320,n=
   const so=Array.from(r).sort((a,b)=>a-b),floor=so[Math.floor(n*.15)]||0,p95=so[Math.floor(n*.95)]||0,thr=Math.max(floor*2.5,p95*.1,1e-4);const sp=new Uint8Array(n);for(let i=0;i<n;i++)sp[i]=r[i]>thr?1:0;
   for(let i=0;i<n;){if(!sp[i]){let j=i;while(j<n&&!sp[j])j++;if(i>0&&j<n&&j-i<9)for(let k=i;k<j;k++)sp[k]=1;i=j}else i++}
   const segs=[];for(let i=0;i<n;){if(sp[i]){let j=i;while(j<n&&sp[j])j++;if(j-i>=4)segs.push([i*.02,j*.02]);i=j}else i++}return{segs,sp,n}}
-function refineOnsets(ws,a16){const hop=160,n=Math.floor(a16.length/hop);if(n<20||!ws.length)return ws;const r=new Float32Array(n);
+function refineOnsets(ws,a16,win){const hop=160,n=Math.floor(a16.length/hop);if(n<20||!ws.length)return ws;const r=new Float32Array(n);
   for(let i=0;i<n;i++){let q=0;for(let j=0;j<hop;j+=2){const v=a16[i*hop+j];q+=v*v}r[i]=Math.sqrt(q/(hop/2))}
   const sm=new Float32Array(n);for(let i=0;i<n;i++)sm[i]=(r[Math.max(0,i-1)]+2*r[i]+r[Math.min(n-1,i+1)])/4;
   const so=Array.from(sm).sort((a,b)=>a-b),noise=so[Math.floor(n*.15)],pk=so[Math.floor(n*.97)],th=noise+(pk-noise)*.1;
@@ -3341,10 +3453,12 @@ function refineOnsets(ws,a16){const hop=160,n=Math.floor(a16.length/hop);if(n<20
   out.forEach((w,k)=>{const prev=out[k-1];const afterPause=!prev||w.s-prev.e>.07;if(!afterPause)return;
     const longGap=!prev||w.s-prev.e>.45;const i0=Math.max(1,Math.round((w.s-(longGap?.3:.18))*100)),i1=Math.min(n-1,Math.round((w.s+(longGap?.6:.14))*100));let best=-1,bd=1e9;
     for(let i=i0;i<=i1;i++){if(sm[i-1]<th&&sm[i]>=th){const d=Math.abs(i/100-w.s);if(d<bd){bd=d;best=i}}}
-    if(best<0)return;let ns=best/100-.015;if(prev)ns=Math.max(ns,prev.e+.01);const dl=ns-w.s;w.s=ns;if(w.e-w.s<.08)w.e=w.s+Math.max(.08,Math.min(.4,(w.e-w.s+Math.abs(dl))))});
+    if(best<0)return;let ns=best/100-.015;if(prev)ns=Math.max(ns,prev.e+.01);if(win&&(ns<win[0]||ns>win[1]))return;const dl=ns-w.s;w.s=ns;if(w.e-w.s<.08)w.e=w.s+Math.max(.08,Math.min(.4,(w.e-w.s+Math.abs(dl))))});
   for(let k=1;k<out.length;k++){if(out[k].s<out[k-1].s)out[k].s=out[k-1].s+.01;if(out[k].e<=out[k].s)out[k].e=out[k].s+.08}
   return out}
-function smartSync(words,a16){if(!words.length)return words;const V=vadSegs(a16),segs=V.segs;if(!segs.length)return words;const isSp=t=>{const i=Math.floor(t/.02);return i>=0&&i<V.n&&V.sp[i]===1};
+/* win = [t0,t1]: only use the speech inside this stretch (syncing part of the captions between neighbours that stay put) */
+const winSegs=(segs,win)=>win?segs.map(([a,b])=>[Math.max(a,win[0]),Math.min(b,win[1])]).filter(([a,b])=>b-a>.08):segs;
+function smartSync(words,a16,win){if(!words.length)return words;const V=vadSegs(a16),segs=winSegs(V.segs,win);if(!segs.length)return words;const isSp=t=>{if(win&&(t<win[0]||t>win[1]))return false;const i=Math.floor(t/.02);return i>=0&&i<V.n&&V.sp[i]===1};
   const asg=words.map(w=>{const m=(w.s+w.e)/2;let b=0,bd=1e9;segs.forEach((g,gi)=>{const d=m<g[0]?g[0]-m:m>g[1]?m-g[1]:0;if(d<bd){bd=d;b=gi}});return b});
   for(let i=1;i<asg.length;i++)if(asg[i]<asg[i-1])asg[i]=asg[i-1];
   const groups=new Map();asg.forEach((g,i)=>{if(!groups.has(g))groups.set(g,[]);groups.get(g).push(i)});
@@ -3384,7 +3498,11 @@ function splitTimed(text,s,e){const ws=text.trim().split(/\s+/).filter(Boolean);
    It finds exactly where people speak, so Whisper only hears speech (no made-up words in silence,
    tighter timing, less memory per pass on phones). Falls back to the built-in energy detector if it can't load. ===== */
 let VADM=null,SILERO=null;
-async function sileroVAD(a16,onStatus){const tf=await loadTF();if(!tf.AutoModel||!tf.Tensor)throw new Error('no AutoModel');
+async function sileroProbs(a16,onStatus){if(useWorker()){try{await awReady();if(AW.info&&!AW.info.auto)throw new Error('no AutoModel');onStatus&&onStatus('Finding speech…',-1);const t0=performance.now();
+      const pr=await awCall('vad',{audio:a16},{limit:120000,onp:d=>{if(d.status==='vad')onStatus&&onStatus(`Finding speech… ${Math.round(d.p*100)}%`,d.p)}});console.info('Silero VAD (worker)',pr.length,'frames in',Math.round(performance.now()-t0),'ms');return pr}
+    catch(e){if(!AW.dead)throw e}}
+  return sileroProbsMain(a16,onStatus)}
+async function sileroProbsMain(a16,onStatus){const tf=await loadTF();if(!tf.AutoModel||!tf.Tensor)throw new Error('no AutoModel');
   if(!VADM){onStatus&&onStatus('Loading voice detector…',-1);VADM=await tf.AutoModel.from_pretrained('onnx-community/silero-vad',{config:{model_type:'custom'},dtype:'fp32',device:'wasm'})}
   const CH=512,CTX=64,N=Math.floor(a16.length/CH);if(N<4)throw new Error('too short');const probs=new Float32Array(N);
   let state=new tf.Tensor('float32',new Float32Array(2*128),[2,1,128]);const sr=new tf.Tensor('int64',BigInt64Array.from([16000n]),[]);
@@ -3394,7 +3512,8 @@ async function sileroVAD(a16,onStatus){const tf=await loadTF();if(!tf.AutoModel|
     for(const k in out){const t=out[k];if(t&&t.dims&&t.dims.length===3&&t.dims[2]===128)st=t;else if(t&&t.data)pr=t}
     if(!pr||!st)throw new Error('unexpected VAD outputs');probs[i]=pr.data[0];state=st;
     if(i%400===0){onStatus&&onStatus(`Finding speech… ${Math.round(i/N*100)}%`,i/N);await new Promise(r=>setTimeout(r,0))}}
-  console.info('Silero VAD',N,'frames in',Math.round(performance.now()-t0),'ms');
+  console.info('Silero VAD',N,'frames in',Math.round(performance.now()-t0),'ms');return probs}
+async function sileroVAD(a16,onStatus){const probs=await sileroProbs(a16,onStatus);const CH=512,N=probs.length;
   /* hysteresis: start at 0.5, end after 0.3 s below 0.35; drop blips under 0.2 s; pad 0.15 s */
   const fr=CH/16000,segs=[];let on=false,st0=0,low=0;
   for(let i=0;i<N;i++){const p=probs[i];if(!on){if(p>=.5){on=true;st0=i;low=0}}else{if(p<.35){low++;if(low*fr>=.3){const e=i-low+1;if((e-st0)*fr>=.2)segs.push([st0*fr,e*fr]);on=false}}else low=0}}
@@ -3408,20 +3527,42 @@ async function sileroVAD(a16,onStatus){const tf=await loadTF();if(!tf.AutoModel|
 /* speech regions → listening windows (≤ 24 s, at least 1.5 s so Whisper has context) */
 function vadWindows(segs,dur){const W=[];for(const [a,b] of segs){const l=W[W.length-1];if(l&&a-l[1]<.6&&b-l[0]<=24)l[1]=b;else W.push([a,b])}
   const out=[];W.forEach(([a,b])=>{if(b-a>24){for(let t=a;t<b;t+=24)out.push([t,Math.min(b,t+24.5)])}else{const m=(a+b)/2,h=Math.max(.75,(b-a)/2);out.push([Math.max(0,m-h),Math.min(dur,m+h)])}});return out}
+/* Pack the detected speech into listening windows of up to ~27 s.
+   Whisper always listens to 30 s at a time, so ten 3-second windows cost ten full passes; packed together they cost one or two.
+   Silence is left out (nothing to invent words in) and each word's time is mapped back to the real video. */
+const PACK_MAX=27,PACK_GAP=.4;
+function quietAt(a16,t0,t1){const sr=16000,hop=320;let best=t1,bv=1e9;for(let t=t0;t<t1;t+=.02){const i=Math.floor(t*sr);let q=0;for(let j=0;j<hop;j+=2){const v=a16[i+j]||0;q+=v*v}if(q<bv){bv=q;best=t+.01}}return best}
+function packSpeech(segs,a16,maxL){maxL=maxL||PACK_MAX;const sr=16000,dur=a16.length/sr;const S=[];
+  segs.slice().sort((x,y)=>x[0]-y[0]).forEach(([a,b])=>{a=Math.max(0,a);b=Math.min(dur,b);if(b-a<.05)return;const l=S[S.length-1];if(l&&a<=l[1]+.05)l[1]=Math.max(l[1],b);else S.push([a,b])});
+  const pieces=[];S.forEach(([a,b])=>{while(b-a>maxL){const cut=quietAt(a16,a+maxL*.6,a+maxL-.3);pieces.push([a,cut]);a=cut}pieces.push([a,b])});
+  const bufs=[];let cur=null;pieces.forEach(([a,b])=>{const L=b-a;if(cur&&cur.len+PACK_GAP+L<=maxL){cur.map.push({s:a,e:b,d:cur.len+PACK_GAP});cur.len+=PACK_GAP+L}else{cur={len:L,map:[{s:a,e:b,d:0}]};bufs.push(cur)}});
+  const F=Math.round(.008*sr);bufs.forEach(B=>{const out=new Float32Array(Math.ceil(B.len*sr)+F);B.map.forEach(m=>{const s0=Math.floor(m.s*sr),e0=Math.min(a16.length,Math.ceil(m.e*sr)),o=Math.floor(m.d*sr),n=e0-s0;out.set(a16.subarray(s0,e0),o);
+      for(let k=0;k<F&&k<n/2;k++){const g=k/F;out[o+k]*=g;out[o+n-1-k]*=g}});B.audio=out;B.speech=B.map.reduce((t,m)=>t+m.e-m.s,0)});
+  return bufs}
+/* a time inside a packed window → the time in the video (starts snap forward out of a gap, ends snap back) */
+function unpackT(B,t,isEnd){const M=B.map;for(let i=0;i<M.length;i++){const m=M[i],L=m.e-m.s;if(t<m.d)return isEnd&&i>0?M[i-1].e:m.s;if(t<=m.d+L)return m.s+(t-m.d)}return M[M.length-1].e}
+/* repeated phrases in one window = Whisper got stuck in a loop */
+function loopScore(words){let bad=0;const lw=words.map(w=>coreOf(w.w).toLowerCase());for(let i=2;i<lw.length;i++)if(lw[i]&&lw[i]===lw[i-1]&&lw[i]===lw[i-2])bad++;
+  for(let n=2;n<=6;n++)for(let i=0;i+3*n<=lw.length;i++){const x=lw.slice(i,i+n).join(' ');if(x===lw.slice(i+n,i+2*n).join(' ')&&x===lw.slice(i+2*n,i+3*n).join(' ')){bad+=n;i+=n}}return bad}
+function chunksToWords(ch,key,B){const words=[];(ch||[]).forEach(c=>{const ts=c.timestamp||[];let s=ts[0]||0,e=ts[1];
+    if(key==='seg'){const ws=splitTimed(c.text||'',s,e??(s+2));ws.forEach(w=>{if(B){w.s=unpackT(B,w.s,false);w.e=unpackT(B,w.e,true)}words.push(w)});return}
+    const w=(c.text||'').trim();if(!w)return;if(e==null)e=s+.3;if(B){s=unpackT(B,s,false);e=unpackT(B,e,true)}if(e<s+.05)e=s+.05;words.push({w,s,e})});return words}
 /* one pass with a list of models (first that works and sounds right wins) */
 async function transcribeWith(order,onStatus,audio,wins){const lang={en:'english',es:'spanish'}[P.cap.lang];let CURK='';
   const prog=d=>{if(d&&d.status==='progress'&&d.total)onStatus(`Downloading ${MODEL_NAME[CURK]||'speech model'} · ${Math.round(d.loaded/d.total*100)}% (first time only)`,d.loaded/d.total);else if(d&&d.status==='ready')onStatus('Model ready',1)};
   let lastErr,bestRes=null;
   for(const key of order){CURK=key;try{onStatus(`Loading ${MODEL_NAME[key]}…`,0);const asr=await getASR(key,prog);onStatus(`Listening with ${MODEL_NAME[key]}… (on your device)`,-1);
-      const opts=Object.assign({return_timestamps:key==='seg'?true:'word',chunk_length_s:30,stride_length_s:5,task:'transcribe'},lang?{language:lang}:{});let out;
-      asrBegin(key,ASRDT);
-      if(wins&&wins.length&&key!=='seg'){const all=[];for(let wi=0;wi<wins.length;wi++){const [a,b]=wins[wi];onStatus(`Listening with ${MODEL_NAME[key]}… ${Math.round(wi/wins.length*100)}%`,wi/wins.length);
-          const o=await asr(audio.slice(Math.floor(a*16000),Math.ceil(b*16000)),opts);(o&&o.chunks||[]).forEach(c=>{const [s0,e0]=c.timestamp;all.push({text:c.text,timestamp:[(s0||0)+a,e0!=null?e0+a:null]})})}out={chunks:all}}
-      else out=await asr(audio,opts);
+      const opts=Object.assign({return_timestamps:key==='seg'?true:'word',chunk_length_s:30,stride_length_s:5,task:'transcribe'},lang?{language:lang}:{});
+      asrBegin(key,ASRDT);let words=[];const t0=performance.now();
+      if(wins&&wins.length&&key!=='seg'){const tot=wins.reduce((t,B)=>t+B.speech,0)||1;let done=0;
+        for(let wi=0;wi<wins.length;wi++){const B=wins[wi];onStatus(`Listening with ${MODEL_NAME[key]}… ${Math.round(done/tot*100)}%`,done/tot);if(!asr.w)await yieldUI();
+          let o=await asr(B.audio,opts);let ws=chunksToWords(o&&o.chunks,key,B);
+          /* stuck in a loop? listen to this window again, this time not allowed to repeat itself */
+          const lb=loopScore(ws);if(lb>=3){try{const o2=await asr(B.audio,Object.assign({},opts,{no_repeat_ngram_size:4}));const w2=chunksToWords(o2&&o2.chunks,key,B);if(w2.length&&loopScore(w2)<lb){ws=w2;console.info('ASR loop repaired in window',wi)}}catch(e){console.warn('loop retry',e)}}
+          words.push(...ws);done+=B.speech}
+        console.info('ASR',key,wins.length,'packed windows,',Math.round(tot),'s of speech in',Math.round(performance.now()-t0),'ms')}
+      else{if(!asr.w)await yieldUI();const out=await asr(audio,opts);words=chunksToWords(out&&out.chunks,key,null)}
       asrEnd();
-      let words=[];const ch=out&&out.chunks||[];
-      if(key==='seg')ch.forEach(c=>{const [s,e]=c.timestamp;words.push(...splitTimed(c.text,s||0,e??((s||0)+2)))});
-      else ch.forEach(c=>{const w=(c.text||'').trim();if(!w)return;const [s,e]=c.timestamp;words.push({w,s:s||0,e:e??((s||0)+.3)})});
       words=words.filter(w=>w.w&&isFinite(w.s)).sort((a,b)=>a.s-b.s);words=dropHallucinations(words,audio);
       if(!words.length){lastErr=new Error('No speech found');continue}
       const sc=asrScore(words,audio);console.info('ASR',key,ASRDT,'score',sc.toFixed(2),words.length,'words');
@@ -3429,21 +3570,37 @@ async function transcribeWith(order,onStatus,audio,wins){const lang={en:'english
       if(sc>=.8)break;onStatus('Double-checking with a stronger model…',-1)}
     catch(e){asrEnd();console.warn('ASR',key,e);lastErr=e}}
   /* phones: free the model's memory right away so editing and export stay smooth */
-  if(isMobileUA()&&ASR){try{await ASR.dispose()}catch(e){}ASR=null;ASRKEY=''}
+  if(isMobileUA())await asrRelease();
+  if(bestRes){try{const u=lsGet('wrd.asrUsed','').split(',').filter(Boolean);if(!u.includes(bestRes.key)){u.push(bestRes.key);lsSet('wrd.asrUsed',u.slice(-4).join(','))}}catch(e){}}
   if(!bestRes)throw lastErr||new Error('Transcription failed');return bestRes}
-function finishWords(words,audio,onStatus){if(P.cap.smart){onStatus&&onStatus('Syncing words to your voice…',-1);words=smartSync(words,audio);words=refineOnsets(words,audio)}
-  try{const ad=audio.length/16000,vd=P.video&&P.video.dur;if(vd&&ad>1){const k=vd/ad;if(Math.abs(k-1)>.003&&Math.abs(k-1)<.12)words.forEach(w=>{w.s*=k;w.e*=k})}}catch(e){}
+/* ===== Audio sync: lines every caption word up with the voice =====
+   1. finds the overall delay between the words and the speech (median over every phrase start, ignored unless most phrases agree)
+   2. snaps each phrase onto the stretch of audio where it's spoken (voice detection)
+   3. snaps each word's start to the exact moment the sound begins */
+function syncLag(words,a16,win){const V=vadSegs(a16),starts=winSegs(V.segs,win).map(g=>g[0]);if(!starts.length||words.length<3)return 0;const d=[];
+  words.forEach((w,i)=>{const pv=words[i-1];if(pv&&w.s-pv.e<.25)return;let bd=null;for(const t of starts){const x=t-w.s;if(Math.abs(x)<1.6&&(bd===null||Math.abs(x)<Math.abs(bd)))bd=x}if(bd!==null)d.push(bd)});
+  if(d.length<2)return 0;d.sort((a,b)=>a-b);const med=d[Math.floor(d.length/2)];const agree=d.filter(x=>Math.abs(x-med)<.15).length/d.length;
+  return agree>=.5&&Math.abs(med)>=.03?Math.round(med*1000)/1000:0}
+function audioSync(words,a16,win){if(!words||!words.length)return{words:words||[],lag:0};let ws=words.map(w=>({w:w.w,s:w.s,e:w.e}));const lag=syncLag(ws,a16,win);
+  if(lag)ws.forEach(w=>{w.s=Math.max(0,w.s+lag);w.e=Math.max(w.s+.05,w.e+lag)});ws=smartSync(ws,a16,win);ws=refineOnsets(ws,a16,win);
+  ws.forEach(w=>{if(win){w.s=clamp(w.s,win[0],win[1]-.05);w.e=clamp(w.e,w.s+.05,win[1])}if(w.s<0)w.s=0;if(w.e<w.s+.05)w.e=w.s+.05});
+  for(let i=1;i<ws.length;i++){if(ws[i].s<ws[i-1].s+.03)ws[i].s=ws[i-1].s+.03;if(ws[i].e<ws[i].s+.05)ws[i].e=ws[i].s+.05}return{words:ws,lag}}
+/* video length ÷ audio length (some files report slightly different lengths) */
+function vidK(a16){try{const ad=a16.length/16000,vd=P.video&&P.video.dur;if(vd&&ad>1){const k=vd/ad;if(Math.abs(k-1)>.003&&Math.abs(k-1)<.12)return k}}catch(e){}return 1}
+function finishWords(words,audio,onStatus){if(P.cap.smart){onStatus&&onStatus('Audio sync · matching words to the voice…',-1);const r=audioSync(words,audio);words=r.words;CAPINFO.lag=r.lag}
+  const k=vidK(audio);if(k!==1)words.forEach(w=>{w.s*=k;w.e*=k});
   return fixVocab(words)}
 async function strongKey(){const G=await gpuInfo();return G.ok&&G.turbo?'turbo':(isMobileUA()&&asrLevel()>0?'fast':'best')}
 let AUDIO16=null;
+/* models to try in order for the chosen mode */
+function asrChain(strong){const pick=P.cap.model||'base',lv=asrLevel(),mob=isMobileUA();if(!strong)strong=GPUINFO&&GPUINFO.ok&&GPUINFO.turbo?'turbo':(mob&&lv>0?'fast':'best');
+  return lv>=2||(mob&&lv>=1)?['fast','tiny']:({fast:['fast','tiny'],base:['base',strong,'fast'],best:[strong,'base','fast']}[pick]||['base','fast'])}
 async function transcribe(onStatus){
   if(!AUDIO)throw new Error('The audio isn’t ready yet. Give it a second after adding the video.');
-  onStatus('Preparing audio…',-1);const audio=await prepAudio(AUDIO);AUDIO16={src:AUDIO,a:audio,w:null};SILERO=null;
-  try{if(audio.length/16000<=1500){SILERO=await sileroVAD(audio,onStatus);AUDIO16.w=vadWindows(SILERO.segs,audio.length/16000);console.info('speech windows',AUDIO16.w.length,'speech',Math.round(SILERO.speech*100)+'%')}}catch(e){console.warn('Silero VAD unavailable, using energy detector',e);SILERO=null}
+  onStatus('Preparing audio…',-1);if(useWorker()){try{await awReady()}catch(e){}}const audio=await prepAudio(AUDIO);AUDIO16={src:AUDIO,a:audio,w:null};SILERO=null;
+  try{if(audio.length/16000<=1500){SILERO=await sileroVAD(audio,onStatus);AUDIO16.w=packSpeech(SILERO.segs,audio);console.info('speech windows',AUDIO16.w.length,'speech',Math.round(SILERO.speech*100)+'%')}}catch(e){console.warn('Silero VAD unavailable, using energy detector',e);SILERO=null}
   /* Best = Turbo wherever it can run · Accurate = Small, checked by Turbo if the result looks off · Fast = Base now, upgraded in the background */
-  const pick=P.cap.model||'base';const strong=await strongKey();
-  const lv=asrLevel(),mob=isMobileUA();
-  const chain=lv>=2||(mob&&lv>=1)?['fast','tiny']:{fast:['fast','tiny'],base:['base',strong,'fast'],best:[strong,'base','fast']}[pick]||['base','fast'];
+  const chain=asrChain(await strongKey());
   const r=await transcribeWith([...new Map(chain.map(k=>[MODELS[k],k])).values()],onStatus,audio,AUDIO16.w);CAPINFO.model=MODEL_NAME[r.key];CAPINFO.key=r.key;
   return finishWords(r.words,audio,onStatus)}
 /* Fast mode: show captions right away, then re-listen with the strongest model the device can run and swap in the better words */
@@ -3455,7 +3612,7 @@ async function upgradeCaptions(){if(UPG.busy||!AUDIO16||P.cap.upgrade===false||a
   try{const r=await transcribeWith([target],st,AUDIO16.a,AUDIO16.w);const words=finishWords(r.words,AUDIO16.a);
     if(capSig()===UPG.sig){commit();buildCaptions(words);refreshAll();changed();CAPINFO.model=MODEL_NAME[r.key];CAPINFO.key=r.key;toast('Captions upgraded to '+MODEL_NAME[r.key]+' accuracy · Undo to go back')}
     else{UPG.result={words,model:MODEL_NAME[r.key],key:r.key};toast(MODEL_NAME[r.key]+' captions are ready: apply them in the Video tab')}}
-  catch(e){console.warn('upgrade',e)}finally{UPG.busy=false;rebuild('video',true)}}
+  catch(e){console.warn('upgrade',e)}finally{UPG.busy=false;if(isMobileUA())asrRelease();rebuild('video',true)}}
 const CAPINFO={model:'',key:''};
 
 /* ---------- caption styles (from your reference videos + CapCut classics) ---------- */
@@ -3591,11 +3748,119 @@ function parseSRT(txt){const cues=[];txt.replace(/\r/g,'').split(/\n\s*\n/).forE
   const ts=(h_,mm,ss,ms)=>(parseInt(h_||'0')*3600)+parseInt(mm)*60+parseInt(ss)+parseInt(ms.padEnd(3,'0'))/1000;const s=ts(m[1]&&m[1].slice(0,-1),m[2],m[3],m[4]),e=ts(m[5]&&m[5].slice(0,-1),m[6],m[7],m[8]);
   const text=b.split('\n').slice(b.split('\n').findIndex(l=>l.includes('-->'))+1).join(' ').replace(/<[^>]+>/g,'').trim();if(text&&e>s)cues.push({s,e,text})});return cues}
 let capAC=null;
-async function runCaptions(){if(ASRBUSY)return;if(UPG.busy){toast('Still improving your captions in the background · one moment');return}UPG.result=null;if(!hasMedia()){toast('Add your video first');return}ASRBUSY=true;try{if(!AUDIO){const AC=window.AudioContext||window.webkitAudioContext;if(!capAC)capAC=new AC();capAC.resume&&capAC.resume()}}catch(e){}rebuild('video',true);
+/* read the video's sound once (shared by captions and audio sync) */
+function audioGesture(){try{if(!AUDIO){const AC=window.AudioContext||window.webkitAudioContext;if(!capAC)capAC=new AC();capAC.resume&&capAC.resume()}}catch(e){}}
+async function ensureAudio(st){if(AUDIO)return AUDIO;if(AUDIO_P){st('Reading the audio track…',-1);await AUDIO_P.catch(()=>{})}
+  if(!AUDIO){st('Reading audio by playing the video silently…',0);AUDIO=await captureAudioByPlaying(q=>st(`Reading audio by playing the video… ${Math.round(q*100)}%`,q),capAC);WAVE=peaks(AUDIO,4000);waveW=0;updTimeline()}return AUDIO}
+/* place each caption around its (new) word times, keeping its text, style and own edits */
+function applyCapTimes(caps,groups){const D=P.video?P.video.dur:1e9,all=capClips();
+  caps.forEach((c,i)=>{const g=groups[i];if(!g||!g.length)return;const nc=all[all.indexOf(c)+1];let n0=null;if(nc){const j=caps.indexOf(nc);const ng=j>=0?groups[j]:nc.words;n0=ng&&ng.length?ng[0].s:nc.start}
+    let st=Math.max(0,g[0].s-.05),en=g[g.length-1].e+.5;if(n0!=null)en=Math.min(en,Math.max(n0-.1,st+.2));en=Math.max(en,st+.55);if(n0!=null)en=Math.min(en,Math.max(st+.2,n0-.1));en=Math.min(en,D);
+    c.words=g;c.start=Math.round(st*1000)/1000;capRebuild(c,Math.max(.2,Math.round((en-c.start)*1000)/1000))});
+  linkProject();S=selClip().s}
+var SYNCBUSY=false;
+async function syncCaptions(only){if(SYNCBUSY||ASRBUSY)return;const allCaps=capClips();const caps=only&&only.length?allCaps.filter(c=>only.includes(c)):allCaps;if(!caps.length){toast('Generate or import captions first');return}if(!hasMedia()){toast('Add your video first');return}
+  audioGesture();SYNCBUSY=true;updSyncUI();const st=m=>{const b=$('#syncStatus');if(b)b.textContent=m};
+  try{await ensureAudio(st);st('Listening for the voice…');
+    let a16=AUDIO16&&AUDIO16.src===AUDIO?AUDIO16.a:null;if(!a16){a16=await prepAudio(AUDIO);AUDIO16={src:AUDIO,a:a16,w:null};SILERO=null}
+    if(!SILERO||SILERO.a!==a16){try{if(a16.length/16000<=1500)SILERO=await sileroVAD(a16,m=>st(m))}catch(e){console.warn('audio sync: neural voice detection unavailable, using the built-in detector',e);SILERO=null}}
+    st('Matching every word to the voice…');await new Promise(r=>setTimeout(r,0));
+    const k=vidK(a16),part=caps.length<allCaps.length,groups=caps.map(()=>[]);let mv=0,nw=0,lags=[];
+    /* part of the captions: sync each run of neighbouring selected captions inside the gap left by the ones that stay put */
+    const runs=[];caps.forEach((c,ci)=>{const ai=allCaps.indexOf(c),l=runs[runs.length-1];if(l&&l.last===ai-1){l.ci.push(ci);l.last=ai}else runs.push({ci:[ci],first:ai,last:ai})});
+    for(const R of runs){const flat=[],idx=[];R.ci.forEach(ci=>(caps[ci].words||[]).forEach(w=>{flat.push({w:w.w,s:w.s/k,e:w.e/k});idx.push(ci)}));if(!flat.length)continue;
+      let win=null;if(part){const pv=allCaps[R.first-1],nx=allCaps[R.last+1];win=[pv?capLastE(pv)/k+.02:0,nx?(nx.words&&nx.words[0]?nx.words[0].s:nx.start)/k-.02:a16.length/16000]}
+      const r=audioSync(flat,a16,win);r.words.forEach((w,i)=>{groups[idx[i]].push({w:w.w,s:Math.round(w.s*k*1000)/1000,e:Math.round(w.e*k*1000)/1000});mv+=Math.abs(w.s-flat[i].s);nw++});lags.push(r.lag)}
+    commit();mv=mv/Math.max(1,nw);const r={words:{length:nw},lag:lags.length===1?lags[0]:0};
+    applyCapTimes(caps,groups);if(caps.length<allCaps.length)capFixLayout(caps);refreshAll();changed();if(CAPALL.on)CAPALL.snap=CAPALL.snap||capSnap();
+    const lagTxt=Math.abs(r.lag)>=.03?` · overall ${Math.abs(r.lag).toFixed(2)} s ${r.lag<0?'earlier':'later'}`:'';
+    toast(mv<.02?(caps.length<allCaps.length?'These captions already match the voice':'Captions already match the voice'):`Audio synced ${r.words.length} words${caps.length<allCaps.length?' in '+caps.length+' caption'+(caps.length>1?'s':''):''} to the voice${lagTxt} · Undo to go back`)}
+  catch(e){console.error(e);toast('Audio sync couldn’t read this video’s sound: '+(e.message||e))}
+  finally{SYNCBUSY=false;updSyncUI()}}
+/* ===== Caption selection =====
+   Select all: every caption moves together.  Drag select: drag across the captions track to pick only the part that's off
+   (tap a caption to add or remove it). Move the selection with the nudge buttons, the arrow keys or by dragging a selected caption.
+   Captions you didn't pick stay put: the selection stops at a neighbour instead of covering it. */
+var CAPALL={on:false,mode:'all',ids:new Set(),off:0,snap:null,moved:false};
+var FRAME=1/30;
+function capIsSel(c){return CAPALL.on&&(CAPALL.mode==='all'||CAPALL.ids.has(c.id))}
+function capSelList(){return CAPALL.on?capClips().filter(capIsSel):[]}
+const capLastE=c=>c.words&&c.words.length?c.words[c.words.length-1].e:c.start+c.s.dur;
+/* how far a selection may move: not before 0:00, not into a caption you didn't select, not past the video */
+function capLimits(sel){const all=capClips(),ids=new Set(sel.map(c=>c.id)),D=P.video?P.video.dur:1e9;let lo=-Infinity,hi=Infinity;
+  all.forEach((c,i)=>{if(!ids.has(c.id))return;const fw=c.words&&c.words[0]?c.words[0].s:c.start;lo=Math.max(lo,-Math.min(c.start,fw));hi=Math.min(hi,D-.2-c.start);
+    const pv=all[i-1],nx=all[i+1];if(pv&&!ids.has(pv.id))lo=Math.max(lo,capLastE(pv)+.02-c.start);if(nx&&!ids.has(nx.id))hi=Math.min(hi,nx.start-.02-capLastE(c))});
+  return{lo:Math.min(lo,0),hi:Math.max(hi,0)}}
+/* after a move: trim any caption that would now run into the next one, keep everything inside the video */
+function capFixLayout(moved){const all=capClips(),D=P.video?P.video.dur:1e9,touched=new Set(moved.map(c=>c.id));
+  all.forEach((a,i)=>{const b=all[i+1];let dur=a.s.dur;if(b&&a.start+dur>b.start-.02)dur=Math.max(.2,b.start-.02-a.start);if(a.start+dur>D)dur=Math.max(.2,D-a.start);dur=Math.round(dur*1000)/1000;const end=a.start+dur;(a.words||[]).forEach(w=>{if(w.e>end&&w.s<end-.05)w.e=Math.round(end*1000)/1000});
+    if(dur!==a.s.dur||touched.has(a.id))capRebuild(a,dur)});linkProject();S=selClip().s}
+function capMove(sel,d){sel.forEach(c=>{c.start=Math.max(0,Math.round((c.start+d)*1000)/1000);(c.words||[]).forEach(w=>{w.s=Math.round((w.s+d)*1000)/1000;w.e=Math.round((w.e+d)*1000)/1000})})}
+function capShift(d,quiet){const sel=capSelList();if(!sel.length){if(!quiet)toast('Drag across the captions track to select some first');return 0}const L=capLimits(sel),want=d;d=clamp(d,L.lo,L.hi);
+  if(Math.abs(d)<1e-4){if(!quiet)toast(want<0?(CAPALL.mode==='all'?'Captions already start at the beginning':'Can’t go earlier: it would run into the caption before'):(CAPALL.mode==='all'?'Captions already reach the end of the video':'Can’t go later: it would run into the next caption'));return 0}
+  capMove(sel,d);capFixLayout(sel);CAPALL.off=Math.round((CAPALL.off+d)*1000)/1000;CAPALL.moved=true;if(!quiet&&Math.abs(d-want)>.004)toast('Stopped at the neighbouring caption');return d}
+function capNudge(d){const r=capShift(d);if(!r)return;refreshAll();changed();updCapAll();if(!playing){const f=capSelList()[0];if(f&&(T<f.start-.6||T>f.start+f.s.dur+.6))seek(f.start+.05)}}
+function capSnap(){const m={};capClips().forEach(c=>{m[c.id]={start:c.start,dur:c.s.dur,words:(c.words||[]).map(w=>({s:w.s,e:w.e}))}});return m}
+function capReset(){const m=CAPALL.snap;if(!m)return;const back=[];capClips().forEach(c=>{const o=m[c.id];if(!o)return;c.start=o.start;(c.words||[]).forEach((w,i)=>{if(o.words[i]){w.s=o.words[i].s;w.e=o.words[i].e}});capRebuild(c,o.dur);back.push(c)});
+  linkProject();S=selClip().s;CAPALL.off=0;CAPALL.moved=false;refreshAll();changed();updCapAll();toast('Captions are back where they were')}
+/* mode: 'all' | 'pick' | false */
+function setCapSel(mode){const n=capClips().length;if(mode&&!n){toast('Generate or import captions first');mode=false}
+  if(!mode){if(!CAPALL.on){updCapAll();return}CAPALL.on=false;CAPALL.ids=new Set();CAPALL.snap=null}
+  else{const was=CAPALL.on;if(!was){CAPALL.snap=capSnap();CAPALL.moved=false}CAPALL.on=true;if(CAPALL.mode!==mode){CAPALL.mode=mode;CAPALL.off=0}else if(!was)CAPALL.off=0;
+    if(mode==='pick'&&!was)CAPALL.ids=new Set();const c=selClip();if(!c||c.kind!=='caption')selectClip(capClips()[0].id,{noPanels:true});
+  }
+  updTimeline();updCapAll();updSyncUI()}
+function setCapAll(on){setCapSel(on?'all':false)}
+function capSelectIds(ids){CAPALL.ids=new Set(ids);CAPALL.off=0;updTimeline();updCapAll()}
+function updCapAll(){const bar=$('#capAllBar'),n=capClips().length;if(!n&&CAPALL.on){CAPALL.on=false;CAPALL.ids=new Set()}
+  [['#tlCapAll','capall','all'],['#tlCapPick','dsel','pick']].forEach(([id,ic,m])=>{const b=$(id);if(!b)return;b.hidden=!n;b.setAttribute('aria-pressed',String(CAPALL.on&&CAPALL.mode===m));const i=b.querySelector('.ico');if(i&&!i.firstChild)i.innerHTML=svg(ic,2)});
+  try{tlC.classList.toggle('capick',CAPALL.on&&CAPALL.mode==='pick')}catch(e){}
+  if(!bar)return;bar.hidden=!CAPALL.on;if(!CAPALL.on){bar.replaceChildren();return}
+  const pick=CAPALL.mode==='pick',k=capSelList().length,none=!k,o=CAPALL.off,offTxt=(o>=0?'+':'−')+Math.abs(o).toFixed(2)+' s',who=pick?'selected captions':'all captions';
+  const B=(label,d,aria)=>h('button',{type:'button','aria-label':aria,disabled:none?true:null,onclick:()=>capNudge(d)},label);
+  const M=(m,ic,label)=>h('button',{type:'button','aria-pressed':String(CAPALL.mode===m),onclick:()=>{if(CAPALL.mode!==m)setCapSel(m)}},h('span',{html:svg(ic,2)}),label);
+  bar.replaceChildren(
+    h('div',{class:'cab-t'},h('span',{html:svg(pick?'dsel':'capall',2)}),h('span',{'aria-live':'polite'},pick?(k?k+' of '+n+' selected':'Drag across captions'):'All '+n+' captions'),h('small',null,pick?(k?'drag a selected one to move them':'tap to add or remove'):'drag one to move all')),
+    h('div',{class:'cab-mode',role:'group','aria-label':'Selection mode'},M('all','capall','All'),M('pick','dsel','Drag select')),
+    h('div',{class:'nud'},B('−0.1s',-.1,'Move '+who+' 0.1 seconds earlier'),B('−1f',-FRAME,'Move '+who+' one frame earlier'),h('span',{class:'off',title:'How far you moved them'},offTxt),B('+1f',FRAME,'Move '+who+' one frame later'),B('+0.1s',.1,'Move '+who+' 0.1 seconds later')),
+    h('div',{class:'acts'},
+      h('button',{type:'button',class:'ic',disabled:none?true:null,onclick:()=>{const f=capSelList()[0];if(f){seek(Math.max(0,f.start-.4));setPlaying(true)}}},h('span',{html:svg('video',2)}),'Play'),
+      CAPALL.moved?h('button',{type:'button',onclick:capReset},'Reset'):null,
+      pick&&k?h('button',{type:'button',onclick:()=>capSelectIds([])},'Clear'):null,
+      pick&&k<n?h('button',{type:'button',onclick:()=>capSelectIds(capClips().map(c=>c.id))},'Pick all'):null,
+      h('button',{type:'button',class:'ic',disabled:SYNCBUSY||none?true:null,onclick:()=>syncCaptions(pick?capSelList():null)},h('span',{html:svg('async',2)}),SYNCBUSY?'Syncing…':(pick?'Sync these':'Audio sync')),
+      h('button',{type:'button',class:'pri',onclick:()=>setCapSel(false)},'Done')))}
+function updSyncUI(){try{if(panelEls.video)rebuild('video',true)}catch(e){}updCapAll()}
+$('#tlCapAll').addEventListener('click',()=>setCapSel(CAPALL.on&&CAPALL.mode==='all'?false:'all'));
+$('#tlCapPick').addEventListener('click',()=>setCapSel(CAPALL.on&&CAPALL.mode==='pick'?false:'pick'));
+/* drag select: a box across the captions track picks every caption it touches (Shift / Ctrl / ⌘ adds to the selection);
+   near the edges the timeline scrolls along with you */
+function capMarquee(e,startCid){const trk=$('#trk1');const R=()=>trk.getBoundingClientRect();const x0=e.clientX-R().left;let lastX=e.clientX,moved=false,raf=0;
+  const add=e.shiftKey||e.metaKey||e.ctrlKey,base=add?new Set(CAPALL.ids):new Set();const box=h('div',{class:'marq',style:`left:${x0}px;width:0px`});trk.append(box);tlDragging=true;
+  try{trk.setPointerCapture(e.pointerId)}catch(_){}
+  const range=()=>{const x1=lastX-R().left,a=Math.min(x0,x1),b=Math.max(x0,x1);return{a,b,t0:txInv(a),t1:txInv(b)}};
+  const hits=g=>capClips().filter(c=>c.start<g.t1&&c.start+c.s.dur>g.t0).map(c=>c.id);
+  const paint=()=>{const g=range();box.style.left=g.a+'px';box.style.width=(g.b-g.a)+'px';const H=new Set(hits(g));
+    trk.querySelectorAll('.clip[data-cid]').forEach(el=>{const id=el.dataset.cid,on=H.has(id)||base.has(id);el.classList.toggle('picking',H.has(id)&&!base.has(id));el.classList.toggle('allsel',base.has(id));el.classList.toggle('pickable',!on)});
+    const t=$('#capAllBar .cab-t span[aria-live]');if(t)t.textContent=new Set([...base,...H]).size+' of '+capClips().length+' selected'};
+  const auto=()=>{raf=0;if(!moved)return;const sr=tlS.getBoundingClientRect(),edge=44;let v=0;if(lastX<sr.left+edge)v=-(sr.left+edge-lastX);else if(lastX>sr.right-edge)v=lastX-(sr.right-edge);
+    if(v){const b0=tlS.scrollLeft;tlS.scrollLeft+=Math.max(-24,Math.min(24,v*.45));if(tlS.scrollLeft!==b0)paint();raf=requestAnimationFrame(auto)}};
+  const mv=ev=>{lastX=ev.clientX;if(!moved&&Math.abs(ev.clientX-e.clientX)>5)moved=true;if(moved){paint();if(!raf)raf=requestAnimationFrame(auto)}};
+  const up=()=>{trk.removeEventListener('pointermove',mv);trk.removeEventListener('pointerup',up);trk.removeEventListener('pointercancel',up);cancelAnimationFrame(raf);box.remove();tlDragging=false;
+    if(!moved){if(startCid){const s_=new Set(CAPALL.ids);s_.has(startCid)?s_.delete(startCid):s_.add(startCid);CAPALL.ids=s_;const c=P.clips.find(x=>x.id===startCid);if(c&&s_.has(startCid)&&(T<c.start||T>=c.start+c.s.dur))seek(c.start+Math.min(c.s.dur*.5,.3))}else if(!add)seek(txInv(x0))}
+    else CAPALL.ids=new Set([...base,...hits(range())]);
+    CAPALL.off=0;updTimeline();updCapAll()};
+  trk.addEventListener('pointermove',mv);trk.addEventListener('pointerup',up);trk.addEventListener('pointercancel',up)}
+$('#trk1').addEventListener('pointerdown',e=>{if(!CAPALL.on||CAPALL.mode!=='pick'||e.button>0)return;const el=e.target.closest&&e.target.closest('.clip[data-cid]');const cid=el?el.dataset.cid:null;
+  if(cid&&CAPALL.ids.has(cid))return;/* a selected caption: its own handler moves the selection */e.stopPropagation();e.preventDefault();capMarquee(e,cid)},true);
+document.addEventListener('keydown',e=>{if(!CAPALL.on)return;const tag=(e.target.tagName||'').toLowerCase();if(tag==='input'&&!['range','checkbox','color'].includes(e.target.type)||tag==='textarea'||e.target.isContentEditable)return;
+  if(e.key==='Escape'){setCapSel(false);e.preventDefault();return}
+  if((e.key==='a'||e.key==='A')&&(e.metaKey||e.ctrlKey)&&CAPALL.mode==='pick'){e.preventDefault();e.stopImmediatePropagation();capSelectIds(capClips().map(c=>c.id));return}
+  if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();e.stopImmediatePropagation();capNudge((e.key==='ArrowLeft'?-1:1)*(e.shiftKey?.1:FRAME))}},true);
+async function runCaptions(){if(ASRBUSY)return;if(UPG.busy){toast('Still improving your captions in the background · one moment');return}UPG.result=null;if(!hasMedia()){toast('Add your video first');return}ASRBUSY=true;audioGesture();if(CAPALL.on)setCapAll(false);rebuild('video',true);
   const st=(msg,p)=>{const box=$('#asrStatus');if(!box)return;box.querySelector('span').textContent=msg;const bar=box.querySelector('i');bar.style.width=p<0?'100%':Math.round(clamp(p)*100)+'%';box.classList.toggle('busy',p<0)};
   const t0=performance.now();
-  try{if(!AUDIO&&AUDIO_P){st('Reading the audio track…',-1);await AUDIO_P.catch(()=>{})}
-    if(!AUDIO){st('Reading audio by playing the video silently…',0);AUDIO=await captureAudioByPlaying(q=>st(`Reading audio by playing the video… ${Math.round(q*100)}%`,q),capAC);WAVE=peaks(AUDIO,4000);waveW=0;updTimeline()}
+  try{await ensureAudio(st);
     const words=await transcribe(st);commit();buildCaptions(words);refreshAll();changed();seek(capClips()[0]?capClips()[0].start:0);
     toast(`${words.length} words captioned in ${Math.round((performance.now()-t0)/1000)}s${CAPINFO.model?" · "+CAPINFO.model:""}`);if((P.cap.model||'base')==='fast'&&P.cap.upgrade!==false)setTimeout(()=>{upgradeCaptions()},600)}
   catch(e){console.error(e);const blocked=/fetch|network|Failed|CSP|load/i.test(String(e&&e.message||e));
@@ -3737,10 +4002,10 @@ function buildVideo(){const p=h('div',{class:'panel'});const C=P.cap;
       PROXY.fail?h('p',{class:'hint',style:'color:#ffb4c2'},PROXY.fail):null),
     AUDIO?toggle('Play sound in preview',()=>soundOn,x=>{soundOn=x;if(x&&playing)startAudio();else stopAudio();updSound()}):null))}
   // captions
-  const nCap=capClips().length;
+  const nCap=capClips().length;if(hasMedia())setTimeout(asrPrewarm,0);
   const gen=h('button',{type:'button',class:'bigbtn',disabled:ASRBUSY||!hasMedia()?true:null,onclick:runCaptions},ASRBUSY?'Generating captions…':nCap?'Regenerate captions':'Generate captions');
   const srtIn=h('input',{type:'file',accept:'.srt,.vtt,text/plain',id:'srtFile',class:'vh'});srtIn.addEventListener('change',async()=>{const f=srtIn.files[0];srtIn.value='';if(!f)return;const cues=parseSRT(await f.text());if(!cues.length){toast('No captions found in that file');return}
-    commit();buildCaptions(null,cues.map(q=>splitTimed(q.text,q.s,q.e)));refreshAll();changed();toast(cues.length+' captions imported')});
+    commit();buildCaptions(null,cues.map(q=>splitTimed(q.text,q.s,q.e)));refreshAll();changed();toast(cues.length+' captions imported · tap Audio sync to match them to the voice')});
   p.append(sec('Auto captions',
     h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Language')),seg([{v:'en',label:'English'},{v:'es',label:'Español'},{v:'auto',label:'Auto'}],()=>C.lang,v=>C.lang=v,{label:'Language'})),
     h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Speech model')),seg([{v:'fast',label:'Fast'},{v:'base',label:'Accurate'},{v:'best',label:'Best'}],()=>C.model,v=>{C.model=v;setTimeout(()=>rebuild('video',true),0)},{label:'Speech model'}),h('p',{class:'hint'},{fast:'Whisper Base · captions in seconds, then WRD quietly re-listens with a stronger model (Turbo on computers with a graphics card, Small on phones) and swaps in the better words, keeping your style.',base:'Whisper Small · accurate on phones and computers (~250 MB once; ~120 MB on phones).',best:'Whisper Large-v3 Turbo on computers with a graphics card (~1.3 GB once), the most accurate. On phones Best uses Whisper Small: phone browsers don’t have the memory for Turbo and would close the page.'}[C.model])),
@@ -3750,13 +4015,17 @@ function buildVideo(){const p=h('div',{class:'panel'});const C=P.cap;
     UPG.result?h('div',{class:'upgbox'},h('span',null,UPG.result.model+' captions are ready. You edited captions since, so they weren’t swapped in automatically.'),h('button',{type:'button',class:'pillbtn',onclick:()=>{const r=UPG.result;UPG.result=null;commit();buildCaptions(r.words);CAPINFO.model=r.model;CAPINFO.key=r.key;refreshAll();changed();toast('Applied '+r.model+' captions · Undo to go back')}},'Use them')):null,
     (()=>{const ta=h('textarea',{class:'txtin',id:'vocabIn',rows:2,placeholder:'Names & words to get right, comma separated',style:'font-size:14px;font-weight:500;resize:vertical;min-height:58px'});ta.value=C.vocab||'';ta.addEventListener('change',()=>{C.vocab=ta.value;try{localStorage.setItem('wrd.vocab',ta.value)}catch(e){}changed({tl:false})});
       return h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',{for:'vocabIn'},'Names & words to get right')),ta,capClips().length?h('button',{type:'button',class:'pillbtn',onclick:()=>{C.vocab=ta.value;commit();capClips().forEach(c=>{fixVocab(c.words);capRebuild(c)});linkProject();rebuild('video',true);changed();toast('Fixed spelling in your captions')}},'Apply to my captions'):null)})(),
-    toggle('Smart sync to my voice',()=>C.smart,v=>C.smart=v),
-    gen,h('div',{class:'asr',id:'asrStatus',hidden:!ASRBUSY},h('span',null,'Starting…'),h('div',{class:'pbar'},h('i'))),
+    toggle('Audio sync to video',()=>C.smart,v=>C.smart=v),
+    gen,
+    nCap?h('div',{class:'syncrow'},
+      h('button',{type:'button',class:'syncbtn wide'+(SYNCBUSY?' busy':''),disabled:SYNCBUSY||ASRBUSY?true:null,onclick:()=>syncCaptions(),'aria-label':'Audio sync all captions to the voice'},h('span',{html:svg('async',2)}),h('span',{id:'syncStatus'},SYNCBUSY?'Syncing…':'Audio sync to voice')),
+      h('button',{type:'button',class:'syncbtn'+(CAPALL.on&&CAPALL.mode==='all'?' on':''),'aria-pressed':String(CAPALL.on&&CAPALL.mode==='all'),onclick:()=>setCapSel(CAPALL.on&&CAPALL.mode==='all'?false:'all')},h('span',{html:svg('capall',2)}),h('span',null,'Select all')),
+      h('button',{type:'button',class:'syncbtn'+(CAPALL.on&&CAPALL.mode==='pick'?' on':''),'aria-pressed':String(CAPALL.on&&CAPALL.mode==='pick'),onclick:()=>setCapSel(CAPALL.on&&CAPALL.mode==='pick'?false:'pick')},h('span',{html:svg('dsel',2)}),h('span',null,'Drag select'))):null,h('div',{class:'asr',id:'asrStatus',hidden:!ASRBUSY},h('span',null,'Starting…'),h('div',{class:'pbar'},h('i'))),
     h('div',{class:'pillrow'},h('label',{class:'pillbtn',for:'srtFile'},'Import SRT'),srtIn,nCap?h('button',{type:'button',class:'pillbtn',onclick:()=>saveBlob(new Blob([makeSRT()],{type:'text/plain'}),slug()+'.srt')},'Export SRT'):null,
       nCap?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();P.clips=P.clips.filter(c=>c.kind!=='caption');linkProject();if(P.clips.length)selectClip(P.clips[0].id);else{P.sel='draft';S=P.draft;refreshAll()}changed()}},'Clear captions'):null),
     nCap?(()=>{const fi_=h('input',{class:'hex',id:'findIn',placeholder:'Find (e.g. riffing)',style:'text-transform:none;font-family:var(--f-ui)'}),ri=h('input',{class:'hex',id:'repIn',placeholder:'Replace with (e.g. roofing)',style:'text-transform:none;font-family:var(--f-ui)'});
       return h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',{for:'findIn'},'Find & replace in captions')),h('div',{class:'two'},fi_,ri),h('button',{type:'button',class:'pillbtn',onclick:()=>{if(!fi_.value.trim())return;commit();const n=replaceAllWords(fi_.value,ri.value);if(selClip().draft||!P.clips.includes(selClip()))P.sel=(capClips()[0]||P.clips[0]||DRAFT).id;S=selClip().s;refreshAll();changed();toast(n?`Replaced ${n} time${n>1?'s':''}`:'No matches')}},'Replace all'))})():null,
-    h('p',{class:'hint'},'Speech recognition runs privately on your device. Smart sync lines every word up with the moment you start saying it. Add brand names and unusual words above so they come out right.')));
+    h('p',{class:'hint'},'Speech recognition runs privately on your device. Audio sync lines every word up with the moment it’s spoken, while generating or any time after with the Audio sync button (also for imported SRT files). Captions a touch early or late? Select all and nudge or drag them together, or use Drag select to fix just the part that’s off. Add brand names and unusual words above so they come out right.')));
   // analysis
   const ana=h('div',{id:'anaOut',class:'panel',style:'gap:10px'});
   if(ANA){const r=ANA,V=r.vis||{};const pace=r.pace[0].toUpperCase()+r.pace.slice(1);const wpm=r.wpm||r.wpmEst;
@@ -4457,7 +4726,10 @@ const G=[
   steps:[['Pick a speech model','Best runs Whisper Large-v3 Turbo, the most accurate open-source model, on computers with a graphics card. Phones use Whisper Small (a phone-sized 8-bit version), because phone browsers close the page when a model is too big for their memory. Accurate runs Whisper Small. Fast shows Whisper Base captions in seconds, then re-listens with a stronger model in the background and swaps in the better words, keeping your style. Models download once, then work offline. If a device ever runs out of memory, WRD switches to a lighter setup automatically.'],
    ['Names & words to get right','Type brand names, places and slang, comma separated. WRD corrects close misses to your spelling, and it learns from words you fix.'],
    ['Voice detection','Before listening, WRD runs Silero VAD, an open-source neural voice detector, to find exactly where people speak. Whisper then only hears speech: no made-up words in silent parts and tighter timing.'],
-   ['Smart sync','Snaps each word to the exact moment it’s spoken, so captions hit on the beat of your voice.'],
+   ['Fast engine','The speech is packed into full 30-second listening windows (silence left out), so Whisper does a fraction of the work. It runs on its own background thread, so the editor stays smooth while it listens, and it uses all your processor cores on Chrome, Edge and Android. On phones the engine closes after each run and gives its memory back. Tip: open the Video tab before you generate, WRD gets the engine ready while you set up.'],
+   ['Audio sync to video','Keep it on while generating: WRD measures any overall delay, places every phrase where it’s spoken and snaps each word to the moment the sound starts. Already have captions (or an imported SRT)? Tap Audio sync to re-time them all, keeping your text and styles.'],
+   ['Select all captions','Tap Select all (or All captions on the timeline) to move every caption together: −0.1s / −1f / +1f / +0.1s, the arrow keys (Shift for 0.1 s), or drag any caption. Play checks it, Reset puts everything back, Done finishes.'],
+   ['Drag select','Only one part off? Tap Drag select (or Select on the timeline), then drag across the captions track to box the captions you want; tap a caption to add or remove it (Shift, Ctrl or ⌘ adds a second box). Nudge or drag them, or tap Sync these to audio-sync just that part. Captions you didn’t pick never move, and the selection stops at its neighbours instead of covering them.'],
    ['Edit words','Tap any caption line and type. Changes save automatically (or tap Update). Timing is kept. Use Find & replace to fix a word everywhere.'],
    ['Caption styles','Pick a style (Glow Duo, Block Rise, Bold Pop, Karaoke…). “Style edits apply to every caption” keeps all captions matching; turn it off to give one caption its own look.'],
    ['Words per caption & position','Fewer words feel faster and punchier; more words feel calmer. Drag the position so captions sit above platform buttons.'],
