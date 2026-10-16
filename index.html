@@ -393,7 +393,7 @@ label.pillbtn{cursor:pointer;display:inline-flex;align-items:center}
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Mea+Culpa&family=Gloria+Hallelujah&family=Major+Mono+Display&family=EB+Garamond:ital,wght@0,400;0,600;0,800;1,400;1,800&family=Fontdiner+Swanky&family=Lobster&family=Bebas+Neue&family=Cairo:wght@400;700;900&family=Instrument+Serif:ital@0;1&family=Playfair+Display:ital,wght@0,800;0,900;1,800;1,900&family=Manufacturing+Consent&family=Montserrat:wght@700;800;900&family=Poppins:wght@600;700;800&family=Anton&family=Archivo+Black&family=Great+Vibes&family=Teko:wght@500;600;700&family=Saira+Condensed:wght@700;800;900&family=Sacramento&family=Gochi+Hand&family=Permanent+Marker&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Mea+Culpa&family=Gloria+Hallelujah&family=Major+Mono+Display&family=EB+Garamond:ital,wght@0,400;0,600;0,800;1,400;1,800&family=Fontdiner+Swanky&family=Lobster&family=Bebas+Neue&family=Cairo:wght@400;700;900&family=Instrument+Serif:ital@0;1&family=Playfair+Display:ital,wght@0,800;0,900;1,800;1,900&family=Manufacturing+Consent&family=Montserrat:ital,wght@0,700;0,800;0,900;1,800;1,900&family=Poppins:ital,wght@0,300;0,600;0,700;0,800;0,900;1,300;1,600;1,800;1,900&family=Anton&family=Archivo+Black&family=Great+Vibes&family=Teko:wght@500;600;700&family=Saira+Condensed:wght@700;800;900&family=Sacramento&family=Gochi+Hand&family=Permanent+Marker&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap">
 <script defer src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/webm-muxer@5.0.2/build/webm-muxer.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -1213,8 +1213,8 @@ const E={
 const FONTS=[
  {id:'inter',name:'Inter',fam:'Inter',w:900,weights:[400,600,800,900],fb:'sans-serif'},
  {id:'akira',name:'Akira Expanded',fam:'Akira Expanded',w:800,fb:'sans-serif',tag:'NEW'},
- {id:'montserrat',name:'Montserrat',fam:'Montserrat',w:800,weights:[700,800,900],fb:'sans-serif',tag:'NEW'},
- {id:'poppins',name:'Poppins',fam:'Poppins',w:800,weights:[600,700,800],fb:'sans-serif',tag:'NEW'},
+ {id:'montserrat',name:'Montserrat',fam:'Montserrat',w:800,weights:[700,800,900],italic:true,fb:'sans-serif',tag:'NEW'},
+ {id:'poppins',name:'Poppins',fam:'Poppins',w:800,weights:[300,600,700,800,900],italic:true,fb:'sans-serif',tag:'NEW'},
  {id:'anton',name:'Anton',fam:'Anton',w:400,fb:'sans-serif',tag:'NEW'},
  {id:'archivo',name:'Archivo Black',fam:'Archivo Black',w:400,fb:'sans-serif',tag:'NEW'},
  {id:'bebas',name:'Bebas Neue',fam:'Bebas Neue',w:400,fb:'sans-serif'},
@@ -1325,6 +1325,15 @@ const ST0={x:0,y:0,sx:1,sy:1,rot:0,a:1,blur:0,mb:0,mby:0,flash:0,skx:0,piv:'c'};
 function selRect(p,G){const b=G.block,pad=G.em*.16,mq=E.inOutCubic(clamp((p-.14)/.66));return{x:b.x0-pad,y:b.top-pad,w:(b.x1-b.x0+2*pad)*mq,h:(b.bottom-b.top+2*pad)*mq,mq,pad}}
 function hlEdge(p,ln,G){const n=G.nL,sp=n>1?Math.min(.18,.6/(n-1)):0;const lp=clamp((p-ln.li*sp)/(1-(n-1)*sp));const pad=ln.px*.1;return{x:ln.x0-pad+(ln.width+2*pad)*E.inOutCubic(lp),lp,pad}}
 function dragM(p){return E.inOutCubic(clamp((p-.12)/.62))}
+/* letters placed along a curve: rainbow (top), around a circle, smile (bottom) or a rising wave that grows */
+function arcPlace(p,u,G){const A=(G.S&&G.S.arc)||{},ln=u.ln,em=u.em,W_=Math.max(em,ln.width||1),s=u.cx-ln.x0,mode=A.mode||'top',k=A.curve??1,spin=(A.spin||0)*G.t;
+  const sc0=p<=0?0:.35+.65*Math.max(0,E.outBack(p,2.2)),m=p<=0?1:1-E.outCubic(p),a=p<=0?0:clamp(p*3);let px,py,rot,gs=1;
+  if(mode==='wave'){const q=s/W_,h=(A.h??1)*em*2.6*k;gs=.7+.6*q;const f=x=>(.5-x)*h*1.15-Math.sin(Math.PI*x)*h*.55;px=ln.x0+s*(.7+.3*q);py=ln.cy+f(q);const dq=.002,sl=(f(q+dq)-f(q-dq))/(2*dq*W_)/Math.max(.2,.7+.6*q);rot=Math.atan(sl)}
+  else{const R=Math.max(em*1.7,W_/(Math.PI*(mode==='around'?1.55:.9)*k));let ang;
+    if(mode==='smile'){ang=Math.PI/2-(s-W_/2)/R+spin;const cx=ln.cx,cy=ln.cy-R*.82;px=cx+R*Math.cos(ang);py=cy+R*Math.sin(ang);rot=ang-Math.PI/2}
+    else if(mode==='around'){ang=-Math.PI*.98+s/R+spin;px=ln.cx+R*Math.cos(ang);py=ln.cy+R*.15+R*Math.sin(ang);rot=ang+Math.PI/2}
+    else{ang=-Math.PI/2+(s-W_/2)/R+spin;const cx=ln.cx,cy=ln.cy+R*.82;px=cx+R*Math.cos(ang);py=cy+R*Math.sin(ang);rot=ang+Math.PI/2}}
+  const sc=sc0*gs;return{x:(px-u.cx)/em,y:(py-u.cy)/em+m*.25,rot,sx:sc,sy:sc,blur:m*.08,a}}
 const ANIMS=[
  // trending (from social edits)
  {id:'riseword',name:'Rise Up',cat:'social',unit:'word',out:'liftOut',fn(p){if(p<=0)return{a:0};const m=Math.pow(1-p,4);return{y:m*1.55,mby:m*2,a:clamp(p*2.6)}}},
@@ -1388,6 +1397,15 @@ const ANIMS=[
  {id:'swipe',name:'Swipe',cat:'misc',unit:'char',custom:1,noImg:1,fx:'#3d7bff',overlay:1,prep(G){const b=G.block;G.swipeX=lerp(b.x0-G.em*.6,b.x1+G.em*.6,E.inOutCubic(G.p))},fn(p,u,G){const l=clamp((G.swipeX-u.cx)/(u.em*.7)+.5);const e=Math.max(0,E.outBack(l,2.6));return{sx:e,sy:e,a:clamp(l*2),y:(1-E.outCubic(l))*.25}}},
  {id:'highlight',name:'Highlight',cat:'misc',unit:'char',custom:1,fx:'#1f4bff',overlay:1,fn(p,u,G){const h=hlEdge(p,u.ln,G);return{a:clamp((h.x-u.cx)/(u.em*.25)+.5)}}},
  {id:'redact',name:'Redact',cat:'misc',unit:'char',custom:1,fx:'#050507',overlay:1,prep(G){const b=G.block;G.redX=b.x0-G.em*.3+(b.x1-b.x0+G.em*1.6)*E.inOutCubic(G.p)},fn(p,u,G){const d=G.redX-u.cx;if(d<0)return{a:0};if(d<u.em*1.1&&p<1)return{text:SCR[Math.floor(hash(u.gi*3.3+Math.floor(G.t*22))*SCR.length)]};return{}}},
+ // caption styles from reference edits
+ {id:'lkey',name:'Punch Rise',cat:'social',unit:'word',out:'blurUp',fn(p){if(p<=0)return{a:0};const m=1-E.outExpo(p);return{y:m*.62,mby:m*.95,blur:m*.05,sx:1+m*.05,sy:1+m*.05,a:clamp(p*2.4)}}},
+ {id:'llead',name:'Whisper In',cat:'social',unit:'word',out:'soft',fn(p){if(p<=0)return{a:0};const m=1-E.outCubic(p);return{blur:m*.2,x:-m*.12,a:clamp(p*1.5)}}},
+ {id:'pillpop',name:'Pill Pop',cat:'social',unit:'line',out:'focus',fn(p){if(p<=0)return{a:0};const e=E.outCubic(p),b=Math.max(0,E.outBack(p,2));return{blur:(1-e)*.14,sx:.9+.1*b,sy:.9+.1*b,a:clamp(p*2.2)}}},
+ {id:'softrise',name:'Soft Rise',cat:'social',unit:'word',out:'soft',fn(p){if(p<=0)return{a:0};const m=1-E.outCubic(p);return{y:m*.28,blur:m*.12,a:clamp(p*1.6)}}},
+ {id:'stackpop',name:'Stack Pop',cat:'social',unit:'word',out:'shrink',fn(p,u){if(p<=0)return{a:0};const e=Math.max(0,E.outBack(p,2.4)),m=1-E.outCubic(p);return{sx:.55+.45*e,sy:.55+.45*e,rot:m*(u.r1-.5)*.35,blur:m*.06,a:clamp(p*3)}}},
+ {id:'arctext',name:'Arc Text',cat:'social',unit:'char',out:'fade',fn(p,u,G){return arcPlace(p,u,G)}},
+ {id:'wavy',name:'Wavy',cat:'social',unit:'char',out:'fade',fn(p,u,G){const A=(G.S&&G.S.wave)||{},amt=A.amt??1,sp=A.speed??1,em=u.em;const ph=G.t*3.2*sp+(u.cx-G.block.x0)/em*1.25;const m=p<=0?1:1-E.outExpo(p);
+   return{y:Math.sin(ph)*.075*amt+m*.9,rot:Math.cos(ph)*.075*amt,sy:1+Math.sin(ph+.6)*.045*amt,mby:m*1.1,blur:m*.04,a:p<=0?0:clamp(p*2.5)}}},
  // 3D
  {id:'flip',name:'Flip Up',cat:'3d',unit:'char',fn(p){const e=E.outBack(p,1.5),ang=(1-e)*Math.PI/2;return{sy:Math.cos(ang),skx:Math.sin(ang)*.25,piv:'b',a:clamp(p*2.2)}}},
  {id:'spin',name:'Spin',cat:'3d',unit:'char',fn(p){const e=E.outCubic(p);return{sx:Math.cos((1-e)*Math.PI*2),sy:1+(1-e)*.25,a:clamp(p*2)}}},
@@ -1661,6 +1679,12 @@ const Engine=(()=>{
       const cv=document.createElement('canvas');cv.width=w;cv.height=h;const x=cv.getContext('2d');x.font=c.font;x.textBaseline=c.textBaseline;x.textAlign='left';x.fillStyle=c.fillStyle;x.strokeStyle=c.strokeStyle;x.lineWidth=c.lineWidth;x.lineJoin=c.lineJoin;x.miterLimit=c.miterLimit;
       x.translate(-x0,-y0);paintItems(x,ln,items,sty,1);e={cv,x:x0,y:y0,w,h};SPRC.set(key,e);if(SPRC.size>260)SPRC.delete(SPRC.keys().next().value);return e}catch(err){return null}}
   function inkCy(c,ln,u){const f=c.font;if(u._icyF===f)return u._icy;let y=u.cy;try{const tx=u.ch!=null?u.ch:(u.isLine?ln.txt:u.text);if(tx){const m=c.measureText(tx);if(m&&m.actualBoundingBoxAscent!=null&&isFinite(m.actualBoundingBoxAscent)){const a=m.actualBoundingBoxAscent,d=m.actualBoundingBoxDescent||0;if(a+d>0)y=ln.base-(a-d)/2}}}catch(e){}u._icy=y;u._icyF=f;return y}
+  /* frosted pill behind a caption line */
+  function drawPlate(c,ln,pl,a,ox,oy){const em=ln.px,px_=em*(pl.padX??.5),py_=em*(pl.padY??.3);const top=ln.base-em*.76-py_+oy,bot=ln.base+em*.22+py_+oy,x0=ln.x0-px_+ox,x1=ln.x1+px_+ox,h_=bot-top,r=Math.min(h_/2,em*(pl.r??10));
+    c.save();c.globalAlpha=clamp(a);rr(c,x0,top,x1-x0,h_,r);if(pl.glow&&!FAST){c.shadowColor=pl.glow;c.shadowBlur=em*.32}
+    const g=c.createLinearGradient(0,top,0,bot);g.addColorStop(0,pl.top||pl.fill);g.addColorStop(1,pl.fill);c.fillStyle=g;c.fill();c.shadowBlur=0;c.shadowColor='rgba(0,0,0,0)';
+    if(pl.stroke){c.lineWidth=Math.max(1,em*.032);c.strokeStyle=pl.stroke;c.stroke()}
+    const hl=c.createLinearGradient(0,top,0,top+h_*.55);hl.addColorStop(0,'rgba(255,255,255,.16)');hl.addColorStop(1,'rgba(255,255,255,0)');rr(c,x0+em*.05,top+em*.04,x1-x0-em*.1,h_*.55,r);c.fillStyle=hl;c.fill();c.restore()}
   function drawUnit(c,ln,u,st,sty,pv,R){
     if(st.a<=.002)return;const em=ln.px,pem=pv.em||em;
     const px=pv.cx,py=st.piv==='b'?pv.bottom:st.piv==='t'?pv.top:(pv===u&&!u.img?inkCy(c,ln,u):pv.cy);
@@ -1678,7 +1702,8 @@ const Engine=(()=>{
         for(const [d,o] of [[fl%10,-fr*step],[(fl+1)%10,(1-fr)*step]]){const y=ln.base+o+oy;if(sty.lw>0)c.strokeText(String(d),u.cx+ox,y);c.fillText(String(d),u.cx+ox,y)}c.restore()}}
     else{const items=pieces(ln,u,st);P=(a,ox=0,oy=0)=>paintItems(c,ln,items,sty,a,ox,oy);
       const uw=Math.max(em,u.x1-u.x0),q_=.3/Math.max(1,pem);const moving=st.text==null&&!st.clip&&!st.clipAbs&&(Math.abs(st.x)>q_||Math.abs(st.y)>q_||Math.abs(st.sx-1)*uw>.3||Math.abs(st.sy-1)*em>.3||Math.abs(st.rot||0)*uw>.3||Math.abs(st.skx||0)*em>.3||st.blur*em>.3||Math.hypot(st.mb||0,st.mby||0)*em>.3);
-      if(moving){const spr=unitSprite(c,ln,u,items,sty,st);if(spr)P=(a,ox=0,oy=0)=>{c.globalAlpha=clamp(a);c.drawImage(spr.cv,0,0,spr.w,spr.h,spr.x+ox,spr.y+oy,spr.w,spr.h)}}}
+      if(moving){const spr=unitSprite(c,ln,u,items,sty,st);if(spr)P=(a,ox=0,oy=0)=>{c.globalAlpha=clamp(a);c.drawImage(spr.cv,0,0,spr.w,spr.h,spr.x+ox,spr.y+oy,spr.w,spr.h)}}
+      if(ln.L.plate&&u.isLine){const P0=P,pl=ln.L.plate;P=(a,ox=0,oy=0)=>{drawPlate(c,ln,pl,a,ox,oy);c.globalAlpha=1;P0(a,ox,oy)}}}
     if(st.shatter&&!u.img){const sh=st.shatter,w=u.x1-u.x0,ix=u.cx+(hash((u.gi||0)*3.1+.7)-.5)*w*.16,iy=u.cy-em*.03,NA=14,seed=(u.gi||0)*.37;
       const ang=[];for(let k=0;k<NA;k++)ang.push((k+.12+hash(k*1.7+seed)*.76)/NA*Math.PI*2);
       const RR=[0,em*.13,em*.36,em*.72,em*1.25,em*2.1,Math.max(w,em)*2.2];const NR=RR.length-1;
@@ -2990,13 +3015,22 @@ $('#sndBtn').addEventListener('click',()=>{soundOn=!soundOn;if(soundOn&&playing)
 /* ---------- sequence renderer: all clips active at time t, composited ---------- */
 const TRANSPARENT={mode:'transparent',color:'#00ff00'};
 const layerCv=document.createElement('canvas');
+/* negative text: Difference or Subtract against whatever is underneath (your video in the preview and in Video + Text) */
+const blendOf=c=>c&&c.s&&c.s.blend&&c.s.blend.mode&&c.s.blend.mode!=='normal'?c.s.blend:null;
+let blendCv=null;
+function blendLayer(tc,layer,bd,W,H,mode){if(!blendCv)blendCv=document.createElement('canvas');if(blendCv.width!==W||blendCv.height!==H){blendCv.width=W;blendCv.height=H}const k=blendCv.getContext('2d');
+  k.setTransform(1,0,0,1,0,0);k.globalAlpha=1;k.globalCompositeOperation='source-over';k.clearRect(0,0,W,H);if(typeof bd==='string'){k.fillStyle=bd;k.fillRect(0,0,W,H)}else{k.fillStyle='#000';k.fillRect(0,0,W,H);try{drawCover(k,bd,W,H)}catch(e){}}
+  if(mode==='subtract'){k.globalCompositeOperation='difference';k.fillStyle='#ffffff';k.fillRect(0,0,W,H);k.globalCompositeOperation='lighter';k.drawImage(layer,0,0);k.globalCompositeOperation='difference';k.fillRect(0,0,W,H)}
+  else{k.globalCompositeOperation='difference';k.drawImage(layer,0,0)}
+  k.globalCompositeOperation='destination-in';k.drawImage(layer,0,0);k.globalCompositeOperation='source-over';tc.drawImage(blendCv,0,0)}
 function renderSeq(t,target,o={}){const W=target.width,H=target.height,tc=target.getContext('2d');const bg=o.bg||P.bg;
-  const act=P.clips.filter(c=>(!o.only||o.only.has(c.id))&&t>=c.start-1e-6&&t<c.start+c.s.dur).sort((a,b)=>(a.track||0)-(b.track||0));let info=null;
-  if(act.length===1){const c=act[0],s=c.s,keep=s.bg,kf=s.flare;s.bg=bg;s.aspect=P.aspect;s.flare=P.line;try{const r=Engine.render(s,t-c.start,target,o);if(c.id===P.sel)info=r}finally{s.bg=keep;s.flare=kf}return info}
+  const act=P.clips.filter(c=>(!o.only||o.only.has(c.id))&&t>=c.start-1e-6&&t<c.start+c.s.dur).sort((a,b)=>(a.track||0)-(b.track||0)||((a.lane|0)-(b.lane|0)));let info=null;
+  const bd=o.backdrop&&act.some(blendOf)?o.backdrop:null;
+  if(act.length===1&&!bd){const c=act[0],s=c.s,keep=s.bg,kf=s.flare;s.bg=bg;s.aspect=P.aspect;s.flare=P.line;try{const r=Engine.render(s,t-c.start,target,o);if(c.id===P.sel)info=r}finally{s.bg=keep;s.flare=kf}return info}
   tc.setTransform(1,0,0,1,0,0);tc.globalAlpha=1;tc.globalCompositeOperation='source-over';tc.clearRect(0,0,W,H);const bc=bgColor(bg);if(bc){tc.fillStyle=bc;tc.fillRect(0,0,W,H)}
   if(!act.length)return null;
   if(layerCv.width!==W||layerCv.height!==H){layerCv.width=W;layerCv.height=H}
-  for(const c of act){const s=c.s,keep=s.bg,kf=s.flare;s.bg=TRANSPARENT;s.aspect=P.aspect;s.flare=P.line;try{const r=Engine.render(s,t-c.start,layerCv,o);if(c.id===P.sel)info=r}finally{s.bg=keep;s.flare=kf}tc.drawImage(layerCv,0,0)}
+  for(const c of act){const s=c.s,keep=s.bg,kf=s.flare;s.bg=TRANSPARENT;s.aspect=P.aspect;s.flare=P.line;try{const r=Engine.render(s,t-c.start,layerCv,o);if(c.id===P.sel)info=r}finally{s.bg=keep;s.flare=kf}const bm=bd&&blendOf(c);if(bm)blendLayer(tc,layerCv,bd,W,H,bm.mode);else tc.drawImage(layerCv,0,0)}
   return info}
 
 let T=0,playing=true,loop=true,last=performance.now();
@@ -3021,7 +3055,7 @@ $('#loopBtn').addEventListener('click',e=>{loop=!loop;e.currentTarget.classList.
 const fmtT=t=>{const m=Math.floor(t/60),s=t-m*60;return String(m).padStart(2,'0')+':'+s.toFixed(2).padStart(5,'0')};
 const fmtS=t=>t>=60?Math.floor(t/60)+':'+String(Math.round(t%60)).padStart(2,'0'):(Math.round(t*100)/100)+'s';
 let lastInfo=null;const tcCur=$('#tcCur'),tcDur=$('#tcDur');
-function drawPreview(){const t0=performance.now();try{lastInfo=renderSeq(T,view,{bg:vidOn()?TRANSPARENT:P.bg,fast:PQ==='smooth',lite:PQ!=='smooth',maxLayers:PQ==='smooth'?(isMob()?24:40):(isMob()?56:84)})}catch(e){console.error(e)}
+function drawPreview(){const t0=performance.now();try{lastInfo=renderSeq(T,view,{backdrop:vidOn()?bgV:bgColor(P.bg)||null,bg:vidOn()?TRANSPARENT:P.bg,fast:PQ==='smooth',lite:PQ!=='smooth',maxLayers:PQ==='smooth'?(isMob()?24:40):(isMob()?56:84)})}catch(e){console.error(e)}
   const dt=performance.now()-t0;perfEma=perfEma*.9+dt*.1;
   if(playing&&t0-lastAdj>1200){const sm=PQ==='smooth',hi=sm?12:22,lo=sm?6:8,fl=sm?.45:.62,top=sm?.9:1;if(perfEma>hi&&qScale>fl){qScale=Math.max(fl,qScale*.85);lastAdj=t0;pendingResize=true}else if(perfEma<lo&&qScale<top){qScale=Math.min(top,qScale*1.08);lastAdj=t0;pendingResize=true}}
   const D=seqDur();tcCur.textContent=fmtT(T);tcDur.textContent=fmtT(D);$('#playBtn').style.setProperty('--prog',clamp(T/D));
@@ -3676,7 +3710,53 @@ function duoState(ws,c,serif){const W_=ws.map(w=>{const u=UP(w.w,c).replace(/[.,
   if(top)lines.push(Ln({text:top,font:'inter',weight:800,size:104*k,track:-.035,c1:'#ffffff'}));
   lines.push(Ln({text:bot,font:serif?'playfair':'inter',weight:900,italic:!!serif,size:(serif?196:180)*k,track:serif?-.015:-.05,mat:'gradient',c1:mix(col,'#ffffff',.38),c2:col,gAng:90}));
   return{anim:'duoblur',lines,lineGap:-18*k,outMode:'smart',outDur:.22,glow:{on:true,color:col,size:30,int:.55},shadow:{on:true,op:.5,blur:22,dx:0,dy:6,color:'#000000'}}}
+/* per-style options (Style options in the Video tab), saved in P.cap.so[style] */
+function styleOpts(cs,c){const so=(c.so&&c.so[cs.id])||{},o={};(cs.opts||[]).forEach(d=>{o[d.k]=so[d.k]??d.def});o.blend=so.blend??cs.blend??'normal';o.ncolor=so.ncolor||'#ffffff';return o}
+const keyIdx=W_=>{let ki=0,kv=-1;W_.forEach((w,i)=>{const v=wscore(w)+i*.35;if(v>kv){kv=v;ki=i}});return ki};
+/* Lilac Punch / Lilac Thin: small light lead-in, one big keyword, optional small tail word */
+function lilacState(ws,c,thin,o){const W_=ws.map(w=>UP(w.w,c)),n=W_.length,ki=n<=1?0:keyIdx(W_),k=clamp(c.size||1,.3,3);const col=c.color||'#e27bff',hi=(o&&o.light)||mix(col,'#ffffff',.55);
+  const lead=W_.slice(0,ki).join(' '),tail=W_.slice(ki+1).join(' '),lines=[];
+  if(lead)lines.push(Ln({text:lead,font:'poppins',weight:300,size:64*k,track:-.045,c1:'#ffffff',align:'left',anim:'llead',dx:-8*k}));
+  lines.push(Ln({text:W_[ki],font:'poppins',weight:thin?300:800,italic:!thin,size:(thin?200:186)*k,track:thin?-.06:-.035,mat:'gradient',c1:hi,c2:col,gAng:90}));
+  if(tail)lines.push(Ln({text:tail,font:'poppins',weight:thin?300:800,italic:true,size:(thin?62:64)*k,track:-.03,c1:'#ffffff',align:'right',anim:thin?'llead':'lkey'}));
+  return{anim:'lkey',lines,lineGap:-30*k,outMode:'smart',outDur:.22,glow:{on:false},shadow:{on:true,op:.22,blur:20,dx:0,dy:8,color:'#1a0024'}}}
+/* lead words + keyword + tail, generic */
+function keySplit(ws,c){const W_=ws.map(w=>UP(w.w,c)),ki=W_.length<=1?0:keyIdx(W_);return{W_,ki,lead:W_.slice(0,ki).join(' '),key:W_[ki],tail:W_.slice(ki+1).join(' ')}}
 const CAPSTYLES=[
+ {id:'lilac',name:'Lilac Punch',isNew:1,pos:.3,max:3,wordDur:.32,color:'#e27bff',opts:[{k:'light',label:'Top of the gradient',type:'color',def:'#ffd2ff'}],build(ws,c,o){return lilacState(ws,c,false,o)}},
+ {id:'lilacthin',name:'Lilac Thin',isNew:1,pos:.3,max:3,wordDur:.32,color:'#e070ff',opts:[{k:'light',label:'Top of the gradient',type:'color',def:'#f6c6ff'}],build(ws,c,o){return lilacState(ws,c,true,o)}},
+ {id:'pill',name:'Glass Pill',isNew:1,pos:.24,max:3,wordDur:.3,color:'#f1e5fb',opts:[{k:'tint',label:'Pill colour',type:'color',def:'#6b4a7a'}],build(ws,c,o){const k=clamp(c.size||1,.3,3),t=o.tint||'#6b4a7a';
+   return{anim:'pillpop',lines:[Ln({text:ws.map(w=>UP(w.w,c)).join(' '),font:'inter',weight:600,size:84*k,track:-.012,c1:c.color||'#f1e5fb',plate:{fill:rgba(mix(t,'#000000',.38),.74),top:rgba(mix(t,'#ffffff',.16),.8),stroke:rgba(mix(t,'#ffffff',.62),.6),glow:rgba(mix(t,'#ffffff',.35),.5),padX:.62,padY:.36}})],outMode:'smart',outDur:.2,glow:{on:false},shadow:{on:false}}}},
+ {id:'thinit',name:'Light Italic',isNew:1,pos:.8,max:2,wordDur:.3,color:'#ffffff',build(ws,c){const k=clamp(c.size||1,.3,3);
+   return{anim:'softrise',lines:[Ln({text:ws.map(w=>UP(w.w,c)).join(' '),font:'poppins',weight:300,italic:true,size:96*k,track:-.03,c1:c.color||'#ffffff'})],outMode:'smart',outDur:.2,glow:{on:false},shadow:{on:true,op:.35,blur:16,dx:0,dy:4}}}},
+ {id:'negative',name:'Negative',isNew:1,pos:.3,max:2,wordDur:.3,color:'#ffffff',blend:'difference',build(ws,c){const k=clamp(c.size||1,.3,3);
+   return{anim:'lkey',lines:splitLines(ws.map(w=>UP(w.w,c)),12).map(l=>Ln({text:l,font:'poppins',weight:800,italic:true,size:176*k,track:-.035,c1:c.color||'#ffffff'})),lineGap:-30*k,outMode:'smart',outDur:.2,glow:{on:false},shadow:{on:false}}}},
+ {id:'arc',name:'Arc Wrap',isNew:1,pos:.42,max:4,wordDur:.28,color:'#ffffff',opts:[{k:'mode',label:'Shape',type:'seg',def:'around',choices:[['top','Rainbow'],['around','Around'],['smile','Smile']]},{k:'spin',label:'Spin',type:'seg',def:'.18',choices:[['0','Off'],['.18','Slow'],['.45','Fast']]},{k:'accent',label:'Second colour',type:'color',def:'#ff2b3d'}],
+   build(ws,c,o){const k=clamp(c.size||1,.3,3),words=ws.map(w=>UP(w.w,c)),cc={};let ci=0;words.forEach((w,i)=>{const n=[...w].length;if(i%2===1)for(let j=0;j<n;j++)cc[ci+j]=o.accent;ci+=n+1});
+   return{anim:'arctext',arc:{mode:o.mode,spin:+o.spin||0,curve:1},lines:[Ln({text:words.join(' '),font:'poppins',weight:800,size:128*k,track:.02,c1:c.color||'#ffffff',cc})],outMode:'smart',outDur:.22,glow:{on:false},shadow:{on:true,op:.35,blur:14,dx:0,dy:5}}}},
+ {id:'curve',name:'Curve Path',isNew:1,pos:.36,max:6,wordDur:.24,color:'#ffffff',opts:[{k:'accent',label:'Keyword colour',type:'color',def:'#e5161f'},{k:'h',label:'Curve',type:'range',min:0,max:2,step:.05,def:1}],
+   build(ws,c,o){const k=clamp(c.size||1,.3,3),words=ws.map(w=>UP(w.w,c)),ki=words.length<=1?0:keyIdx(words),cc={};let ci=0;words.forEach((w,i)=>{const n=[...w].length;if(i===ki)for(let j=0;j<n;j++)cc[ci+j]=o.accent;ci+=n+1});
+   return{anim:'arctext',arc:{mode:'wave',h:+o.h,curve:1},lines:[Ln({text:words.join(' '),font:'inter',weight:900,size:92*k,track:-.03,c1:c.color||'#ffffff',cc})],outMode:'smart',outDur:.22,glow:{on:false},shadow:{on:true,op:.32,blur:14,dx:0,dy:5}}}},
+ {id:'compound',name:'Compound',isNew:1,pos:.5,max:4,wordDur:.3,color:'#e3242b',build(ws,c){const k=clamp(c.size||1,.3,3),q=keySplit(ws,c),lines=[];
+   if(q.lead)lines.push(Ln({text:q.lead,font:'poppins',weight:600,italic:true,size:56*k,track:-.02,c1:'#ffffff',align:'left',anim:'llead'}));
+   lines.push(Ln({text:q.key.toUpperCase(),font:'anton',size:236*k,track:.005,c1:c.color||'#e3242b',anim:'slide2'}));
+   if(q.tail)lines.push(Ln({text:q.tail,font:'poppins',weight:600,italic:true,size:56*k,track:-.02,c1:'#ffffff',align:'right',anim:'llead'}));
+   return{anim:'slide2',lines,lineGap:-26*k,outMode:'smart',outDur:.2,glow:{on:false},shadow:{on:true,op:.3,blur:16,dx:0,dy:6}}}},
+ {id:'creator',name:'Creator Stack',isNew:1,pos:.36,max:5,wordDur:.26,color:'#ffd60a',opts:[{k:'tilt',label:'Tilt',type:'range',min:0,max:1.5,step:.05,def:1}],build(ws,c,o){const k=clamp(c.size||1,.3,3),t=+o.tilt;
+   const lines=ws.map(w=>{const x=UP(w.w,c),core=x.toLowerCase().replace(/[^\p{L}\p{N}']/gu,''),weak=STOPW.has(core)||core.length<=2,strong=!weak&&wscore(x)>=4;
+     return Ln({text:x,font:'montserrat',weight:strong?900:800,italic:strong,size:(strong?150:weak?72:96)*k,track:-.03,c1:strong?(c.color||'#ffd60a'):'#ffffff',align:'left'})});
+   return{anim:'stackpop',lines,lineGap:-4*k,d3:{rx:6*t,ry:-12*t,rz:-5*t,fov:40},outMode:'smart',outDur:.2,glow:{on:false},shadow:{on:true,op:.42,blur:16,dx:0,dy:6}}}},
+ {id:'wavy',name:'Wavy Text',isNew:1,pos:.22,max:3,wordDur:.32,color:'#f5c518',opts:[{k:'amt',label:'Wave',type:'range',min:0,max:2,step:.05,def:1},{k:'speed',label:'Wave speed',type:'range',min:.2,max:2.5,step:.05,def:1}],build(ws,c,o){const k=clamp(c.size||1,.3,3),W_=ws.map(w=>w.w.toUpperCase()),h_=Math.ceil(W_.length/2);
+   const lines=[W_.slice(0,h_).join(' '),W_.slice(h_).join(' ')].filter(Boolean).map((x,i)=>Ln({text:x,font:'montserrat',weight:900,size:170*k,track:-.01,c1:i?'#ffffff':(c.color||'#f5c518')}));
+   return{anim:'wavy',wave:{amt:+o.amt,speed:+o.speed},lines,lineGap:-14*k,outMode:'smart',outDur:.22,glow:{on:false},shadow:{on:true,op:.4,blur:18,dx:0,dy:8}}}},
+ {id:'neonserif',name:'Neon Serif',isNew:1,pos:.66,max:3,wordDur:.3,color:'#36ff3a',build(ws,c){const k=clamp(c.size||1,.3,3),q=keySplit(ws,c),lines=[],col=c.color||'#36ff3a';
+   if(q.lead)lines.push(Ln({text:q.lead,font:'inter',weight:800,size:98*k,track:-.035,c1:'#ffffff',anim:'blurpop'}));
+   lines.push(Ln({text:q.key,font:'playfair',weight:900,italic:true,size:178*k,track:-.02,c1:col}));
+   if(q.tail)lines.push(Ln({text:q.tail,font:'inter',weight:800,size:72*k,track:-.03,c1:'#ffffff',align:'right',anim:'blurpop'}));
+   return{anim:'lkey',lines,lineGap:-44*k,outMode:'smart',outDur:.22,glow:{on:true,color:col,size:28,int:.7},shadow:{on:true,op:.35,blur:14,dx:0,dy:5}}}},
+ {id:'persp',name:'3D Perspective',isNew:1,pos:.42,max:4,wordDur:.28,color:'#ffffff',opts:[{k:'accent',label:'Keyword colour',type:'color',def:'#e5161f'},{k:'tilt',label:'Tilt',type:'range',min:0,max:1.5,step:.05,def:1}],build(ws,c,o){const k=clamp(c.size||1,.3,3),t=+o.tilt,W_=ws.map(w=>UP(w.w,c)),ki=W_.length<=1?0:keyIdx(W_),n=W_.length;
+   const lines=W_.map((x,i)=>Ln({text:x,font:'inter',weight:900,size:(i===ki?176:96)*k,track:-.045,c1:i===ki?o.accent:(c.color||'#ffffff'),align:'left',dx:(i-(n-1)/2)*70*k}));
+   return{anim:'lkey',lines,lineGap:-2*k,d3:{rx:16*t,ry:-26*t,rz:-5*t,fov:38},outMode:'smart',outDur:.2,glow:{on:false},shadow:{on:true,op:.3,blur:14,dx:0,dy:6}}}},
  {id:'duo',name:'Glow Duo',isNew:1,pos:.64,max:5,wordDur:.34,color:'#a6ff3f',build(ws,c){return duoState(ws,c,false)}},
  {id:'duoserif',name:'Glow Duo Serif',isNew:1,pos:.64,max:5,wordDur:.34,color:'#a6ff3f',build(ws,c){return duoState(ws,c,true)}},
  {id:'block',name:'Block Rise',isNew:1,pos:.3,max:8,wordDur:.32,color:'#fcd064',build(ws,c){return{anim:'riseword',lines:blockLines(ws,c),anchorTop:.2,lineGap:-4,outMode:'smart',outDur:.2,glow:{on:false},shadow:{on:true,op:.22,blur:18,dx:0,dy:4}}}},
@@ -3700,10 +3780,11 @@ const CAP_BY=Object.fromEntries(CAPSTYLES.map(x=>[x.id,x]));
 function heightUnits(){const [aw,ah]=aspectWH(P.aspect);return 1080*ah/Math.min(aw,ah)}
 /* per-caption overrides: a caption can have its own style (c.capo) and its own highlighted words (c.emphW) */
 function capCfg(clip){return clip&&clip.capo?Object.assign({},P.cap,clip.capo,clip.emphW?{emphW:clip.emphW}:{}):(clip&&clip.emphW?Object.assign({},P.cap,{emphW:clip.emphW}):P.cap)}
-function capState(ws,start,dur,c){const cs=CAP_BY[c.style]||CAPSTYLES[0];const o=cs.build(ws,c);
+function capState(ws,start,dur,c){const cs=CAP_BY[c.style]||CAPSTYLES[0];const so=styleOpts(cs,c);const o=cs.build(ws,c,so);const d3o=o.d3;
+  if(so.blend&&so.blend!=='normal'){o.blend={mode:so.blend};o.lines.forEach(L=>{L.mat='flat';L.c1=so.ncolor||'#ffffff';delete L.cc});o.glow={on:false};o.shadow={on:false}}
   if(o.anchorTop!=null)o.anchorTop=clamp(c.pos-.1,.03,.85);else{const shift=(c.pos-.5)*heightUnits();o.lines.forEach(L=>{L.dy=(L.dy||0)+shift})}
   if(c.dx)o.lines.forEach(L=>{L.dx=(L.dx||0)+c.dx});
-  const g0=o.glow;Object.assign(o,{dur,inDur:.3,outMode:o.outMode||'fade',outDur:o.outDur??.12,stagger:0,wordDur:c.wordDur,words:ws.map(w=>Math.max(0,w.s-start-.02)),shine:capShineFor(c.shine,dur),glow:g0||{on:false},flare:{on:false},d3:{depth:0},lineGap:o.lineGap??-6});
+  const g0=o.glow;Object.assign(o,{dur,inDur:.3,outMode:o.outMode||'fade',outDur:o.outDur??.12,stagger:0,wordDur:c.wordDur,words:ws.map(w=>Math.max(0,w.s-start-.02)),shine:capShineFor(c.shine,dur),glow:g0||{on:false},flare:{on:false},d3:d3o?Object.assign({depth:0},d3o):{depth:0},lineGap:o.lineGap??-6});
   if(cs.emph){let bi=0,bv=-1;ws.forEach((w,i)=>{const v=wscore(w.w);if(v>bv){bv=v;bi=i}});o.emph=bv>=3?[bi]:[];o.emphColor=c.emph}
   if(Array.isArray(c.emphW)){o.emph=c.emphW.filter(i=>i>=0&&i<ws.length);o.emphColor=c.emph}
   if(cs.karaoke||c.karaoke){o.karaoke=true;o.karaokeColor=c.karaokeColor||c.emph}
@@ -4115,6 +4196,13 @@ function buildVideo(){const p=h('div',{class:'panel'});const C=P.cap;
     nOwn?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();capClips().forEach(c=>{if(c.capo){delete c.capo;c.gen=null;c.keep=null;capRebuild(c)}});refreshAll();changed();toast('Every caption uses the main style again')}},'Reset all to the main style'):null));
   p.append(h('div',{class:'cat',style:'--c:#ff3d7f'},h('div',{class:'cat-h'},h('span',{class:'cat-n'},String(CAPSTYLES.length)),h('span',{class:'cat-t'},'caption styles')),g));
   const reb=()=>{capRebuildAll();dirty=true};
+  {const cs=CAP_BY[C.style];if(cs){const so=styleOpts(cs,C),setO=(k,v)=>{C.so=C.so||{};C.so[cs.id]=C.so[cs.id]||{};C.so[cs.id][k]=v;reb();changed()};
+    const ctls=(cs.opts||[]).map(d=>d.type==='seg'?h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,d.label)),seg(d.choices.map(([v,l])=>({v,label:l})),()=>String(so[d.k]),v=>{setO(d.k,v);rebuild('video',true)},{label:d.label})):
+      d.type==='range'?slider(d.label,{min:d.min,max:d.max,step:d.step,get:()=>+((C.so&&C.so[cs.id]&&C.so[cs.id][d.k])??d.def),set:v=>setO(d.k,v),reset:d.def}):colorCtl(d.label,()=>(C.so&&C.so[cs.id]&&C.so[cs.id][d.k])||d.def,v=>setO(d.k,v)));
+    p.append(sec('Style options · '+cs.name,...ctls,
+      h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Negative text (blend)')),seg([{v:'normal',label:'Normal'},{v:'difference',label:'Difference'},{v:'subtract',label:'Subtract'}],()=>so.blend,v=>{setO('blend',v);rebuild('video',true)},{label:'Blend mode'})),
+      so.blend!=='normal'?colorCtl('Negative text colour',()=>so.ncolor,v=>setO('ncolor',v)):null,
+      h('p',{class:'hint'},so.blend!=='normal'?(so.blend==='difference'?'Difference flips the video inside the letters (white text = a photo negative). ':'Subtract darkens the video inside the letters by the colour you pick. ')+'You see it on your video in the preview and in the Video + Text export. For transparent exports (MOV, WebM, PNG) the text stays plain: set that layer’s blend mode to '+(so.blend==='difference'?'Difference':'Subtract')+' in your editor.':'Options for this caption style. Blend turns it into negative text that inverts the video inside the letters.')))}}
   p.append(sec('Caption settings',
     slider('Words per caption',{min:1,max:8,step:1,get:()=>C.maxWords,set:v=>{C.maxWords=v},fmt:v=>Math.round(v),reset:3,opts:{tl:false}}),
     h('button',{type:'button',class:'pillbtn',onclick:()=>{const ws=allCapWords();if(!ws.length){toast('Generate captions first');return}commit();buildCaptions(ws);refreshAll();changed()}},'Re-split captions'),
@@ -4531,7 +4619,7 @@ async function encodeFull(cv,w,hh,fps,frames,bitrate){
   const bgA=EX.bg.mode==='transparent'?{mode:'black',color:'#000000'}:EX.bg;
   setProg(0,'Reading the sound…');if(!AUDIO&&AUDIO_P){try{await AUDIO_P}catch(e){}}let ab=AUDIO||null;try{if(P.sfx&&P.sfx.on){setProg(0,'Mixing sound effects…');ab=await sfxMix(ab,D)}}catch(e){console.warn('sfx mix',e)}const withSfx=!!(P.sfx&&P.sfx.on&&sfxEvents().length);
   let v=null;if(pic){setProg(0,'Opening your video…');v=await openExportVideo()}
-  const paint=t=>{if(v){ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';ctx.fillStyle='#000';ctx.fillRect(0,0,w,hh);drawCover(ctx,v,w,hh);renderSeq(t,ov,{bg:TRANSPARENT,maxLayers:180});ctx.drawImage(ov,0,0)}else renderSeq(t,cv,{bg:bgA,maxLayers:180})};
+  const paint=t=>{if(v){ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';ctx.fillStyle='#000';ctx.fillRect(0,0,w,hh);drawCover(ctx,v,w,hh);renderSeq(t,ov,{bg:TRANSPARENT,maxLayers:180,backdrop:v});ctx.drawImage(ov,0,0)}else renderSeq(t,cv,{bg:bgA,maxLayers:180,backdrop:bgColor(bgA)||null})};
   const cleanup=()=>{if(v){try{v.pause();v.removeAttribute('src');v.load()}catch(e){}v.remove()}};
   try{
     const hasWC=typeof VideoEncoder!=='undefined'&&typeof VideoFrame!=='undefined'&&window.Mp4Muxer;let vcfg=null;
@@ -4713,7 +4801,7 @@ var SFX_ANIM={};[['woosh',.3,0,'swoosh slideskew cross shift rise fall slide1 sl
   ['fast',.18,-1,'burst bounce1 bounce2 grow popwords pop popflash strike flip spin select highlight redact vhs melt'],
   ['click',.12,-2,'popchar glass glassin broken shatter flicker neonflick typewriter odometer countup'],
   ['light',.4,-3,'duoblur blurpop riseblur softfade cloud focus apple fadechars blur']].forEach(([s,at,g,ids])=>ids.split(' ').forEach(id=>SFX_ANIM[id]={s,at,g}));
-var SFX_CAP={block:['woosh',0],duo:['light',-1],duoserif:['light',-1],focus:['light',-1],apple:['light',-5],neonpop:['fast',-1],chrome:['fast',0],letters:['light',-2],blurpop:['light',-2],scriptbold:['woosh',0],cloud:['light',-1],karaoke:['click',-3],boldpop:['click',-1],minimal:[null,0]};
+var SFX_CAP={lilac:['click',0],lilacthin:['click',-2],pill:['light',-1],thinit:['click',-4],negative:['fast',-1],arc:['woosh',-2],curve:['woosh',-2],compound:['fast',0],creator:['click',-1],wavy:['woosh',-1],neonserif:['light',0],persp:['woosh',-1],block:['woosh',0],duo:['light',-1],duoserif:['light',-1],focus:['light',-1],apple:['light',-5],neonpop:['fast',-1],chrome:['fast',0],letters:['light',-2],blurpop:['light',-2],scriptbold:['woosh',0],cloud:['light',-1],karaoke:['click',-3],boldpop:['click',-1],minimal:[null,0]};
 var SFX_ALT={woosh:['fast','light','click'],fast:['woosh','click','light'],light:['woosh','fast','click'],click:['fast','woosh','light']};
 var sfxRate=I=>clamp(1-.22*Math.log2(Math.max(.05,I)/.9),.82,1.28);
 function sfxRnd(str){let h_=2166136261;for(let i=0;i<str.length;i++){h_^=str.charCodeAt(i);h_=Math.imul(h_,16777619)}return((h_>>>0)%100000)/100000}
@@ -4907,6 +4995,8 @@ const G=[
    ['Drag select','Only one part off? Tap Drag select (or Select on the timeline), then drag across the captions track to box the captions you want; tap a caption to add or remove it (Shift, Ctrl or ⌘ adds a second box). Nudge or drag them, or tap Sync these to audio-sync just that part. Captions you didn’t pick never move, and on the same layer the selection stops at its neighbours instead of covering them.'],
    ['Caption layers','Need more room? Drag selected captions down: a New caption layer opens under the captions track and they can overlap other captions in time there (or tap Layer ↓ / Layer ↑). Captions on different layers play at the same time; empty layers tidy themselves away.'],
    ['Edit words','Tap any caption line and type. Changes save automatically (or tap Update). Timing is kept. Use Find & replace to fix a word everywhere.'],
+   ['New styles from your references','Lilac Punch and Lilac Thin (small light lead-in + big lilac keyword), Glass Pill, Light Italic, Negative, Arc Wrap, Curve Path, Compound, Creator Stack, Wavy Text, Neon Serif and 3D Perspective. Each has Style options in the Video tab (colours, arc shape and spin, wave strength, tilt, pill colour).'],
+   ['Negative text','In Style options set Blend to Difference (flips the video inside the letters) or Subtract (darkens it by your colour) and pick the negative colour. It shows on your video in the preview and in Video + Text exports; for transparent exports set the layer to Difference/Subtract in your editor.'],
    ['Caption styles','Pick a style (Glow Duo, Block Rise, Bold Pop, Karaoke…). “Style edits apply to every caption” keeps all captions matching; turn it off to give one caption its own look.'],
    ['Words per caption & position','Fewer words feel faster and punchier; more words feel calmer. Drag the position so captions sit above platform buttons.'],
    ['SRT in and out','Import an .srt from another app, or export yours for YouTube or subtitles.']],
@@ -5047,6 +5137,7 @@ setTimeout(finishSplash,7000);
 (async()=>{const loads=FONTS.map(f=>document.fonts.load(`${f.weights?f.weights.slice(-1)[0]:f.w} 40px "${f.fam}"`,'Aa').catch(()=>{}));
   FONTS.filter(f=>f.weights).forEach(f=>f.weights.forEach(w=>loads.push(document.fonts.load(`${w} 40px "${f.fam}"`,'Aa').catch(()=>{}))));
   loads.push(document.fonts.load('800 40px "Akira Expanded"','AKIRA').catch(()=>{}));
+  ['italic 300 40px "Poppins"','italic 600 40px "Poppins"','italic 800 40px "Poppins"','italic 900 40px "Poppins"','italic 800 40px "Montserrat"','italic 900 40px "Montserrat"','italic 900 40px "Playfair Display"'].forEach(f=>loads.push(document.fonts.load(f,'Aa').catch(()=>{})));
   loads.push(document.fonts.load('italic 400 40px "Instrument Serif"').catch(()=>{}),document.fonts.load('italic 800 40px "EB Garamond"').catch(()=>{}));
   let nDone=0;loads.forEach(pr=>pr.then(()=>{nDone++;splashProgress(nDone/loads.length*.9)}));
   const timeout=new Promise(r=>setTimeout(r,4000));await Promise.race([Promise.all(loads),timeout]);finishSplash();
