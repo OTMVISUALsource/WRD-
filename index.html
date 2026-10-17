@@ -2280,7 +2280,7 @@ let S=selClip().s;let sel=0;
 function seqDur(){return Math.max(.5,P.video&&P.video.dur?P.video.dur:Math.max(1,...P.clips.map(c=>c.start+c.s.dur)))}
 function selectClip(id,o={}){const c=P.clips.find(x=>x.id===id);if(!c)return;P.sel=id;S=c.s;sel=Math.min(sel,S.lines.length-1);try{capTrack()}catch(e){}
   if(o.seek&&(T<c.start||T>=c.start+c.s.dur))seek(c.start+Math.min(c.s.dur*.5,c.s.inDur+.15));
-  if(!o.noPanels)Object.keys(panelEls).forEach(k=>{if(k!=='looks'&&k!=='video')rebuild(k,true)});
+  if(!o.noPanels)Object.keys(panelEls).forEach(k=>{if(k!=='looks'&&k!=='video')rebuild(k,true)});else{try{rebuild('size',true)}catch(e){}}
   if(!o.noTL)updTimeline();updKey();dirty=true}
 function styleOnto(ns,old){ns.lines=old.lines.map((L,i)=>{const src=ns.lines[Math.min(i,ns.lines.length-1)];return Object.assign({},src,{text:L.text,dx:L.dx,dy:L.dy,size:L.size,align:L.align,anim:undefined,delay:0})});
   ['words','emph','emphColor','karaoke','karaokeColor','wordDur','dur','inDur','outMode','outDur','stagger'].forEach(k=>{ns[k]=old[k]});ns.autoFit=old.autoFit;return ns}
@@ -2851,15 +2851,27 @@ function capMoveSet(x,y){const c=selClip(),HU=heightUnits();x=clamp(Math.round(x
   if(capMoveScope==='one'&&c&&c.kind==='caption'){if(x||y)c.mv={x,y};else delete c.mv;capRebuild(c);linkProject()}
   else{P.cap.dx=x;P.cap.pos=capDefPos()+y/HU;capRebuildAll()}
   S=selClip().s;dirty=true}
-function buildSizeCaps(){const p=h('div',{class:'panel'});const C=P.cap;const s0=C.size||1;let k=100;
-  const upd=()=>{C.size=clamp(s0*k/100,.3,4);capRebuildAll();dirty=true};
-  const sizeNow=h('p',{class:'hint'});const showNow=()=>{sizeNow.textContent='Caption size now: '+Math.round((C.size||1)*100)+'% of the style’s normal size.'+((C.size||1)>=2.95?' That’s the largest size.':'')};showNow();
-  const sl=slider('Scale',{min:25,max:300,step:1,get:()=>k,set:v=>{k=v;upd();showNow()},fmt:v=>Math.round(v)+'%',reset:100});
-  const quick=h('div',{class:'pillrow'},...[50,75,90,110,125,150].map(q=>h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();k=q;upd();sl.sync();changed()}},q+'%')));
-  p.append(sec('Scale all captions',h('p',{class:'hint',style:'color:#9fd0ff;margin-top:0'},'Captions scale as one. Every caption, every line and every word keep their proportions, spacing and layout.'),sl,quick,
-    sizeNow,
-    h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn',onclick:()=>{fitSafe();rebuild('size',true)}},'Fit inside safe area'),h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();C.size=1;capRebuildAll();changed();rebuild('size',true)}},'Reset to 100%'),h('button',{type:'button',class:'pillbtn',onclick:()=>rebuild('size',true)},'Done · reset slider'))));
+/* scale: 'one' = this caption only (factor stored on the caption as c.mvs, on top of the shared size) · 'all' = the shared size every caption follows */
+function capScaleGet(){const c=selClip(),base=P.cap.size||1;if(capMoveScope==='one'&&c&&c.kind==='caption')return base*(+c.mvs||1)*100;return base*100}
+function capScaleSet(pct){const c=selClip(),base=P.cap.size||1;pct=clamp(pct,25,300);
+  if(capMoveScope==='one'&&c&&c.kind==='caption'){const f=pct/100/base;if(Math.abs(f-1)<.004)delete c.mvs;else c.mvs=f;capRebuild(c);linkProject()}
+  else{P.cap.size=clamp(pct/100,.3,4);capRebuildAll()}
+  S=selClip().s;dirty=true}
+function buildSizeCaps(){const p=h('div',{class:'panel'});const C=P.cap;
   const selCap=selClip().kind==='caption'?selClip():null;if(!selCap&&capMoveScope==='one')capMoveScope='all';
+  const one=capMoveScope==='one';
+  p.append(sec('Apply size & move to',
+    h('div',{class:'ctl'},seg([{v:'one',label:'This caption only'},{v:'all',label:'All captions'}],()=>capMoveScope,v=>{capMoveScope=v;rebuild('size',true)},{label:'Apply to'})),
+    h('p',{class:'hint',style:'color:#9fd0ff;margin-top:0'},one?'Everything below changes only the caption you have selected (the one showing in the preview). Every other caption keeps its own size and spot.':'Everything below changes every caption together. Captions you sized or placed individually keep their own extra adjustment on top.')));
+  let sl;const sizeNow=h('p',{class:'hint'});const showNow=()=>{const v=capScaleGet();sizeNow.textContent=(one?'This caption’s size now: ':'Caption size now: ')+Math.round(v)+'% of the style’s normal size.'+(v>=299?' That’s the largest size.':'')};showNow();
+  sl=slider('Scale',{min:25,max:300,step:1,get:()=>capScaleGet(),set:v=>{capScaleSet(v);showNow()},fmt:v=>Math.round(v)+'%',reset:100});
+  const nSz=capClips().filter(c=>c.mvs).length;
+  const quick=h('div',{class:'pillrow'},...[50,75,90,110,125,150].map(q=>h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();capScaleSet(q);sl.sync();showNow();changed()}},q+'%')));
+  p.append(sec(one?'Scale this caption':'Scale all captions',sl,quick,sizeNow,
+    h('div',{class:'pillrow'},
+      h('button',{type:'button',class:'pillbtn',onclick:()=>{fitSafe();rebuild('size',true)}},'Fit inside safe area'),
+      h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();capScaleSet(one?(P.cap.size||1)*100:100);sl.sync();showNow();changed()}},one?'Reset this caption’s size':'Reset to 100%'),
+      nSz?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();capClips().forEach(c=>{delete c.mvs});capRebuildAll();changed();rebuild('size',true);toast('Every caption is back at the shared size')}},'Reset all individual sizes ('+nSz+')'):null)));
   const sx=slider('Left / Right',{min:-1100,max:1100,step:1,get:()=>capMoveGet().x,set:v=>{capMoveSet(v,capMoveGet().y)},fmt:v=>(v>0?'+':'')+Math.round(v),reset:0});
   const sy=slider('Up / Down',{min:-1900,max:1900,step:1,get:()=>capMoveGet().y,set:v=>{capMoveSet(capMoveGet().x,v)},fmt:v=>(v>0?'+':'')+Math.round(v),reset:0});
   const syncAll=()=>{sx.sync();sy.sync()};
@@ -2869,10 +2881,8 @@ function buildSizeCaps(){const p=h('div',{class:'panel'});const C=P.cap;const s0
     b.addEventListener('pointerdown',e=>{e.preventDefault();nudge(ax,ay);to=setTimeout(()=>{iv=setInterval(()=>nudge(ax,ay),60)},380)});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,stop));return b};
   const pad=h('div',{style:'display:grid;grid-template-columns:repeat(3,auto);gap:6px;justify-content:start;margin:4px 0 10px'},h('span'),nb('arrU',0,-1,'Move up'),h('span'),nb('arrL',-1,0,'Move left'),h('button',{type:'button',class:'pillbtn',style:'min-width:46px;font-size:11px','aria-label':'Reset this move',onclick:()=>{commit();capMoveSet(0,0);syncAll();changed()}},'0'),nb('arrR',1,0,'Move right'),h('span'),nb('arrD',0,1,'Move down'),h('span'));
   const nOne=capClips().filter(c=>c.mv).length;
-  const one=capMoveScope==='one';
-  p.append(sec('Move captions',
-    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Apply to')),seg([{v:'one',label:'This caption only'},{v:'all',label:'All captions'}],()=>capMoveScope,v=>{capMoveScope=v;rebuild('size',true)},{label:'Move scope'})),
-    h('p',{class:'hint',style:'color:#9fd0ff;margin-top:0'},one?'Moves only the caption you have selected (the one showing in the preview). Every other caption keeps its own spot. You can also drag it in the preview.':'Moves every caption together. Captions you placed individually keep their own extra offset on top of this.'),
+  p.append(sec(one?'Move this caption':'Move all captions',
+    h('p',{class:'hint',style:'color:#9fd0ff;margin-top:0'},one?'You can also drag this caption in the preview.':'You can also drag in the preview to move them all together.'),
     sx,sy,pad,h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Arrow step')),seg([{v:2,label:'Fine'},{v:10,label:'Normal'},{v:40,label:'Big'}],()=>moveStep,v=>{moveStep=v},{label:'Arrow step'})),
     h('div',{class:'pillrow'},
       h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();const m=capMoveGet();capMoveSet(0,m.y);syncAll();changed()}},h('span',{class:'icl'},h('i',{class:'ic',html:svg('ctrH',2)}),'Center left–right')),
@@ -4176,7 +4186,7 @@ function capLook(id,text,name,so){try{const cs=CAP_BY[id];if(!cs)return null;con
  .forEach(([id,txt,name,so])=>{const lk=capLook(id,txt,name,so);if(lk)LOOKS.push(lk)});
 function heightUnits(){const [aw,ah]=aspectWH(P.aspect);return 1080*ah/Math.min(aw,ah)}
 /* per-caption overrides: a caption can have its own style (c.capo) and its own highlighted words (c.emphW) */
-function capCfg(clip){if(P.cap&&P.cap.style==='stkfire')P.cap.style='stacked';if(clip&&clip.capo&&clip.capo.style==='stkfire')clip.capo.style='stacked';let cfg=clip&&clip.capo?Object.assign({},P.cap,clip.capo):P.cap;if(clip&&(clip.emphW||clip.mv)){cfg=Object.assign({},cfg);if(clip.emphW)cfg.emphW=clip.emphW;if(clip.mv){cfg.mvx=+clip.mv.x||0;cfg.mvy=+clip.mv.y||0}}return cfg}
+function capCfg(clip){if(P.cap&&P.cap.style==='stkfire')P.cap.style='stacked';if(clip&&clip.capo&&clip.capo.style==='stkfire')clip.capo.style='stacked';let cfg=clip&&clip.capo?Object.assign({},P.cap,clip.capo):P.cap;if(clip&&(clip.emphW||clip.mv||clip.mvs)){cfg=Object.assign({},cfg);if(clip.emphW)cfg.emphW=clip.emphW;if(clip.mv){cfg.mvx=+clip.mv.x||0;cfg.mvy=+clip.mv.y||0}if(clip.mvs&&+clip.mvs>0)cfg.size=clamp((cfg.size||1)*(+clip.mvs),.2,4)}return cfg}
 function capState(ws,start,dur,c){const cs=CAP_BY[c.style]||CAPSTYLES[0];const so=styleOpts(cs,c);const o=cs.build(ws,c,so);const d3o=o.d3;
   if(so.blend&&so.blend!=='normal'){const on=cs.stack?(so.negOn||'all'):'all',amt=so.namt??1,flat=L=>{if(!so.nkeep){L.mat='flat';L.c1=so.ncolor||'#ffffff';delete L.cc;delete L.gm}delete L.lglow;delete L.plate};
     if(on==='all'){o.blend={mode:so.blend,amt};o.lines.forEach(flat);o.glow={on:false};o.shadow={on:false}}
@@ -4202,9 +4212,9 @@ function groupWords(words,maxW){const out=[];let cur=[];const maxC=P.cap&&CAP_BY
     if(cur.length&&(cur.length>=maxW||gap>.55||chars>maxC||/[.!?…]$/.test(prev.w)||(/[,;:]$/.test(prev.w)&&cur.length>=2))){out.push(cur);cur=[]}cur.push(w)});if(cur.length)out.push(cur);return out}
 const capClips=()=>P.clips.filter(c=>c.kind==='caption').sort((a,b)=>a.start-b.start);
 function allCapWords(){return capClips().flatMap(c=>c.words||[])}
-function buildCaptions(words,groups){const keepSel=selClip().kind!=='caption'?P.sel:null;const old=capClips().map(c=>({a:c.start,b:c.start+c.s.dur,capo:c.capo,mv:c.mv}));P.clips=P.clips.filter(c=>c.kind!=='caption');const gs=groups||groupWords(words,P.cap.maxWords);
+function buildCaptions(words,groups){const keepSel=selClip().kind!=='caption'?P.sel:null;const old=capClips().map(c=>({a:c.start,b:c.start+c.s.dur,capo:c.capo,mv:c.mv,mvs:c.mvs}));P.clips=P.clips.filter(c=>c.kind!=='caption');const gs=groups||groupWords(words,P.cap.maxWords);
   gs.forEach((g,i)=>{const nx=gs[i+1];let st=Math.max(0,g[0].s-.05),en=g[g.length-1].e+.5;if(nx)en=Math.min(en,Math.max(nx[0].s-.08,0)-.02);en=Math.max(en,st+.55);if(nx)en=Math.min(en,Math.max(st+.2,nx[0].s-.1));if(P.video)en=Math.min(en,P.video.dur);if(en<=st+.05)return;
-    const c=newClip(null,Math.round(st*1000)/1000,{track:1,kind:'caption',words:g.map(w=>({w:w.w,s:w.s,e:w.e}))});const from=old.find(o=>g[0].s>=o.a-.01&&g[0].s<o.b);if(from&&from.capo)c.capo=structuredClone(from.capo);if(from&&from.mv)c.mv=Object.assign({},from.mv);
+    const c=newClip(null,Math.round(st*1000)/1000,{track:1,kind:'caption',words:g.map(w=>({w:w.w,s:w.s,e:w.e}))});const from=old.find(o=>g[0].s>=o.a-.01&&g[0].s<o.b);if(from&&from.capo)c.capo=structuredClone(from.capo);if(from&&from.mv)c.mv=Object.assign({},from.mv);if(from&&from.mvs)c.mvs=from.mvs;
     c.s=capState(c.words,c.start,Math.round((en-st)*1000)/1000,capCfg(c));capGen(c);P.clips.push(c)});
   linkProject();P.sel=keepSel&&P.clips.find(c=>c.id===keepSel)?keepSel:(capClips()[0]||P.clips[0]).id;S=selClip().s;sel=0;capTrack()}
 /* keep adjustments: every caption remembers what you changed on it (font, colours, material, glow…) and re-applies it after any rebuild */
