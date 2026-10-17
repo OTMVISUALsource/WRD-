@@ -2841,22 +2841,45 @@ function buildGloss(){const p=h('div',{class:'panel'});if(glossTgt>=S.lines.leng
   return p}
 function sizeTargets(){if(sizeScope==='titles'){const cs=P.clips.filter(c=>c.kind!=='caption').map(c=>c.s);if(!cs.length)cs.push(S);return cs.map(s_=>({s:s_,lines:s_.lines}))}
   if(sizeScope==='all'||S.lines.length<2)return[{s:S,lines:S.lines}];return[{s:S,lines:[S.lines[Math.min(sel,S.lines.length-1)]]}]}
-function buildSizeCaps(){const p=h('div',{class:'panel'});const C=P.cap;const s0=C.size||1,p0=C.pos,x0=C.dx||0;let k=100,mx=0,my=0;const HU=heightUnits();
-  const upd=()=>{C.size=clamp(s0*k/100,.3,4);C.pos=clamp(p0+my/HU,.03,.97);C.dx=Math.round(x0+mx);capRebuildAll();dirty=true};
+let capMoveScope='one';
+const capDefPos=()=>(CAP_BY[P.cap.style]||{}).pos??.72;
+/* one place that reads / writes a caption position, used by the sliders, arrows and the preview drag.
+   'one'  = only the selected caption (stored on the caption as c.mv, added on top of the shared position)
+   'all'  = the shared position every caption follows (P.cap.pos / P.cap.dx) */
+function capMoveGet(){const c=selClip(),HU=heightUnits();if(capMoveScope==='one'&&c&&c.kind==='caption'){const m=c.mv||{};return{x:+m.x||0,y:+m.y||0}}return{x:+P.cap.dx||0,y:Math.round((P.cap.pos-capDefPos())*HU)}}
+function capMoveSet(x,y){const c=selClip(),HU=heightUnits();x=clamp(Math.round(x),-1600,1600);y=clamp(Math.round(y),-2600,2600);
+  if(capMoveScope==='one'&&c&&c.kind==='caption'){if(x||y)c.mv={x,y};else delete c.mv;capRebuild(c);linkProject()}
+  else{P.cap.dx=x;P.cap.pos=capDefPos()+y/HU;capRebuildAll()}
+  S=selClip().s;dirty=true}
+function buildSizeCaps(){const p=h('div',{class:'panel'});const C=P.cap;const s0=C.size||1;let k=100;
+  const upd=()=>{C.size=clamp(s0*k/100,.3,4);capRebuildAll();dirty=true};
   const sizeNow=h('p',{class:'hint'});const showNow=()=>{sizeNow.textContent='Caption size now: '+Math.round((C.size||1)*100)+'% of the style’s normal size.'+((C.size||1)>=2.95?' That’s the largest size.':'')};showNow();
   const sl=slider('Scale',{min:25,max:300,step:1,get:()=>k,set:v=>{k=v;upd();showNow()},fmt:v=>Math.round(v)+'%',reset:100});
   const quick=h('div',{class:'pillrow'},...[50,75,90,110,125,150].map(q=>h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();k=q;upd();sl.sync();changed()}},q+'%')));
-  p.append(sec('Scale all captions',h('p',{class:'hint',style:'color:#9fd0ff;margin-top:0'},'Captions scale and move as one. Every caption, every line and every word keep their proportions, spacing and layout.'),sl,quick,
+  p.append(sec('Scale all captions',h('p',{class:'hint',style:'color:#9fd0ff;margin-top:0'},'Captions scale as one. Every caption, every line and every word keep their proportions, spacing and layout.'),sl,quick,
     sizeNow,
     h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn',onclick:()=>{fitSafe();rebuild('size',true)}},'Fit inside safe area'),h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();C.size=1;capRebuildAll();changed();rebuild('size',true)}},'Reset to 100%'),h('button',{type:'button',class:'pillbtn',onclick:()=>rebuild('size',true)},'Done · reset slider'))));
-  const sx=slider('Left / Right',{min:-600,max:600,step:1,get:()=>mx,set:v=>{mx=v;upd()},fmt:v=>(v>0?'+':'')+Math.round(v),reset:0});
-  const sy=slider('Up / Down',{min:-900,max:900,step:1,get:()=>my,set:v=>{my=v;upd()},fmt:v=>(v>0?'+':'')+Math.round(v),reset:0});
-  const nudge=(ax,ay)=>{commit();mx=clamp(mx+ax*moveStep,-600,600);my=clamp(my+ay*moveStep,-900,900);upd();sx.sync();sy.sync();changed()};
+  const selCap=selClip().kind==='caption'?selClip():null;if(!selCap&&capMoveScope==='one')capMoveScope='all';
+  const sx=slider('Left / Right',{min:-1100,max:1100,step:1,get:()=>capMoveGet().x,set:v=>{capMoveSet(v,capMoveGet().y)},fmt:v=>(v>0?'+':'')+Math.round(v),reset:0});
+  const sy=slider('Up / Down',{min:-1900,max:1900,step:1,get:()=>capMoveGet().y,set:v=>{capMoveSet(capMoveGet().x,v)},fmt:v=>(v>0?'+':'')+Math.round(v),reset:0});
+  const syncAll=()=>{sx.sync();sy.sync()};
+  window.capMoveSync=()=>{try{syncAll()}catch(e){}};
+  const nudge=(ax,ay)=>{commit();const m=capMoveGet();capMoveSet(m.x+ax*moveStep,m.y+ay*moveStep);syncAll();changed()};
   const nb=(lbl,ax,ay,aria)=>{const b=h('button',{type:'button',class:'pillbtn nudge','aria-label':aria,title:aria,html:svg(lbl,2.2)});let iv=null,to=null;const stop=()=>{clearTimeout(to);clearInterval(iv)};
     b.addEventListener('pointerdown',e=>{e.preventDefault();nudge(ax,ay);to=setTimeout(()=>{iv=setInterval(()=>nudge(ax,ay),60)},380)});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,stop));return b};
-  const pad=h('div',{style:'display:grid;grid-template-columns:repeat(3,auto);gap:6px;justify-content:start;margin:4px 0 10px'},h('span'),nb('arrU',0,-1,'Move captions up'),h('span'),nb('arrL',-1,0,'Move captions left'),h('button',{type:'button',class:'pillbtn',style:'min-width:46px;font-size:11px','aria-label':'Undo this move',onclick:()=>{commit();mx=0;my=0;upd();sx.sync();sy.sync();changed()}},'0'),nb('arrR',1,0,'Move captions right'),h('span'),nb('arrD',0,1,'Move captions down'),h('span'));
-  p.append(sec('Move all captions',sx,sy,pad,h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Arrow step')),seg([{v:2,label:'Fine'},{v:10,label:'Normal'},{v:40,label:'Big'}],()=>moveStep,v=>{moveStep=v},{label:'Arrow step'})),
-    h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();C.dx=0;capRebuildAll();changed();rebuild('size',true)}},h('span',{class:'icl'},h('i',{class:'ic',html:svg('ctrH',2)}),'Center left–right')),h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();C.pos=(CAP_BY[C.style]||{}).pos??.72;capRebuildAll();changed();rebuild('size',true)}},'Style’s default height'))));
+  const pad=h('div',{style:'display:grid;grid-template-columns:repeat(3,auto);gap:6px;justify-content:start;margin:4px 0 10px'},h('span'),nb('arrU',0,-1,'Move up'),h('span'),nb('arrL',-1,0,'Move left'),h('button',{type:'button',class:'pillbtn',style:'min-width:46px;font-size:11px','aria-label':'Reset this move',onclick:()=>{commit();capMoveSet(0,0);syncAll();changed()}},'0'),nb('arrR',1,0,'Move right'),h('span'),nb('arrD',0,1,'Move down'),h('span'));
+  const nOne=capClips().filter(c=>c.mv).length;
+  const one=capMoveScope==='one';
+  p.append(sec('Move captions',
+    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Apply to')),seg([{v:'one',label:'This caption only'},{v:'all',label:'All captions'}],()=>capMoveScope,v=>{capMoveScope=v;rebuild('size',true)},{label:'Move scope'})),
+    h('p',{class:'hint',style:'color:#9fd0ff;margin-top:0'},one?'Moves only the caption you have selected (the one showing in the preview). Every other caption keeps its own spot. You can also drag it in the preview.':'Moves every caption together. Captions you placed individually keep their own extra offset on top of this.'),
+    sx,sy,pad,h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Arrow step')),seg([{v:2,label:'Fine'},{v:10,label:'Normal'},{v:40,label:'Big'}],()=>moveStep,v=>{moveStep=v},{label:'Arrow step'})),
+    h('div',{class:'pillrow'},
+      h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();const m=capMoveGet();capMoveSet(0,m.y);syncAll();changed()}},h('span',{class:'icl'},h('i',{class:'ic',html:svg('ctrH',2)}),'Center left–right')),
+      h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();if(capMoveScope==='all'){C.pos=capDefPos();capRebuildAll()}else capMoveSet(capMoveGet().x,0);syncAll();changed()}},'Style’s default height')),
+    h('div',{class:'pillrow'},
+      one&&selCap&&selCap.mv?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();delete selCap.mv;capRebuild(selCap);linkProject();S=selClip().s;changed();rebuild('size',true);toast('This caption is back with the others')}},'Reset this caption’s position'):null,
+      nOne?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();capClips().forEach(c=>{delete c.mv});capRebuildAll();changed();rebuild('size',true);toast('Every caption is back at the shared position')}},'Reset all individual positions ('+nOne+')'):null)));
   p.addEventListener('pointerup',()=>setTimeout(()=>{commit();changed()},50));return p}
 function buildSize(){if(selClip().kind==='caption')return buildSizeCaps();const p=h('div',{class:'panel'});const multi=S.lines.length>1,nTitles=P.clips.filter(c=>c.kind!=='caption').length;if(!multi&&sizeScope==='line')sizeScope='all';
   const opts=[];if(multi)opts.push({v:'line',label:'This line'});opts.push({v:'all',label:multi?'All lines':'This title'});if(nTitles>1)opts.push({v:'titles',label:'All titles ('+nTitles+')'});
@@ -2966,7 +2989,8 @@ function negSec(){const lineMode=negScope==='line'&&S.lines.length>1,L=cur();con
     box.append(h('p',{class:'hint'},(lineMode?'Only “'+(L.text||'this line').slice(0,18)+'” is negative; the other lines stay as they are. ':'')+'Keep colours & gradient lets gradients and gradient motion keep moving inside the negative. White gives a true negative. Shows over your video in the preview and in Video + Text exports.'))}
   else box.append(h('p',{class:'hint'},'Difference flips the video inside the letters, Subtract darkens it by the letter colour. Pick Selected line to make only some words negative. Needs a video behind the text.'));
   return box}
-function buildD3(){const d=S.d3;const p=h('div',{class:'panel'});
+function buildD3(){/* live view of the selected clip's 3D settings: when a caption edit is copied to every caption the 3D object is replaced, so a fixed reference would leave the sliders changing an object nobody draws */
+  const d=new Proxy({},{get:(_,k)=>S.d3[k],set:(_,k,v)=>{S.d3[k]=v;return true},has:(_,k)=>k in S.d3,ownKeys:()=>Reflect.ownKeys(S.d3),getOwnPropertyDescriptor:(_,k)=>({value:S.d3[k],enumerable:true,configurable:true,writable:true})});const p=h('div',{class:'panel'});
   {const caps=capClips(),isCap=selClip().kind==='caption';if(caps.length){const box=sec('3D for',seg([{v:'cap',label:'Caption styles'},{v:'look',label:'This look'}],()=>isCap?'cap':'look',v=>shineFor(v),{label:'3D for'}),
       h('p',{class:'hint'},isCap?'3D here applies to every caption and stays when you change caption style, regenerate or press play. Adjust while it plays to see it live.':'3D here is only on the selected look or text. Switch to Caption styles to put your captions in 3D.'));
     if(isCap&&d&&(d.rx||d.ry||d.rz||d.depth>0||(d.idle&&d.idle!=='none')))box.append(h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();const flat={rx:0,ry:0,rz:0,depth:0,idle:'none'};const look=P.cap.look||(P.cap.look={});look.s=look.s||{};look.s.d3=Object.assign({},S.d3,flat);capClips().forEach(c=>{c.s.d3=Object.assign({},c.s.d3,flat);if(c.gen)c.gen.s.d3=kj(c.s.d3);if(c.keep&&c.keep.s)delete c.keep.s.d3});S=selClip().s;capTrack();changed();rebuild('d3',true);toast('Captions are flat again')}},'Make captions flat again'));
@@ -3340,13 +3364,16 @@ function capBlock(){const c=selClip();if(!c||c.kind!=='caption')return null;try{
   const lines=lastInfo.lay.lines;let hit=-1;lines.forEach((ln,i)=>{if(x>=ln.x0-20&&x<=ln.x1+20&&y>=ln.top-20&&y<=ln.bottom+20)hit=i});if(hit<0)return;
   if(hit!==sel){sel=hit;rebuild('text');rebuild('style')}
   const cap=selClip().kind==='caption';
-  drag={x:e.clientX,y:e.clientY,dx:S.lines[sel].dx,dy:S.lines[sel].dy,k,base:lastInfo.lay.base,cap,pos0:P.cap.pos};snX=snY=false;view.setPointerCapture(e.pointerId);if(playing)setPlaying(false);
+  if(cap){const act=capClips().filter(c=>T>=c.start&&T<c.start+c.s.dur),cur=selClip();if(act.length&&!act.includes(cur))selectClip(act[act.length-1].id)}
+  const m0=cap?capMoveGet():{x:0,y:0};
+  drag={x:e.clientX,y:e.clientY,dx:S.lines[sel].dx,dy:S.lines[sel].dy,k,base:lastInfo.lay.base,cap,mx0:m0.x,my0:m0.y};snX=snY=false;view.setPointerCapture(e.pointerId);if(playing)setPlaying(false);
   const c=selClip();if(T-c.start<S.inDur)seek(c.start+Math.min(S.dur-.01,S.inDur+.05));dirty=true});
   view.addEventListener('pointermove',e=>{if(!drag)return;const W=view.width,H=view.height,ddx=(e.clientX-drag.x)*drag.k,ddy=(e.clientY-drag.y)*drag.k;const thr=12*drag.k,rel=22*drag.k;
-    if(drag.cap){let pos=clamp(drag.pos0+ddy/H,.06,.94);const b0=capBlock();let ny=false;
-      if(b0){const cy=(b0.top+b0.bottom)/2,cur=P.cap.pos;const want=cy+(pos-cur)*H;if(Math.abs(want-H/2)<(snY?rel:thr)){pos+=(H/2-want)/H;ny=true}}
-      if(ny&&!snY)buzz();snY=ny;snX=false;P.cap.pos=pos;if(!raf)raf=requestAnimationFrame(()=>{raf=0;capRebuildAll();dirty=true;const b=capBlock();if(b)showPosQ(b,W,H,true,true)});
-      sv.classList.remove('on');sh.classList.toggle('on',snY);return}
+    if(drag.cap){let nx=drag.mx0+ddx/drag.base,ny_=drag.my0+ddy/drag.base;const b_=drag.base;
+      const apply=()=>{capMoveSet(nx,ny_)};apply();let sX=false,sY=false;const bb=capBlock();
+      if(bb){const cx=(bb.x0+bb.x1)/2,cy=(bb.top+bb.bottom)/2;if(Math.abs(cx-W/2)<(snX?rel:thr)){nx+=(W/2-cx)/b_;sX=true}if(Math.abs(cy-H/2)<(snY?rel:thr)){ny_+=(H/2-cy)/b_;sY=true}if(sX||sY)apply()}
+      if((sX&&!snX)||(sY&&!snY))buzz();snX=sX;snY=sY;sv.classList.toggle('on',snX);sh.classList.toggle('on',snY);
+      if(!raf)raf=requestAnimationFrame(()=>{raf=0;dirty=true;const b=capBlock();if(b)showPosQ(b,W,H,true,true);try{window.capMoveSync&&window.capMoveSync()}catch(e){}});return}
     const L=S.lines[sel];L.dx=Math.round(drag.dx+ddx/drag.base);L.dy=Math.round(drag.dy+ddy/drag.base);
     let lay=Engine.layout(S,W,H),ln=lay.lines[sel];let nx=false,ny=false;
     if(ln){if(Math.abs(ln.cx-W/2)<(snX?rel:thr)){L.dx+=(W/2-ln.cx)/lay.base;nx=true}
@@ -3355,7 +3382,7 @@ function capBlock(){const c=selClip();if(!c||c.kind!=='caption')return null;try{
     if((nx&&!snX)||(ny&&!snY))buzz();snX=nx;snY=ny;sv.classList.toggle('on',snX);sh.classList.toggle('on',snY);
     showPosQ(lay.block,W,H,false,true);changed({tl:false})});
   const end=()=>{if(drag){const cap=drag.cap;drag=null;sv.classList.remove('on');sh.classList.remove('on');$('#recZ').hidden=true;
-      const W=view.width,H=view.height;if(cap){capRebuildAll();const b=capBlock();if(b)showPosQ(b,W,H,true,false);changed();rebuild('video',true)}else{try{showPosQ(Engine.layout(S,W,H).block,W,H,false,false)}catch(e){}rebuild('text',true)}}};
+      const W=view.width,H=view.height;if(cap){const b=capBlock();if(b)showPosQ(b,W,H,true,false);changed();rebuild('video',true);try{rebuild('size',true)}catch(e){}}else{try{showPosQ(Engine.layout(S,W,H).block,W,H,false,false)}catch(e){}rebuild('text',true)}}};
   view.addEventListener('pointerup',end);view.addEventListener('pointercancel',end)})();
 
 /* =====================================================================
@@ -4149,13 +4176,14 @@ function capLook(id,text,name,so){try{const cs=CAP_BY[id];if(!cs)return null;con
  .forEach(([id,txt,name,so])=>{const lk=capLook(id,txt,name,so);if(lk)LOOKS.push(lk)});
 function heightUnits(){const [aw,ah]=aspectWH(P.aspect);return 1080*ah/Math.min(aw,ah)}
 /* per-caption overrides: a caption can have its own style (c.capo) and its own highlighted words (c.emphW) */
-function capCfg(clip){if(P.cap&&P.cap.style==='stkfire')P.cap.style='stacked';if(clip&&clip.capo&&clip.capo.style==='stkfire')clip.capo.style='stacked';return clip&&clip.capo?Object.assign({},P.cap,clip.capo,clip.emphW?{emphW:clip.emphW}:{}):(clip&&clip.emphW?Object.assign({},P.cap,{emphW:clip.emphW}):P.cap)}
+function capCfg(clip){if(P.cap&&P.cap.style==='stkfire')P.cap.style='stacked';if(clip&&clip.capo&&clip.capo.style==='stkfire')clip.capo.style='stacked';let cfg=clip&&clip.capo?Object.assign({},P.cap,clip.capo):P.cap;if(clip&&(clip.emphW||clip.mv)){cfg=Object.assign({},cfg);if(clip.emphW)cfg.emphW=clip.emphW;if(clip.mv){cfg.mvx=+clip.mv.x||0;cfg.mvy=+clip.mv.y||0}}return cfg}
 function capState(ws,start,dur,c){const cs=CAP_BY[c.style]||CAPSTYLES[0];const so=styleOpts(cs,c);const o=cs.build(ws,c,so);const d3o=o.d3;
   if(so.blend&&so.blend!=='normal'){const on=cs.stack?(so.negOn||'all'):'all',amt=so.namt??1,flat=L=>{if(!so.nkeep){L.mat='flat';L.c1=so.ncolor||'#ffffff';delete L.cc;delete L.gm}delete L.lglow;delete L.plate};
     if(on==='all'){o.blend={mode:so.blend,amt};o.lines.forEach(flat);o.glow={on:false};o.shadow={on:false}}
     else o.lines.filter(L=>on==='accent'?L._acc:!L._acc).forEach(L=>{L.blend={mode:so.blend,amt};flat(L)})}
-  if(o.anchorTop!=null)o.anchorTop=clamp(c.pos-.1,.03,.85);else{const shift=(c.pos-.5)*heightUnits();o.lines.forEach(L=>{L.dy=(L.dy||0)+shift})}
-  if(c.dx)o.lines.forEach(L=>{L.dx=(L.dx||0)+c.dx});
+  const mvx=+c.mvx||0,mvy=+c.mvy||0;
+  if(o.anchorTop!=null)o.anchorTop=clamp(c.pos-.1+mvy/heightUnits(),-.6,1.5);else{const shift=(c.pos-.5)*heightUnits()+mvy;o.lines.forEach(L=>{L.dy=(L.dy||0)+shift})}
+  if(c.dx||mvx)o.lines.forEach(L=>{L.dx=(L.dx||0)+(c.dx||0)+mvx});
   const g0=o.glow;Object.assign(o,{dur,inDur:.3,outMode:o.outMode||'fade',outDur:o.outDur??.12,stagger:0,wordDur:c.wordDur,words:ws.map(w=>Math.max(0,w.s-start-.02)),shine:capShineFor(c.shine,dur),glow:g0||{on:false},flare:{on:false},d3:d3o?Object.assign({depth:0},d3o):{depth:0},lineGap:o.lineGap??-6});
   if(cs.emph){let bi=0,bv=-1;ws.forEach((w,i)=>{const v=wscore(w.w);if(v>bv){bv=v;bi=i}});o.emph=bv>=3?[bi]:[];o.emphColor=c.emph}
   if(Array.isArray(c.emphW)){o.emph=c.emphW.filter(i=>i>=0&&i<ws.length);o.emphColor=c.emph}
@@ -4174,9 +4202,9 @@ function groupWords(words,maxW){const out=[];let cur=[];const maxC=P.cap&&CAP_BY
     if(cur.length&&(cur.length>=maxW||gap>.55||chars>maxC||/[.!?…]$/.test(prev.w)||(/[,;:]$/.test(prev.w)&&cur.length>=2))){out.push(cur);cur=[]}cur.push(w)});if(cur.length)out.push(cur);return out}
 const capClips=()=>P.clips.filter(c=>c.kind==='caption').sort((a,b)=>a.start-b.start);
 function allCapWords(){return capClips().flatMap(c=>c.words||[])}
-function buildCaptions(words,groups){const keepSel=selClip().kind!=='caption'?P.sel:null;const old=capClips().map(c=>({a:c.start,b:c.start+c.s.dur,capo:c.capo}));P.clips=P.clips.filter(c=>c.kind!=='caption');const gs=groups||groupWords(words,P.cap.maxWords);
+function buildCaptions(words,groups){const keepSel=selClip().kind!=='caption'?P.sel:null;const old=capClips().map(c=>({a:c.start,b:c.start+c.s.dur,capo:c.capo,mv:c.mv}));P.clips=P.clips.filter(c=>c.kind!=='caption');const gs=groups||groupWords(words,P.cap.maxWords);
   gs.forEach((g,i)=>{const nx=gs[i+1];let st=Math.max(0,g[0].s-.05),en=g[g.length-1].e+.5;if(nx)en=Math.min(en,Math.max(nx[0].s-.08,0)-.02);en=Math.max(en,st+.55);if(nx)en=Math.min(en,Math.max(st+.2,nx[0].s-.1));if(P.video)en=Math.min(en,P.video.dur);if(en<=st+.05)return;
-    const c=newClip(null,Math.round(st*1000)/1000,{track:1,kind:'caption',words:g.map(w=>({w:w.w,s:w.s,e:w.e}))});const from=old.find(o=>g[0].s>=o.a-.01&&g[0].s<o.b);if(from&&from.capo)c.capo=structuredClone(from.capo);
+    const c=newClip(null,Math.round(st*1000)/1000,{track:1,kind:'caption',words:g.map(w=>({w:w.w,s:w.s,e:w.e}))});const from=old.find(o=>g[0].s>=o.a-.01&&g[0].s<o.b);if(from&&from.capo)c.capo=structuredClone(from.capo);if(from&&from.mv)c.mv=Object.assign({},from.mv);
     c.s=capState(c.words,c.start,Math.round((en-st)*1000)/1000,capCfg(c));capGen(c);P.clips.push(c)});
   linkProject();P.sel=keepSel&&P.clips.find(c=>c.id===keepSel)?keepSel:(capClips()[0]||P.clips[0]).id;S=selClip().s;sel=0;capTrack()}
 /* keep adjustments: every caption remembers what you changed on it (font, colours, material, glow…) and re-applies it after any rebuild */
@@ -4751,7 +4779,7 @@ setTimeout(markPQ,0);
 function updSafeWarn(){const w=$('#safeWarn');if(!w)return;if(!P.safe||!P.safe.on||!lastInfo||!lastInfo.lay){w.hidden=true;return}const b=lastInfo.lay.block,z=safeZone(),W=view.width,H=view.height;
   const bad=b.x0<W*z.l-1||b.x1>W*(1-z.r)+1||b.top<H*z.t-1||b.bottom>H*(1-z.b)+1;w.hidden=!bad}
 function fitSafe(){const c=selClip(),z=safeZone();if(c.draft){toast('Select a text clip first');return}commit();
-  if(c.kind==='caption'){const lo=z.t+.07,hi=1-z.b-.07;P.cap.pos=clamp(P.cap.pos,lo,hi);capRebuildAll();refreshAll();changed();toast('Captions moved inside the '+PLATS[safePlat()].name+' safe area');return}
+  if(c.kind==='caption'){const lo=z.t+.07,hi=1-z.b-.07;if(capMoveScope==='one'&&c.mv){const HU=heightUnits(),eff=P.cap.pos+(c.mv.y||0)/HU,fix=clamp(eff,lo,hi);c.mv.y=Math.round((fix-P.cap.pos)*HU);capRebuild(c);linkProject()}else{P.cap.pos=clamp(P.cap.pos,lo,hi);capRebuildAll()}refreshAll();changed();toast('Captions moved inside the '+PLATS[safePlat()].name+' safe area');return}
   const W=view.width,H=view.height,sx0=W*z.l,sx1=W*(1-z.r),sy0=H*z.t,sy1=H*(1-z.b);let lay,b;
   for(let it=0;it<6;it++){lay=Engine.layout(S,W,H);b=lay.block;const k=Math.min(1,(sx1-sx0)*.88/Math.max(1,b.x1-b.x0),(sy1-sy0)*.9/Math.max(1,b.bottom-b.top));if(k>=.995)break;
     S.lines.forEach(L=>{L.size=Math.max(20,Math.floor(L.size*k));L.dx=Math.round(L.dx*k);L.dy=Math.round(L.dy*k)})}
