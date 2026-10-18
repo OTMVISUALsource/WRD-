@@ -1755,7 +1755,7 @@ const Engine=(()=>{
       if(cc&&it.ci!=null&&cc[it.ci]){const fs=c.fillStyle;c.fillStyle=cc[it.ci];c.fillText(it.text,x,y);c.fillStyle=fs}else c.fillText(it.text,x,y)}}
   let FAST=false,LITE=false,GT=0,LP=0;
   /* moving text is drawn from a cached bitmap so glyphs glide smoothly instead of snapping to the pixel grid */
-  const SPRC=new Map();
+  const SPRC=new Map();const SPCAP=(/iPhone|iPad|Android/i.test(navigator.userAgent)||(/Mac/.test(navigator.userAgent)&&navigator.maxTouchPoints>1))?80:260;
   function unitSprite(c,ln,u,items,sty,st){try{const L=ln.L;const fk=typeof c.fillStyle==='string'?c.fillStyle:[L.mat,L.c1,L.c2,L.c3,L.gAng,L.gH,L.metal,L.gm&&L.gm.type!=='none'?GT.toFixed(3):'',st.color||''].join(',');
       /* padding covers the real ink of the glyphs (wide/heavy fonts, swashes and phone fallback fonts reach past the measured box) */
       let ov=0;try{items.forEach(it=>{const m=c.measureText(it.text);if(m&&isFinite(m.actualBoundingBoxLeft)){const ix=it.cx!=null?it.cx-m.width/2:it.x;ov=Math.max(ov,(u.x0-(ix-m.actualBoundingBoxLeft)),(ix+m.actualBoundingBoxRight)-u.x1,(m.actualBoundingBoxAscent||0)-(ln.base-ln.top),(m.actualBoundingBoxDescent||0)-(ln.bottom-ln.base))}})}catch(e){}
@@ -1764,7 +1764,7 @@ const Engine=(()=>{
       const key=c.font+'|'+items.map(i=>i.text+'@'+(i.x!=null?i.x.toFixed(2):'c'+i.cx.toFixed(2))).join('')+'|'+ln.base.toFixed(2)+'|'+fk+'|'+(ln.L.cc?JSON.stringify(ln.L.cc):'')+'|'+(sty.lw||0)+'|'+c.strokeStyle+'|'+x0+','+y0+','+w+','+h;
       let e=SPRC.get(key);if(e){SPRC.delete(key);SPRC.set(key,e);return e}
       const cv=document.createElement('canvas');cv.width=w;cv.height=h;const x=cv.getContext('2d');x.font=c.font;x.textBaseline=c.textBaseline;x.textAlign='left';x.fillStyle=c.fillStyle;x.strokeStyle=c.strokeStyle;x.lineWidth=c.lineWidth;x.lineJoin=c.lineJoin;x.miterLimit=c.miterLimit;
-      x.translate(-x0,-y0);paintItems(x,ln,items,sty,1);e={cv,x:x0,y:y0,w,h};SPRC.set(key,e);if(SPRC.size>260)SPRC.delete(SPRC.keys().next().value);return e}catch(err){return null}}
+      x.translate(-x0,-y0);paintItems(x,ln,items,sty,1);e={cv,x:x0,y:y0,w,h};SPRC.set(key,e);if(SPRC.size>SPCAP)SPRC.delete(SPRC.keys().next().value);return e}catch(err){return null}}
   function inkCy(c,ln,u){const f=c.font;if(u._icyF===f)return u._icy;let y=u.cy;try{const tx=u.ch!=null?u.ch:(u.isLine?ln.txt:u.text);if(tx){const m=c.measureText(tx);if(m&&m.actualBoundingBoxAscent!=null&&isFinite(m.actualBoundingBoxAscent)){const a=m.actualBoundingBoxAscent,d=m.actualBoundingBoxDescent||0;if(a+d>0)y=ln.base-(a-d)/2}}}catch(e){}u._icy=y;u._icyF=f;return y}
   /* frosted pill behind a caption line */
   function drawPlate(c,ln,pl,a,ox,oy){const em=ln.px,px_=em*(pl.padX??.5),py_=em*(pl.padY??.3);const top=ln.base-em*.76-py_+oy,bot=ln.base+em*.22+py_+oy,x0=ln.x0-px_+ox,x1=ln.x1+px_+ox,h_=bot-top,r=Math.min(h_/2,em*(pl.r??10));
@@ -2426,7 +2426,10 @@ const rq=[];let rqOn=false,SPBUSY=!!document.getElementById('splash');
 function queueRender(fn){rq.push(fn);if(!rqOn){rqOn=true;requestAnimationFrame(runQ)}}
 function runQ(){if(SPBUSY){setTimeout(()=>requestAnimationFrame(runQ),150);return}const t0=performance.now();while(rq.length&&performance.now()-t0<9){try{rq.shift()()}catch(e){console.warn(e)}}if(rq.length)requestAnimationFrame(runQ);else rqOn=false}
 function miniState(o){const s=fromLook({s:Object.assign({glow:{on:true,size:22,int:.45},flare:{on:false},shine:{on:false},d3:{depth:0},dur:2,inDur:.9,outMode:'none',stagger:.5,autoFit:true,lineGap:-20,bg:{mode:'transparent'}},o)});s.aspect='3:2';return s}
-function renderMini(cv,state,t){try{Engine.render(state,t,cv,{noGL:true})}catch(e){console.warn(e)}}
+const LAZYTILES=/iPhone|iPad|Android/i.test(navigator.userAgent)||(/Mac/.test(navigator.userAgent)&&navigator.maxTouchPoints>1)||matchMedia('(pointer:coarse)').matches;
+const TILE_IO=LAZYTILES&&'IntersectionObserver' in window?new IntersectionObserver(es=>{es.forEach(e=>{const cv=e.target;cv._vis=e.isIntersecting;if(e.isIntersecting&&cv._pend){const q=cv._pend;cv._pend=null;queueRender(()=>{try{Engine.render(q[0],q[1],cv,{noGL:true})}catch(er){console.warn(er)}})}})},{rootMargin:'240px'}):null;
+function renderMini(cv,state,t,now){if(TILE_IO&&!now&&cv&&cv.isConnected!==undefined){if(!cv._io){cv._io=1;cv._vis=false;TILE_IO.observe(cv)}if(!cv._vis){cv._pend=[state,t];return}}
+  try{Engine.render(state,t,cv,{noGL:true})}catch(e){console.warn(e)}}
 const hov={tile:null,state:null,t0:0,len:2};
 /* a tile can be re-drawn the moment it's tapped (the panel refreshes); the preview finds its replacement by this key */
 function tileKey(t){const d=t.dataset||{};for(const k of['cap','anim','shine','gm','look'])if(d[k])return`[data-${k}="${d[k]}"]`;const a=t.getAttribute('aria-label');return a?`button[aria-label="${a.replace(/"/g,'\\"')}"]`:null}
@@ -2437,7 +2440,7 @@ const HOVC=new Map();
 function tickHover(now){if(!hov.tile)return;if(!hov.tile.isConnected){const n=hov.key&&document.querySelector(hov.key);if(n&&n.querySelector('canvas')){hov.tile=n;hov.cv=n.querySelector('canvas');n.classList.add('playing')}else{hov.tile=null;return}}if(hov.until&&now>hov.until){const tl=hov.tile;hov.tile=null;tl.classList.remove('playing');return}const t=((now-hov.t0)/1000)%hov.len,fi=Math.floor(t*15);
   let c=HOVC.get(hov.tile);if(!c||c.cv!==hov.cv||c.w!==hov.cv.width){c={cv:hov.cv,w:hov.cv.width,f:[]};HOVC.set(hov.tile,c);if(HOVC.size>8)HOVC.delete(HOVC.keys().next().value)}
   const x=hov.cv.getContext('2d');if(c.f[fi]){x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,hov.cv.width,hov.cv.height);x.drawImage(c.f[fi],0,0);return}
-  renderMini(hov.cv,hov.state,fi/15);try{const k=document.createElement('canvas');k.width=hov.cv.width;k.height=hov.cv.height;k.getContext('2d').drawImage(hov.cv,0,0);c.f[fi]=k}catch(e){}}
+  renderMini(hov.cv,hov.state,fi/15,true);try{const k=document.createElement('canvas');k.width=hov.cv.width;k.height=hov.cv.height;k.getContext('2d').drawImage(hov.cv,0,0);c.f[fi]=k}catch(e){}}
 
 /* =====================================================================
    Panels
@@ -2949,7 +2952,7 @@ function buildStyle(){const L=cur();const p=h('div',{class:'panel'});const g=h('
   {const isNone=S.lines.every(o=>o.mat==='flat'&&/^#f{6}$/i.test(o.c1)&&!(o.bevel>0)&&!(o.strokeW>0));const cv=h('canvas',{width:220,height:176});
    const tile=h('button',{type:'button',class:'tile mat',style:'--c:#57e36b','aria-pressed':String(isNone),'aria-label':'No material, plain white text'},cv,h('span',{class:'name'},'None'),h('span',{class:'dot',html:svg('check',3.5)}));
    tile.addEventListener('click',()=>{commit();S.lines.forEach(o=>Object.assign(o,{mat:'flat',c1:'#ffffff',bevel:null,strokeW:0,metal:0}));rebuild('style');changed();toast('Material removed · plain white text')});g.append(tile);
-   queueRender(()=>{const st=miniState({anim:'slide1',inDur:.05,lines:[Ln({text:'Aa',font:L.font,weight:L.weight,size:420,track:-.02})],glow:{on:false}});st.aspect='5:4';renderMini(cv,st,1);const x=cv.getContext('2d');x.save();x.strokeStyle='rgba(255,255,255,.28)';x.lineWidth=3;x.beginPath();x.moveTo(cv.width*.2,cv.height*.78);x.lineTo(cv.width*.8,cv.height*.18);x.stroke();x.restore()})}
+   queueRender(()=>{const st=miniState({anim:'slide1',inDur:.05,lines:[Ln({text:'Aa',font:L.font,weight:L.weight,size:420,track:-.02})],glow:{on:false}});st.aspect='5:4';renderMini(cv,st,1,true);const x=cv.getContext('2d');x.save();x.strokeStyle='rgba(255,255,255,.28)';x.lineWidth=3;x.beginPath();x.moveTo(cv.width*.2,cv.height*.78);x.lineTo(cv.width*.8,cv.height*.18);x.stroke();x.restore()})}
   const mkMat=(id,M,g)=>{const cv=h('canvas',{width:220,height:176});const tile=h('button',{type:'button',class:'tile mat',style:'--c:#57e36b','aria-pressed':String(L.mat===id&&!(id==='flat'&&S.lines.every(o=>o.mat==='flat'&&/^#f{6}$/i.test(o.c1)&&!(o.bevel>0)&&!(o.strokeW>0)))),'aria-label':M.name+' material'},cv,h('span',{class:'name'},M.name),M.isNew?h('span',{class:'newtag'},'NEW'):null,h('span',{class:'dot',html:svg('check',3.5)}));
     tile.addEventListener('click',()=>{useRec('mat',id);L.mat=id;L.bevel=null;rebuild('style');changed()});g.append(tile);
     queueRender(()=>{const st=miniState({anim:'slide1',inDur:.05,lines:[Ln({text:'Aa',font:L.font,weight:L.weight,size:420,mat:id,c1:L.c1,c2:L.c2,gAng:L.gAng,track:-.02})],glow:{on:false}});st.aspect='5:4';renderMini(cv,st,1)})};newFirst(Object.entries(MATS),x=>x[1].isNew).forEach(([id,M])=>mkMat(id,M,g));
@@ -3338,7 +3341,11 @@ function updSel(){const sb=$('#selbox');if(playing||!lastInfo||!lastInfo.lay||is
 /* smooth playhead: time moves forward at the screen's pace and leans gently toward the video/audio clock.
    Phones update the video clock in coarse steps; snapping to it made text jump back and forth. Only a real jump (seek, stall) snaps. */
 function followClock(T,dt,ref,seeking){const nx=T+dt,er=ref-nx;if(seeking||!isFinite(ref))return nx;if(Math.abs(er)>.25)return ref;return nx+clamp(er*.08,-dt*.45,dt*.45)}
-let lastLoopT=0;function loopFn(now){const dt=Math.min(.1,(now-last)/1000);last=now;if(pendingResize&&(!playing||T<lastLoopT-.05||T<.05)){pendingResize=false;sizeView()}lastLoopT=T;
+let lastLoopT=0,loopErrs=0;
+function loopFn(now){try{loopCore(now);loopErrs=0}catch(e){loopErrs++;console.warn('frame skipped',e);dirty=false;
+    if(loopErrs>=20){loopErrs=0;try{if(playing)setPlaying(false);toast('Preview paused: this frame couldn’t be drawn. Your work is safe.')}catch(_){}}
+    requestAnimationFrame(loopFn)}}
+function loopCore(now){const dt=Math.min(.1,(now-last)/1000);last=now;if(pendingResize&&(!playing||T<lastLoopT-.05||T<.05)){pendingResize=false;sizeView()}lastLoopT=T;
   if(playing&&!isExporting){const D=seqDur();
     if(vidOn()&&!proxyOn()){if(bgV.paused&&!bgV.ended&&!bgV.seeking)bgV.play().catch(()=>{});const vt=bgV.currentTime;T=followClock(T,dt,vt,bgV.seeking);
       if(bgV.ended||T>=D-.01){if(loop){try{bgV.currentTime=0}catch(e){}T=0;bgV.play().catch(()=>{})}else{T=D;setPlaying(false)}}}
@@ -4246,6 +4253,26 @@ function capPropagate(){const c=selClip();if(!c||c.kind!=='caption'){capPrev=nul
   const look=P.cap.look||(P.cap.look={});look.s=Object.assign(look.s||{},d.s);look.la=Object.assign(look.la||{},d.la);
   capClips().forEach(x=>{applyKeep(x.s,d);if(x.gen){for(const k in d.s)x.gen.s[k]=kj(d.s[k]);x.gen.l.forEach(gl=>{for(const k in d.la)gl[k]=kj(d.la[k])})}if(x.keep){if(x.keep.s)for(const k in d.s)delete x.keep.s[k];if(x.keep.l)x.keep.l.forEach(dl=>{if(dl)for(const k in d.la)delete dl[k]})}});
   capPrev.snap=snapKeep(c.s);dirty=true}
+
+/* ===== My presets on caption styles: any preset saved in Looks (or from a caption) can restyle every caption, or just one ===== */
+function capPresetKeep(lk){const ns=fromLook(lk,{aspect:P.aspect,bg:P.bg});const kp={s:{},la:{}};KEEP_S.forEach(k=>{if(ns[k]!==undefined)kp.s[k]=cpv(ns[k])});const L0=(ns.lines&&ns.lines[0])||{};KEEP_L.forEach(k=>{if(L0[k]!==undefined)kp.la[k]=cpv(L0[k])});return kp}
+function capApplyPreset(lk,scope){let kp;try{kp=capPresetKeep(lk)}catch(e){console.warn('preset',e);toast('That preset couldn’t be applied');return false}
+  if(scope==='one'){const c=selClip();if(!c||c.kind!=='caption'){toast('Tap a caption on the timeline first');return false}
+    if(!c.gen)c.gen=snapKeep(c.s);applyKeep(c.s,kp);c.keep=diffKeep(c.s,c.gen);S=c.s;capTrack();linkProject();refreshAll();changed();toast(lk.name+' · this caption only');return true}
+  P.cap.look=kp;P.cap.lookFrom=lk.name;capClips().forEach(c=>{c.gen=null;c.keep=null;capRebuild(c)});S=selClip().s;sel=Math.min(sel,S.lines.length-1);capTrack();linkProject();refreshAll();changed();toast(lk.name+' · all captions');return true}
+function capPresetSection(C,scope){const mine=myPresets();const g=h('div',{class:'grid2 mypre'});
+  mine.forEach((lk,idx)=>{const cv=h('canvas',{width:300,height:200});
+    const tile=h('button',{type:'button',class:'tile','data-preset':String(idx),style:'--c:#7a5cff','aria-label':'Use preset '+lk.name+' on captions'},cv,h('span',{class:'name',style:'position:absolute;left:0;right:0;bottom:6px;z-index:3;text-align:center;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.08em;color:rgba(255,255,255,.75);text-transform:uppercase'},lk.name),(P.cap.lookFrom===lk.name)?h('span',{class:'dot',html:svg('check',3.5)}):null);
+    let kp=null;const mk=()=>{if(!kp)kp=capPresetKeep(lk);const ws=splitTimed('how I post four times a week',0,1.6);const c2=Object.assign({},C,{pos:.5,size:1.35,autoFit:true});const st=capState(ws.slice(0,4),0,2,c2);applyKeep(st,kp);st.aspect='3:2';st.autoFit=true;st.bg={mode:'transparent'};return st};
+    const draw=()=>queueRender(()=>{try{renderMini(cv,mk(),1.7)}catch(e){console.warn(e)}});draw();hoverPlay(tile,cv,mk,2);tile.addEventListener('pointerleave',draw);
+    tile.addEventListener('click',()=>{commit();useRec('looks',lk.name);capApplyPreset(lk,scope)});
+    const x=h('span',{class:'x',role:'button','aria-label':'Delete preset '+lk.name},'×');x.addEventListener('click',e=>{e.stopPropagation();const arr=myPresets();arr.splice(idx,1);saveMyPresets(arr);rebuild('video',true);toast('Preset deleted')});tile.append(x);g.append(tile)});
+  const nm=h('input',{class:'txtin',placeholder:'Name this caption look (e.g. My gold pop)',maxlength:'40'});
+  const save=h('button',{type:'button',class:'pillbtn',onclick:()=>{const c=selClip();if(!c||c.kind!=='caption'){toast('Tap a caption on the timeline first, then save its look');return}const n=(nm.value||'').trim()||('Caption look '+(mine.length+1));const s_=structuredClone(c.s);delete s_.aspect;delete s_.bg;const arr=myPresets();arr.unshift({name:n,tag:'MINE',s:s_});saveMyPresets(arr.slice(0,40));rebuild('video',true);toast('Saved “'+n+'” to My presets')}},'Save this caption’s look');
+  return h('div',{class:'cat',style:'--c:#7a5cff'},h('div',{class:'cat-h'},h('span',{class:'cat-n'},String(mine.length)),h('span',{class:'cat-t'},'my presets · captions')),
+    h('p',{class:'hint',style:'margin-top:0'},scope==='one'?'Tap a preset to give only the selected caption that look.':'Tap a preset to restyle every caption with it. Switch “Apply style to” above to use it on one caption.'),
+    h('div',{style:'display:flex;gap:8px;margin:0 0 10px'},nm,save),
+    mine.length?g:h('p',{class:'hint'},'No presets yet. Save one from the Looks tab, or style a caption and tap “Save this caption’s look”.'))}
 function capResetLook(){commit();P.cap.look=null;P.cap.lookFrom=null;capClips().forEach(c=>{c.gen=null;c.keep=null;c.s=capState(c.words,c.start,c.s.dur,capCfg(c));c.s.aspect=P.aspect;c.s.bg=P.bg;capGen(c)});linkProject();S=selClip().s;sel=Math.min(sel,S.lines.length-1);capTrack();refreshAll();changed();toast('Caption style reset to the caption preset')}
 let capShineSig='';
 /* caption shine always carries every setting (an empty {on:false} left the Shine sliders at NaN, so a shine picked on a caption never showed) */
@@ -4678,6 +4705,7 @@ function buildVideo(){const p=h('div',{class:'panel'});const C=P.cap;
     one&&selCap.capo?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();delete selCap.capo;selCap.gen=null;selCap.keep=null;capRebuild(selCap);refreshAll();changed();toast('Caption back to the main style')}},'Use the main style for this caption'):null,
     nOwn?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();capClips().forEach(c=>{if(c.capo){delete c.capo;c.gen=null;c.keep=null;capRebuild(c)}});refreshAll();changed();toast('Every caption uses the main style again')}},'Reset all to the main style'):null));
   p.append(h('div',{class:'cat',style:'--c:#ff3d7f'},h('div',{class:'cat-h'},h('span',{class:'cat-n'},String(CAPSTYLES.length)),h('span',{class:'cat-t'},'caption styles')),g));
+  p.append(capPresetSection(C,one?'one':'all'));
   const reb=()=>{capRebuildAll();dirty=true};
   {const cs=CAP_BY[C.style];if(cs){const so=styleOpts(cs,C),setO=(k,v)=>{C.so=C.so||{};C.so[cs.id]=C.so[cs.id]||{};C.so[cs.id][k]=v;reb();changed()};
     const ctls=(cs.opts||[]).filter(d=>!d.show||d.show(so)).map(d=>d.type==='chips'?h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,d.label)),h('div',{class:'pillrow'},...d.choices.map(([v,l])=>h('button',{type:'button',class:'pillbtn'+(String(so[d.k])===v?' on':''),'aria-pressed':String(String(so[d.k])===v),onclick:()=>{setO(d.k,v);rebuild('video',true)}},l)))):d.type==='seg'?h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,d.label)),seg(d.choices.map(([v,l])=>({v,label:l})),()=>String(so[d.k]),v=>{setO(d.k,v);if(d.regroup&&cs.stack){C.maxWords=stackMaxWords(styleOpts(cs,C));const ws=allCapWords();if(ws.length){buildCaptions(ws);refreshAll()}}rebuild('video',true)},{label:d.label})):
@@ -5205,6 +5233,9 @@ if(ASR_CRASHED)setTimeout(()=>toast('Your device ran out of memory while making 
   btn.addEventListener('click',open);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal&&!modal.hidden)close()});
   /* stay-signed-out mode: save the project when the tab closes */
   window.addEventListener('pagehide',()=>{try{saveNow()}catch(e){}});
+  {let shown=0;window.addEventListener('unhandledrejection',e=>{try{e.preventDefault()}catch(_){}console.warn('async error',e&&e.reason)});
+   window.addEventListener('error',e=>{try{console.warn('error',e&&e.message);if(shown++<1){try{saveNow()}catch(_){}toast('Something hiccuped, but your project is saved. Keep going.')}}catch(_){}});
+   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){try{saveNow()}catch(_){}}})}
 })();
 
 /* ===== first sign-in tour: a few quick spotlights, shown once per user ===== */
