@@ -2756,6 +2756,7 @@ function buildText(){const L=cur();const p=h('div',{class:'panel'});if(selClip()
       h('div',{class:'pillrow'},Array.isArray(cc.emphW)?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();delete cc.emphW;capRebuild(cc);changed();rebuild('text',true)}},'Auto highlight'):null,
         h('button',{type:'button',class:'pillbtn',onclick:()=>setHL([])},'No highlight'),
         h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();P.cap.emph=cfg.emph;P.cap.karaokeColor=cfg.emph;capClips().forEach(x=>{if(x.capo){delete x.capo.emph;delete x.capo.karaokeColor;if(!Object.keys(x.capo).length)delete x.capo}});capRebuildAll();changed();toast('Accent colour applied to every caption')}},'Use this accent on all captions'))));
+    p.append(capNegSec());
     p.append(sec('Caption words',capEditor(selClip(),{area:true}),h('p',{class:'hint'},capAuto()?'Saves automatically when you pause typing. Tap Update or press Enter to save right away.':'Tap Update or press Enter to confirm your edit. Auto-update can be turned on in Video › Captions.')),sec('Style a line',chips,h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Font & style edits apply to')),seg([{v:'one',label:'This line, this caption'},{v:'lineall',label:'This line, all captions'},{v:'all',label:'All lines'}],()=>capLineScope,v=>{capLineScope=v;rebuild('text',true)},{label:'Line style scope',opts:{tl:false}})),
       h('p',{class:'hint'},capLineScope==='one'?'Only the line you tapped above changes, and only in this caption. Every other line and caption stays as it is.':capLineScope==='lineall'?'Only the line you tapped above changes, in every caption (line 1 of each caption, and so on). Your other lines keep their own font.':'Every line of every caption changes together.')))}
   else p.append(sec('Lines',chips,ti,S.lines.length>1?h('div',{class:'pillrow'},
@@ -2997,7 +2998,7 @@ function buildStyle(){const L=cur();const p=h('div',{class:'panel'});const g=h('
     slider('Softness',{min:0,max:60,step:1,get:()=>S.shadow.blur,set:v=>S.shadow.blur=v,fmt:v=>Math.round(v),reset:12}),
     slider('Offset X',{min:-60,max:60,step:1,get:()=>S.shadow.dx,set:v=>S.shadow.dx=v,fmt:v=>Math.round(v),reset:6}),
     slider('Offset Y',{min:-60,max:60,step:1,get:()=>S.shadow.dy,set:v=>S.shadow.dy=v,fmt:v=>Math.round(v),reset:10})));
-  p.append(selClip().kind==='caption'?capNegSec():negSec());
+  if(selClip().kind!=='caption')p.append(negSec());
   return p}
 /* negative text for looks: the letters show the video inverted (Difference) or darkened (Subtract).
    It can cover the whole look, or only the lines you pick, with its own strength; gradients and gradient motion keep moving inside it */
@@ -3009,22 +3010,25 @@ function capNegSec(){const C=P.cap,cs=CAP_BY[C.style]||CAPSTYLES[0],cc=selClip()
   const setShared=(k,v)=>{C.so=C.so||{};C.so[cs.id]=C.so[cs.id]||{};C.so[cs.id][k]=v;capRebuildAll();dirty=true;changed()};
   const setMode=v=>{commit();
     if(one){const w=own&&Array.isArray(own.words)?own.words:null;if(v===sharedMode&&!w)delete cc.neg;else cc.neg={mode:v,words:w};capRebuild(cc);linkProject();changed()}
-    else{capClips().forEach(x=>{delete x.neg});setShared('blend',v)}rebuild('style',true)};
-  const setW=arr=>{commit();const m=(own&&own.mode)||sharedMode;if(arr&&arr.length===words.length)arr=null;if(arr==null&&m===sharedMode)delete cc.neg;else cc.neg={mode:m,words:arr};capRebuild(cc);linkProject();changed();rebuild('style',true)};
+    else{capClips().forEach(x=>{delete x.neg});setShared('blend',v)}rebuild('text',true)};
+  const setW=arr=>{commit();const m=(own&&own.mode)||sharedMode;if(arr&&arr.length===words.length)arr=null;if(arr==null&&m===sharedMode)delete cc.neg;else cc.neg={mode:m,words:arr};capRebuild(cc);linkProject();changed();rebuild('text',true)};
   const box=sec('Negative text (blend)',
-    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Apply to')),seg([{v:'one',label:'This caption (pick words)'},{v:'all',label:'All captions'}],()=>capNegScope,v=>{capNegScope=v;rebuild('style',true)},{label:'Negative scope',opts:{tl:false}})),
+    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Apply to')),seg([{v:'one',label:'This caption (pick lines)'},{v:'all',label:'All captions'}],()=>capNegScope,v=>{capNegScope=v;rebuild('text',true)},{label:'Negative scope',opts:{tl:false}})),
     h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Blend mode')),seg([{v:'normal',label:'Normal'},{v:'difference',label:'Difference'},{v:'subtract',label:'Subtract'}],()=>mode,setMode,{label:'Blend mode',opts:{tl:false}})));
-  if(one&&mode!=='normal'){const sel_=own&&Array.isArray(own.words)?own.words:null;
-    box.append(h('p',{class:'hint',style:'margin-top:0'},sel_?'Only the words you picked are negative in this caption.':'Every word is negative. Tap words to choose just those.'),
-      h('div',{class:'wordchips',style:'--wc:#9fd0ff'},words.map((w,i)=>h('button',{type:'button','aria-pressed':String(sel_?sel_.includes(i):true),onclick:()=>setW(sel_?(sel_.includes(i)?sel_.filter(x=>x!==i):[...sel_,i].sort((a,b)=>a-b)):[i])},w.w))),
-      h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn',onclick:()=>setW(null)},'All words'),h('button',{type:'button',class:'pillbtn',onclick:()=>setW([])},'No words')),
-      h('p',{class:'hint'},'A line that holds several words turns negative as a whole line. For exact single words use a one-word-per-line style (Stacked, Creator Stack).'))}
-  if(!one&&mode!=='normal'&&cs.stack)box.append(h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Negative on')),seg([{v:'all',label:'All words'},{v:'accent',label:'Accent words'},{v:'plain',label:'Other words'}],()=>so.negOn||'all',v=>{setShared('negOn',v);rebuild('style',true)},{label:'Negative on',opts:{tl:false}})));
+  if(one&&mode!=='normal'){const sel_=own&&Array.isArray(own.words)?own.words:null;const rg=lineWordRanges(cc.s.lines);
+    const has=i=>{const r=rg[i];if(!r||r[1]<=r[0])return false;if(!sel_)return true;for(let w=r[0];w<r[1];w++)if(!sel_.includes(w))return false;return true};
+    const tapLine=i=>{const r=rg[i];const idx=[];for(let w=r[0];w<r[1];w++)idx.push(w);
+      if(!sel_)return setW(idx);                       /* everything was on: the first tap picks just that line */
+      const nxt=has(i)?sel_.filter(w=>!idx.includes(w)):[...new Set([...sel_,...idx])].sort((x,y)=>x-y);setW(nxt)};
+    box.append(h('p',{class:'hint',style:'margin-top:0'},sel_?(sel_.length?'Only the lines you picked are negative. Every other line stays normal.':'No lines are negative in this caption.'):'Every line is negative. Tap a line to make just that one negative.'),
+      h('div',{class:'wordchips',style:'--wc:#9fd0ff'},cc.s.lines.map((L,i)=>{const r=rg[i];if(!r||r[1]<=r[0])return null;return h('button',{type:'button','aria-pressed':String(has(i)),onclick:()=>tapLine(i)},(L.text||'Line '+(i+1)))})),
+      h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn',onclick:()=>setW(null)},'All lines'),h('button',{type:'button',class:'pillbtn',onclick:()=>setW([])},'None')))}
+  if(!one&&mode!=='normal'&&cs.stack)box.append(h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Negative on')),seg([{v:'all',label:'All words'},{v:'accent',label:'Accent words'},{v:'plain',label:'Other words'}],()=>so.negOn||'all',v=>{setShared('negOn',v);rebuild('text',true)},{label:'Negative on',opts:{tl:false}})));
   if(mode!=='normal')box.append(slider('Strength',{min:0,max:1,step:.01,get:()=>so.namt??1,set:v=>setShared('namt',v),fmt:v=>Math.round(v*100)+'%',reset:1}),
-    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Letter colour')),seg([{v:'one',label:'One colour'},{v:'keep',label:'Keep colours & gradient'}],()=>so.nkeep?'keep':'one',v=>{setShared('nkeep',v==='keep');rebuild('style',true)},{label:'Negative letter colour',opts:{tl:false}})));
+    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Letter colour')),seg([{v:'one',label:'One colour'},{v:'keep',label:'Keep colours & gradient'}],()=>so.nkeep?'keep':'one',v=>{setShared('nkeep',v==='keep');rebuild('text',true)},{label:'Negative letter colour',opts:{tl:false}})));
   if(mode!=='normal'&&!so.nkeep)box.append(colorCtl('Negative text colour',()=>so.ncolor,v=>setShared('ncolor',v)));
   const nOwn=capClips().filter(x=>x.neg).length;
-  if(nOwn)box.append(h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();capClips().forEach(x=>{delete x.neg});capRebuildAll();changed();rebuild('style',true);toast('Every caption follows the shared negative setting')}},'Clear individual negative settings ('+nOwn+')'));
+  if(nOwn)box.append(h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();capClips().forEach(x=>{delete x.neg});capRebuildAll();changed();rebuild('text',true);toast('Every caption follows the shared negative setting')}},'Clear individual negative settings ('+nOwn+')'));
   box.append(h('p',{class:'hint'},'Difference flips the video inside the letters, Subtract darkens it. Shows over your video in the preview and in Video + Text exports. Transparent exports keep plain text.'));
   return box}
 
@@ -4812,12 +4816,7 @@ function buildVideo(){const p=h('div',{class:'panel'});const C=P.cap;
     const ctls=(cs.opts||[]).filter(d=>!d.show||d.show(so)).map(d=>d.type==='chips'?h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,d.label)),h('div',{class:'pillrow'},...d.choices.map(([v,l])=>h('button',{type:'button',class:'pillbtn'+(String(so[d.k])===v?' on':''),'aria-pressed':String(String(so[d.k])===v),onclick:()=>{setO(d.k,v);rebuild('video',true)}},l)))):d.type==='seg'?h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,d.label)),seg(d.choices.map(([v,l])=>({v,label:l})),()=>String(so[d.k]),v=>{setO(d.k,v);if(d.regroup&&cs.stack){C.maxWords=stackMaxWords(styleOpts(cs,C));const ws=allCapWords();if(ws.length){buildCaptions(ws);refreshAll()}}rebuild('video',true)},{label:d.label})):
       d.type==='range'?slider(d.label,{min:d.min,max:d.max,step:d.step,get:()=>+((C.so&&C.so[cs.id]&&C.so[cs.id][d.k])??d.def),set:v=>{if(d.regroup){C.so=C.so||{};C.so[cs.id]=C.so[cs.id]||{};C.so[cs.id][d.k]=v;C.maxWords=cs.stack?stackMaxWords(styleOpts(cs,C)):Math.round(v);clearTimeout(regroupT);regroupT=setTimeout(()=>{const ws=allCapWords();if(ws.length){commit();buildCaptions(ws);refreshAll();changed()}},250)}else setO(d.k,v)},fmt:d.regroup?(v=>Math.round(v)+' lines'):undefined,reset:d.def}):colorCtl(d.label,()=>(C.so&&C.so[cs.id]&&C.so[cs.id][d.k])||d.def,v=>setO(d.k,v)));
     p.append(sec('Style options · '+cs.name,...ctls,
-      h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Negative text (blend)')),seg([{v:'normal',label:'Normal'},{v:'difference',label:'Difference'},{v:'subtract',label:'Subtract'}],()=>so.blend,v=>{setO('blend',v);rebuild('video',true)},{label:'Blend mode'})),
-      so.blend!=='normal'&&cs.stack?h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Negative on')),seg([{v:'all',label:'All words'},{v:'accent',label:'Accent words'},{v:'plain',label:'Other words'}],()=>so.negOn||'all',v=>{setO('negOn',v);rebuild('video',true)},{label:'Negative on'})):null,
-      so.blend!=='normal'?slider('Negative strength',{min:0,max:1,step:.01,get:()=>so.namt??1,set:v=>setO('namt',v),fmt:v=>Math.round(v*100)+'%',reset:1}):null,
-      so.blend!=='normal'?h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Letter colour')),seg([{v:'one',label:'One colour'},{v:'keep',label:'Keep colours & gradient'}],()=>so.nkeep?'keep':'one',v=>{setO('nkeep',v==='keep');rebuild('video',true)},{label:'Negative letter colour'})):null,
-      so.blend!=='normal'&&!so.nkeep?colorCtl('Negative text colour',()=>so.ncolor,v=>setO('ncolor',v)):null,
-      h('p',{class:'hint'},so.blend!=='normal'?(so.blend==='difference'?'Difference flips the video inside the letters (white text = a photo negative). ':'Subtract darkens the video inside the letters by the colour you pick. ')+'You see it on your video in the preview and in the Video + Text export. For transparent exports (MOV, WebM, PNG) the text stays plain: set that layer’s blend mode to '+(so.blend==='difference'?'Difference':'Subtract')+' in your editor.':'Options for this caption style. Blend turns it into negative text that inverts the video inside the letters.')))}}
+      h('p',{class:'hint'},'Negative text (Difference / Subtract) is in the Text tab, where you can pick which lines it affects, or use it on all captions.')))}}
   p.append(sec('Caption settings',
     slider('Words per caption',{min:1,max:8,step:1,get:()=>C.maxWords,set:v=>{C.maxWords=v},fmt:v=>Math.round(v),reset:3,opts:{tl:false}}),
     h('button',{type:'button',class:'pillbtn',onclick:()=>{const ws=allCapWords();if(!ws.length){toast('Generate captions first');return}commit();buildCaptions(ws);refreshAll();changed()}},'Re-split captions'),
