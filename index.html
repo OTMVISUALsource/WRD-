@@ -212,6 +212,14 @@ input,select,textarea{font:inherit;color:inherit}
 .selbox{position:absolute;pointer-events:none;border:1px dashed rgba(255,255,255,.55);border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
 .selbox::before,.selbox::after{content:"";position:absolute;width:7px;height:7px;background:#fff;border-radius:2px}
 .selbox::before{left:-4px;top:-4px}.selbox::after{right:-4px;bottom:-4px}
+.selbox.xf{border-color:rgba(120,170,255,.9)}.selbox.xf::before,.selbox.xf::after{display:none}
+.selbox .hnd{display:none;position:absolute;width:11px;height:11px;background:#fff;border:1.5px solid #3d7bff;border-radius:3px;pointer-events:auto;touch-action:none;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.selbox.xf .hnd{display:block}
+.selbox .hnd.nw{left:-6px;top:-6px;cursor:nwse-resize}.selbox .hnd.se{right:-6px;bottom:-6px;cursor:nwse-resize}
+.selbox .hnd.ne{right:-6px;top:-6px;cursor:nesw-resize}.selbox .hnd.sw{left:-6px;bottom:-6px;cursor:nesw-resize}
+.selbox .hnd.rot{left:50%;top:-30px;margin-left:-6px;width:12px;height:12px;border-radius:50%;cursor:grab}
+.selbox .hnd.rot::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:17px;background:rgba(255,255,255,.7);transform:translateX(-50%)}
+.selbox.rotb .hnd.rot{top:auto;bottom:-30px}.selbox.rotb .hnd.rot::after{top:auto;bottom:100%}
 .res-tag{position:absolute;top:12px;left:12px;font-family:var(--f-mono);font-size:10.5px;color:var(--muted);background:rgba(5,6,10,.7);border:1px solid var(--line);padding:4px 8px;border-radius:8px;backdrop-filter:blur(8px);letter-spacing:.04em}
 .stagebar{flex:none;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line)}
 .bgchips{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -643,6 +651,14 @@ input,select,textarea{font:inherit;color:inherit}
 .selbox{position:absolute;pointer-events:none;border:1px dashed rgba(255,255,255,.55);border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
 .selbox::before,.selbox::after{content:"";position:absolute;width:7px;height:7px;background:#fff;border-radius:2px}
 .selbox::before{left:-4px;top:-4px}.selbox::after{right:-4px;bottom:-4px}
+.selbox.xf{border-color:rgba(120,170,255,.9)}.selbox.xf::before,.selbox.xf::after{display:none}
+.selbox .hnd{display:none;position:absolute;width:11px;height:11px;background:#fff;border:1.5px solid #3d7bff;border-radius:3px;pointer-events:auto;touch-action:none;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.selbox.xf .hnd{display:block}
+.selbox .hnd.nw{left:-6px;top:-6px;cursor:nwse-resize}.selbox .hnd.se{right:-6px;bottom:-6px;cursor:nwse-resize}
+.selbox .hnd.ne{right:-6px;top:-6px;cursor:nesw-resize}.selbox .hnd.sw{left:-6px;bottom:-6px;cursor:nesw-resize}
+.selbox .hnd.rot{left:50%;top:-30px;margin-left:-6px;width:12px;height:12px;border-radius:50%;cursor:grab}
+.selbox .hnd.rot::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:17px;background:rgba(255,255,255,.7);transform:translateX(-50%)}
+.selbox.rotb .hnd.rot{top:auto;bottom:-30px}.selbox.rotb .hnd.rot::after{top:auto;bottom:100%}
 .pqsw{position:absolute;top:44px;left:12px;z-index:4;display:flex;gap:2px;padding:2px;border-radius:9px;background:rgba(5,6,10,.7);border:1px solid var(--line);backdrop-filter:blur(8px)}
 .pqsw button{display:inline-flex;align-items:center;gap:3px;border:0;background:transparent;color:var(--muted);font:700 10px/1 var(--f-mono);letter-spacing:.06em;padding:5px 8px;border-radius:7px;cursor:pointer;transition:background .2s,color .2s;-webkit-tap-highlight-color:transparent}
 .pqsw button[aria-checked="true"]{background:linear-gradient(135deg,#3d7bff,#7a5cff);color:#fff;box-shadow:0 2px 10px -2px rgba(61,123,255,.7)}
@@ -2533,7 +2549,7 @@ window.addEventListener('wrd-license',()=>{CLOUD.pulled=false;setTimeout(()=>{cl
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&CLOUD.on&&Date.now()-CLOUD.last>60000){CLOUD.pulled=false;cloudPull(false)}});
 function buildLooks(){const g=h('div',{class:'grid2'});const lkHint=capClips().length?h('p',{class:'hint',style:'margin:0 0 8px'},P.cap.lookFrom?'Your captions use the look “'+P.cap.lookFrom+'”. Tap None to put them back to their caption style.':'Select a caption on the timeline, then tap a look to restyle every caption with it. None puts captions back to their caption style.'):null;
   const mkLook=(lk,g)=>{const cv=h('canvas',{width:300,height:333});const tile=h('button',{type:'button',class:'tile look',style:'--c:#f2b33d','aria-label':'Apply look '+lk.name},cv,h('span',{class:'name'},lk.name),lk.tag?h('span',{class:'newtag'},lk.tag):null);
-    tile.addEventListener('click',()=>{commit();useRec('looks',lk.name);setTimeout(()=>refreshRecent('looks'),350);let c=selClip();let ns=fromLook(lk,{aspect:P.aspect,bg:P.bg});if(c.draft){const st=P.video?Math.min(T,Math.max(0,P.video.dur-.5)):0;if(P.video)ns.dur=Math.min(ns.dur,Math.max(.5,P.video.dur-st));c=newClip(ns,Math.round(st*100)/100);P.clips.push(c);P.sel=c.id;S=ns;linkProject();sel=0;refreshAll();seek(c.start);setPlaying(true);changed();toast(lk.name+' added at '+fmtT(c.start));return}if(c.kind==='caption'){ns=styleOnto(ns,S);P.cap.lookFrom=lk.name}else if(P.clips.length>1||P.video)ns.dur=S.dur;c.s=ns;S=ns;linkProject();sel=0;refreshAll();seek(c.start);setPlaying(true);changed();const r=recommendKey(S);toast(lk.name+' applied · best key: '+KEYS[r.mode].name)});
+    tile.addEventListener('click',()=>{commit();useRec('looks',lk.name);setTimeout(()=>refreshRecent('looks'),350);let c=selClip();if(c.kind==='caption'&&lk.capcfg){capApplyPreset(lk,'all');return}let ns=fromLook(lk,{aspect:P.aspect,bg:P.bg});if(c.draft){const st=P.video?Math.min(T,Math.max(0,P.video.dur-.5)):0;if(P.video)ns.dur=Math.min(ns.dur,Math.max(.5,P.video.dur-st));c=newClip(ns,Math.round(st*100)/100);P.clips.push(c);P.sel=c.id;S=ns;linkProject();sel=0;refreshAll();seek(c.start);setPlaying(true);changed();toast(lk.name+' added at '+fmtT(c.start));return}if(c.kind==='caption'){ns=styleOnto(ns,S);P.cap.lookFrom=lk.name}else if(P.clips.length>1||P.video)ns.dur=S.dur;c.s=ns;S=ns;linkProject();sel=0;refreshAll();seek(c.start);setPlaying(true);changed();const r=recommendKey(S);toast(lk.name+' applied · best key: '+KEYS[r.mode].name)});
     g.append(tile);queueRender(()=>{const st=fromLook(lk);st.flare.on=false;st.aspect='9:10';st.bg={mode:'transparent'};st.d3.idle='none';renderMini(cv,st,Math.min(st.dur-.05,st.inDur+.15+(st.shine.on?Math.max(0,st.shine.start-st.inDur-.15)+st.shine.dur*.45:0)))});
     const lkSt=()=>{const st=fromLook(lk);st.flare.on=false;st.aspect='9:10';st.bg={mode:'transparent'};st.d3.idle='none';return st};hoverPlay(tile,cv,lkSt,Math.max(1.2,Math.min(3,fromLook(lk).dur||2)));
     tile.addEventListener('pointerleave',()=>queueRender(()=>{const st=lkSt();renderMini(cv,st,Math.min(st.dur-.05,st.inDur+.15+(st.shine.on?Math.max(0,st.shine.start-st.inDur-.15)+st.shine.dur*.45:0)))}))};{const caps=capClips().length>0,isCap=selClip().kind==='caption';const capLooked=!!(P.cap.lookFrom||(P.cap.look&&((P.cap.look.s&&Object.keys(P.cap.look.s).length)||(P.cap.look.la&&Object.keys(P.cap.look.la).length))));
@@ -2548,7 +2564,7 @@ function buildLooks(){const g=h('div',{class:'grid2'});const lkHint=capClips().l
     x.addEventListener('click',e=>{e.stopPropagation();const arr=myPresets();arr.splice(idx,1);saveMyPresets(arr);rebuild('looks');toast('Preset deleted')});tile.append(x)});
   const nm=h('input',{class:'txtin',placeholder:'Name this preset (e.g. Views counter)',maxlength:'40'});
   const mine=h('div',{class:'cat',style:'--c:#7a5cff'},h('div',{class:'cat-h'},h('span',{class:'cat-n'},String(myp.length)),h('span',{class:'cat-t'},'my presets')),cloudBlock(),
-    h('div',{style:'display:flex;gap:8px;margin:0 0 10px'},nm,h('button',{type:'button',class:'pillbtn',onclick:()=>{if(selClip().draft&&!S.lines.length){toast('Make a title first');return}const n=(nm.value||'').trim()||('Preset '+(myp.length+1));const s_=structuredClone(S);delete s_.aspect;delete s_.bg;const arr=myPresets();arr.unshift({name:n,tag:s_.counter&&s_.counter.on?'COUNTER':'MINE',s:s_});saveMyPresets(arr.slice(0,40));rebuild('looks');toast('Saved “'+n+'” to My presets')}},'Save current')),
+    h('div',{style:'display:flex;gap:8px;margin:0 0 10px'},nm,h('button',{type:'button',class:'pillbtn',onclick:()=>{if(selClip().draft&&!S.lines.length){toast('Make a title first');return}const n=(nm.value||'').trim()||('Preset '+(myp.length+1));const s_=structuredClone(S);delete s_.aspect;delete s_.bg;const arr=myPresets();const pr={name:n,tag:s_.counter&&s_.counter.on?'COUNTER':'MINE',s:s_};if(selClip().kind==='caption')pr.capcfg=capCfgSnap(selClip());arr.unshift(pr);saveMyPresets(arr.slice(0,40));rebuild('looks');toast('Saved “'+n+'” to My presets')}},'Save current')),
     myp.length?mg:h('p',{class:'hint'},'Save the selected title (animation, styling, counter, easing, motion) as your own preset to reuse it in one tap.'));
   return h('div',{class:'panel'},tileLineToggle(),glowLineBox(),mine,recentBlock('looks',(id,gg)=>{const lk=LOOKS.find(l=>l.name===id);if(lk)mkLook(lk,gg)}),h('div',{class:'cat',style:'--c:#f2b33d'},h('div',{class:'cat-h'},h('span',{class:'cat-n'},String(LOOKS.length)),h('span',{class:'cat-t'},'looks · newest first')),lkHint,g),h('p',{class:'hint'},'A look replaces text, fonts, animation, shine and 3D. Your aspect ratio and background stay. None removes it.'))}
 let animTgt=-1;
@@ -2740,7 +2756,8 @@ function buildText(){const L=cur();const p=h('div',{class:'panel'});if(selClip()
       h('div',{class:'pillrow'},Array.isArray(cc.emphW)?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();delete cc.emphW;capRebuild(cc);changed();rebuild('text',true)}},'Auto highlight'):null,
         h('button',{type:'button',class:'pillbtn',onclick:()=>setHL([])},'No highlight'),
         h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();P.cap.emph=cfg.emph;P.cap.karaokeColor=cfg.emph;capClips().forEach(x=>{if(x.capo){delete x.capo.emph;delete x.capo.karaokeColor;if(!Object.keys(x.capo).length)delete x.capo}});capRebuildAll();changed();toast('Accent colour applied to every caption')}},'Use this accent on all captions'))));
-    p.append(sec('Caption words',capEditor(selClip(),{area:true}),h('p',{class:'hint'},capAuto()?'Saves automatically when you pause typing. Tap Update or press Enter to save right away.':'Tap Update or press Enter to confirm your edit. Auto-update can be turned on in Video › Captions.')),sec('Style a line',chips))}
+    p.append(sec('Caption words',capEditor(selClip(),{area:true}),h('p',{class:'hint'},capAuto()?'Saves automatically when you pause typing. Tap Update or press Enter to save right away.':'Tap Update or press Enter to confirm your edit. Auto-update can be turned on in Video › Captions.')),sec('Style a line',chips,h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Font & style edits apply to')),seg([{v:'one',label:'This line, this caption'},{v:'lineall',label:'This line, all captions'},{v:'all',label:'All lines'}],()=>capLineScope,v=>{capLineScope=v;rebuild('text',true)},{label:'Line style scope',opts:{tl:false}})),
+      h('p',{class:'hint'},capLineScope==='one'?'Only the line you tapped above changes, and only in this caption. Every other line and caption stays as it is.':capLineScope==='lineall'?'Only the line you tapped above changes, in every caption (line 1 of each caption, and so on). Your other lines keep their own font.':'Every line of every caption changes together.')))}
   else p.append(sec('Lines',chips,ti,S.lines.length>1?h('div',{class:'pillrow'},
     h('button',{type:'button',class:'pillbtn',onclick:()=>{if(sel>0){[S.lines[sel-1],S.lines[sel]]=[S.lines[sel],S.lines[sel-1]];sel--;rebuild('text');changed()}}},'Move up'),
     h('button',{type:'button',class:'pillbtn',onclick:()=>{S.lines.splice(sel,1);sel=Math.max(0,sel-1);rebuild('text');rebuild('style');changed()}},'Delete line')):null));
@@ -2893,7 +2910,7 @@ function buildSizeCaps(){const p=h('div',{class:'panel'});const C=P.cap;
     h('div',{class:'pillrow'},
       one&&selCap&&selCap.mv?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();delete selCap.mv;capRebuild(selCap);linkProject();S=selClip().s;changed();rebuild('size',true);toast('This caption is back with the others')}},'Reset this caption’s position'):null,
       nOne?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();capClips().forEach(c=>{delete c.mv});capRebuildAll();changed();rebuild('size',true);toast('Every caption is back at the shared position')}},'Reset all individual positions ('+nOne+')'):null)));
-  p.addEventListener('pointerup',()=>setTimeout(()=>{commit();changed()},50));return p}
+  p.append(transformSec());p.addEventListener('pointerup',()=>setTimeout(()=>{commit();changed()},50));return p}
 function buildSize(){if(selClip().kind==='caption')return buildSizeCaps();const p=h('div',{class:'panel'});const multi=S.lines.length>1,nTitles=P.clips.filter(c=>c.kind!=='caption').length;if(!multi&&sizeScope==='line')sizeScope='all';
   const opts=[];if(multi)opts.push({v:'line',label:'This line'});opts.push({v:'all',label:multi?'All lines':'This title'});if(nTitles>1)opts.push({v:'titles',label:'All titles ('+nTitles+')'});
   p.append(sec('Scale & move',h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Apply to')),seg(opts,()=>sizeScope,v=>{sizeScope=v;rebuild('size',true)},{label:'Scale scope'})),
@@ -2932,7 +2949,7 @@ function buildSize(){if(selClip().kind==='caption')return buildSizeCaps();const 
     h('p',{class:'hint'},sizeScope==='titles'?'Moves every title clip together by the same amount. Captions are not changed.':sizeScope==='all'?'Moves all lines of this title together and keeps their layout.':'Moves only this line. The other lines stay where they are.'),
     h('p',{class:'hint',style:'color:#9fd0ff'},'Hold an arrow to keep moving. Tap 0 to undo this move, or double-tap a slider to reset it.')));
   p.addEventListener('pointerup',()=>setTimeout(()=>{commit();changed()},50));
-  return p}
+  p.append(transformSec());return p}
 function buildGrad(){const p=h('div',{class:'panel'});const T=gTargets(),L=T[0],M=MATS[L.mat]||MATS.flat,each=fn=>T.forEach(fn),allT=T.length>1;
   if(S.lines.length>1){const gmOn=o=>o.gm&&o.gm.type&&o.gm.type!=='none';
     p.append(sec('Apply gradient to',h('div',{class:'linechips'},h('button',{type:'button','aria-pressed':String(gradTgt<0),onclick:()=>{gradTgt=-1;rebuild('grad',true)}},'All lines'),
@@ -2980,11 +2997,37 @@ function buildStyle(){const L=cur();const p=h('div',{class:'panel'});const g=h('
     slider('Softness',{min:0,max:60,step:1,get:()=>S.shadow.blur,set:v=>S.shadow.blur=v,fmt:v=>Math.round(v),reset:12}),
     slider('Offset X',{min:-60,max:60,step:1,get:()=>S.shadow.dx,set:v=>S.shadow.dx=v,fmt:v=>Math.round(v),reset:6}),
     slider('Offset Y',{min:-60,max:60,step:1,get:()=>S.shadow.dy,set:v=>S.shadow.dy=v,fmt:v=>Math.round(v),reset:10})));
-  if(selClip().kind!=='caption')p.append(negSec());
+  p.append(selClip().kind==='caption'?capNegSec():negSec());
   return p}
 /* negative text for looks: the letters show the video inverted (Difference) or darkened (Subtract).
    It can cover the whole look, or only the lines you pick, with its own strength; gradients and gradient motion keep moving inside it */
 let negScope='all';
+let capNegScope='one';
+function capNegSec(){const C=P.cap,cs=CAP_BY[C.style]||CAPSTYLES[0],cc=selClip(),words=cc.words||[];const so=styleOpts(cs,C);
+  const one=capNegScope==='one';const own=cc.neg||null;const sharedMode=so.blend||'normal';
+  const mode=one?(own&&own.mode)||sharedMode:sharedMode;
+  const setShared=(k,v)=>{C.so=C.so||{};C.so[cs.id]=C.so[cs.id]||{};C.so[cs.id][k]=v;capRebuildAll();dirty=true;changed()};
+  const setMode=v=>{commit();
+    if(one){const w=own&&Array.isArray(own.words)?own.words:null;if(v===sharedMode&&!w)delete cc.neg;else cc.neg={mode:v,words:w};capRebuild(cc);linkProject();changed()}
+    else{capClips().forEach(x=>{delete x.neg});setShared('blend',v)}rebuild('style',true)};
+  const setW=arr=>{commit();const m=(own&&own.mode)||sharedMode;if(arr&&arr.length===words.length)arr=null;if(arr==null&&m===sharedMode)delete cc.neg;else cc.neg={mode:m,words:arr};capRebuild(cc);linkProject();changed();rebuild('style',true)};
+  const box=sec('Negative text (blend)',
+    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Apply to')),seg([{v:'one',label:'This caption (pick words)'},{v:'all',label:'All captions'}],()=>capNegScope,v=>{capNegScope=v;rebuild('style',true)},{label:'Negative scope',opts:{tl:false}})),
+    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Blend mode')),seg([{v:'normal',label:'Normal'},{v:'difference',label:'Difference'},{v:'subtract',label:'Subtract'}],()=>mode,setMode,{label:'Blend mode',opts:{tl:false}})));
+  if(one&&mode!=='normal'){const sel_=own&&Array.isArray(own.words)?own.words:null;
+    box.append(h('p',{class:'hint',style:'margin-top:0'},sel_?'Only the words you picked are negative in this caption.':'Every word is negative. Tap words to choose just those.'),
+      h('div',{class:'wordchips',style:'--wc:#9fd0ff'},words.map((w,i)=>h('button',{type:'button','aria-pressed':String(sel_?sel_.includes(i):true),onclick:()=>setW(sel_?(sel_.includes(i)?sel_.filter(x=>x!==i):[...sel_,i].sort((a,b)=>a-b)):[i])},w.w))),
+      h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn',onclick:()=>setW(null)},'All words'),h('button',{type:'button',class:'pillbtn',onclick:()=>setW([])},'No words')),
+      h('p',{class:'hint'},'A line that holds several words turns negative as a whole line. For exact single words use a one-word-per-line style (Stacked, Creator Stack).'))}
+  if(!one&&mode!=='normal'&&cs.stack)box.append(h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Negative on')),seg([{v:'all',label:'All words'},{v:'accent',label:'Accent words'},{v:'plain',label:'Other words'}],()=>so.negOn||'all',v=>{setShared('negOn',v);rebuild('style',true)},{label:'Negative on',opts:{tl:false}})));
+  if(mode!=='normal')box.append(slider('Strength',{min:0,max:1,step:.01,get:()=>so.namt??1,set:v=>setShared('namt',v),fmt:v=>Math.round(v*100)+'%',reset:1}),
+    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Letter colour')),seg([{v:'one',label:'One colour'},{v:'keep',label:'Keep colours & gradient'}],()=>so.nkeep?'keep':'one',v=>{setShared('nkeep',v==='keep');rebuild('style',true)},{label:'Negative letter colour',opts:{tl:false}})));
+  if(mode!=='normal'&&!so.nkeep)box.append(colorCtl('Negative text colour',()=>so.ncolor,v=>setShared('ncolor',v)));
+  const nOwn=capClips().filter(x=>x.neg).length;
+  if(nOwn)box.append(h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();capClips().forEach(x=>{delete x.neg});capRebuildAll();changed();rebuild('style',true);toast('Every caption follows the shared negative setting')}},'Clear individual negative settings ('+nOwn+')'));
+  box.append(h('p',{class:'hint'},'Difference flips the video inside the letters, Subtract darkens it. Shows over your video in the preview and in Video + Text exports. Transparent exports keep plain text.'));
+  return box}
+
 function negSec(){const lineMode=negScope==='line'&&S.lines.length>1,L=cur();const T_=()=>lineMode?(L.blend||{mode:'normal'}):(S.blend||{mode:'normal'});const mode=T_().mode||'normal';
   const restore=(b,lines)=>{if(b&&b.prev)b.prev.forEach((o,i)=>{if(lines[i])Object.assign(lines[i],o)})};
   const setMode=v=>{commit();if(lineMode){if(v==='normal'){restore(L.blend,[L]);delete L.blend}else{L.blend=Object.assign({amt:1},L.blend||{},{mode:v});if(S.blend){restore(S.blend,S.lines);S.blend=null}}}
@@ -3337,7 +3380,10 @@ function drawPreview(){const t0=performance.now();try{lastInfo=renderSeq(T,view,
   if(playing&&!tlDragging){const sl=tlS.scrollLeft,vw=tlS.clientWidth;if(x>sl+vw-30||x<sl)tlS.scrollLeft=Math.max(0,x-60)}
   updSel();updSafeWarn()}
 function updSel(){const sb=$('#selbox');if(playing||!lastInfo||!lastInfo.lay||isExporting){sb.hidden=true;return}const ln=lastInfo.lay.lines[sel];if(!ln||!ln.glyphs.length){sb.hidden=true;return}
-  const k=viewCss.w/view.width;sb.hidden=false;sb.style.left=(ln.x0*k-6)+'px';sb.style.top=(ln.top*k-6)+'px';sb.style.width=(ln.width*k+12)+'px';sb.style.height=((ln.bottom-ln.top)*k+12)+'px'}
+  const k=viewCss.w/view.width,L_=ln.x0*k-6,T_=ln.top*k-6;sb.hidden=false;sb.style.left=L_+'px';sb.style.top=T_+'px';sb.style.width=(ln.width*k+12)+'px';sb.style.height=((ln.bottom-ln.top)*k+12)+'px';
+  const fine=matchMedia('(pointer:fine)').matches;sb.classList.toggle('xf',fine);sb.classList.toggle('rotb',T_<34);
+  const blk=lastInfo.lay.block,rz=+((S.d3&&S.d3.rz)||0);
+  if(fine&&blk&&rz){sb.style.transformOrigin=(((blk.x0+blk.x1)/2)*k-L_)+'px '+(((blk.top+blk.bottom)/2)*k-T_)+'px';sb.style.transform='rotate('+(-rz)+'deg)'}else sb.style.transform=''}
 /* smooth playhead: time moves forward at the screen's pace and leans gently toward the video/audio clock.
    Phones update the video clock in coarse steps; snapping to it made text jump back and forth. Only a real jump (seek, stall) snaps. */
 function followClock(T,dt,ref,seeking){const nx=T+dt,er=ref-nx;if(seeking||!isFinite(ref))return nx;if(Math.abs(er)>.25)return ref;return nx+clamp(er*.08,-dt*.45,dt*.45)}
@@ -3401,6 +3447,50 @@ function capBlock(){const c=selClip();if(!c||c.kind!=='caption')return null;try{
   const end=()=>{if(drag){const cap=drag.cap;drag=null;sv.classList.remove('on');sh.classList.remove('on');$('#recZ').hidden=true;
       const W=view.width,H=view.height;if(cap){const b=capBlock();if(b)showPosQ(b,W,H,true,false);changed();rebuild('video',true);try{rebuild('size',true)}catch(e){}}else{try{showPosQ(Engine.layout(S,W,H).block,W,H,false,false)}catch(e){}rebuild('text',true)}}};
   view.addEventListener('pointerup',end);view.addEventListener('pointercancel',end)})();
+/* ===== Transform: rotate / scale / align. Desktop gets drag handles on the box; everyone gets the controls in the Size tab ===== */
+function rotGet(){return +((S.d3&&S.d3.rz)||0)}
+function rotSet(deg){deg=clamp(Math.round(deg*2)/2,-180,180);const c=selClip();
+  if(c.kind==='caption'&&capMoveScope!=='one'){const look=P.cap.look||(P.cap.look={});look.s=look.s||{};look.s.d3=Object.assign({},look.s.d3||S.d3,{rz:deg});
+    capClips().forEach(x=>{x.s.d3=Object.assign({},x.s.d3,{rz:deg});if(x.gen)x.gen.s.d3=kj(x.s.d3);if(x.keep&&x.keep.s)delete x.keep.s.d3});S=selClip().s;capTrack()}
+  else{S.d3=Object.assign({},S.d3,{rz:deg})}
+  dirty=true}
+function alignTo(where){const W=view.width,H=view.height;let lay;try{lay=Engine.layout(S,W,H)}catch(e){return}const b=lay.block,base=lay.base||1;if(!b)return;const z=safeZone();
+  const ml=Math.max(z.l||0,.05)*W,mr=Math.max(z.r||0,.05)*W,mt=Math.max(z.t||0,.05)*H,mb=Math.max(z.b||0,.05)*H;let dx=0,dy=0;
+  switch(where){case'l':dx=ml-b.x0;break;case'r':dx=(W-mr)-b.x1;break;case'c':dx=W/2-(b.x0+b.x1)/2;break;case't':dy=mt-b.top;break;case'b':dy=(H-mb)-b.bottom;break;case'm':dy=H/2-(b.top+b.bottom)/2;break}
+  commit();
+  if(selClip().kind==='caption'){const m=capMoveGet();capMoveSet(m.x+dx/base,m.y+dy/base)}
+  else S.lines.forEach(L=>{L.dx=Math.round((L.dx||0)+dx/base);L.dy=Math.round((L.dy||0)+dy/base)});
+  dirty=true;changed();try{rebuild('size',true)}catch(e){}}
+function transformSec(){const isCap=selClip().kind==='caption';
+  const rs=slider('Rotation',{min:-180,max:180,step:.5,get:()=>rotGet(),set:v=>rotSet(v),fmt:v=>(+v).toFixed(v%1?1:0)+'°',reset:0});
+  const num=h('input',{class:'txtin',type:'number',min:'-180',max:'180',step:'1',value:String(Math.round(rotGet()*10)/10),'aria-label':'Rotation in degrees',style:'width:84px'});
+  num.addEventListener('change',()=>{commit();rotSet(+num.value||0);rs.sync();changed()});
+  const ab=(l,w,aria)=>h('button',{type:'button',class:'pillbtn','aria-label':aria,title:aria,onclick:()=>alignTo(w)},l);
+  return sec('Transform & align',
+    h('p',{class:'hint',style:'margin-top:0'},(isCap?(capMoveScope==='one'?'Rotation and alignment change only the selected caption. ':'Rotation applies to every caption. '):'Rotation turns the whole title. ')+'On a computer you can also drag the corner handles to scale and the round handle above the box to rotate (hold Shift to snap to 15°'+(isCap?')':', or to scale the whole title)')+'.'),
+    rs,h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Exact angle')),num),
+    h('div',{class:'pillrow'},...[-90,-45,0,45,90].map(a=>h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();rotSet(a);rs.sync();num.value=String(a);changed()}},a+'°'))),
+    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Align in frame'))),
+    h('div',{class:'pillrow'},ab('Left','l','Align left'),ab('Center','c','Center left to right'),ab('Right','r','Align right'),ab('Top','t','Align top'),ab('Middle','m','Center top to bottom'),ab('Bottom','b','Align bottom')))}
+(()=>{const sb=$('#selbox');if(!sb)return;
+  ['nw','ne','sw','se','rot'].forEach(c=>{const e=document.createElement('i');e.className='hnd '+c;e.dataset.h=c;sb.appendChild(e)});
+  let g=null,raf=0;
+  sb.addEventListener('pointerdown',e=>{const hd=e.target.closest&&e.target.closest('.hnd');if(!hd||e.button>0)return;e.preventDefault();e.stopPropagation();
+    if(!lastInfo||!lastInfo.lay)return;const r=view.getBoundingClientRect(),k=r.width/view.width,lay=lastInfo.lay,ln=lay.lines[sel],blk=lay.block;if(!ln||!blk)return;
+    styleTouch.t=0;commit();if(playing)setPlaying(false);const cap=selClip().kind==='caption';
+    const bc={x:r.left+((blk.x0+blk.x1)/2)*k,y:r.top+((blk.top+blk.bottom)/2)*k},lc={x:r.left+ln.cx*k,y:r.top+((ln.top+ln.bottom)/2)*k};const c0=(hd.dataset.h==='rot'||cap)?bc:lc;
+    g={h:hd.dataset.h,cap,c0,a0:Math.atan2(e.clientY-c0.y,e.clientX-c0.x),d0:Math.hypot(e.clientX-c0.x,e.clientY-c0.y)||1,rz0:rotGet(),pct0:cap?capScaleGet():100,base:S.lines.map(L=>({L,size:L.size,dx:L.dx||0,dy:L.dy||0,fw:L.fit?L.fit.w:null})),lg:S.lineGap,sel,e};
+    try{hd.setPointerCapture(e.pointerId)}catch(_){}});
+  const run=()=>{raf=0;if(!g)return;const e=g.e;
+    if(g.h==='rot'){let d=(Math.atan2(e.clientY-g.c0.y,e.clientX-g.c0.x)-g.a0)*180/Math.PI;d=((d+540)%360)-180;let v=g.rz0-d;if(e.shiftKey)v=Math.round(v/15)*15;rotSet(v)}
+    else{const f=clamp(Math.hypot(e.clientX-g.c0.x,e.clientY-g.c0.y)/g.d0,.15,6);
+      if(g.cap)capScaleSet(g.pct0*f);
+      else{const whole=e.shiftKey;g.base.forEach((o,i)=>{if(!whole&&i!==g.sel)return;o.L.size=Math.max(12,Math.round(o.size*f));if(o.fw!=null&&o.L.fit)o.L.fit=Object.assign({},o.L.fit,{w:clamp(o.fw*f,.08,.98)});if(whole){o.L.dx=Math.round(o.dx*f);o.L.dy=Math.round(o.dy*f)}});if(whole&&g.lg!=null)S.lineGap=Math.round(g.lg*f)}}
+    dirty=true;changed({tl:false})};
+  sb.addEventListener('pointermove',e=>{if(!g)return;g.e=e;if(!raf)raf=requestAnimationFrame(run)});
+  const end=e=>{if(!g)return;g=null;try{e.target.releasePointerCapture(e.pointerId)}catch(_){}changed();['size','text','d3'].forEach(id=>{try{rebuild(id,true)}catch(_){}})};
+  sb.addEventListener('pointerup',end);sb.addEventListener('pointercancel',end)})();
+
 
 /* =====================================================================
    Timeline (multi-clip)
@@ -4193,11 +4283,13 @@ function capLook(id,text,name,so){try{const cs=CAP_BY[id];if(!cs)return null;con
  .forEach(([id,txt,name,so])=>{const lk=capLook(id,txt,name,so);if(lk)LOOKS.push(lk)});
 function heightUnits(){const [aw,ah]=aspectWH(P.aspect);return 1080*ah/Math.min(aw,ah)}
 /* per-caption overrides: a caption can have its own style (c.capo) and its own highlighted words (c.emphW) */
-function capCfg(clip){if(P.cap&&P.cap.style==='stkfire')P.cap.style='stacked';if(clip&&clip.capo&&clip.capo.style==='stkfire')clip.capo.style='stacked';let cfg=clip&&clip.capo?Object.assign({},P.cap,clip.capo):P.cap;if(clip&&(clip.emphW||clip.mv||clip.mvs)){cfg=Object.assign({},cfg);if(clip.emphW)cfg.emphW=clip.emphW;if(clip.mv){cfg.mvx=+clip.mv.x||0;cfg.mvy=+clip.mv.y||0}if(clip.mvs&&+clip.mvs>0)cfg.size=clamp((cfg.size||1)*(+clip.mvs),.2,4)}return cfg}
+function capCfg(clip){if(P.cap&&P.cap.style==='stkfire')P.cap.style='stacked';if(clip&&clip.capo&&clip.capo.style==='stkfire')clip.capo.style='stacked';let cfg=clip&&clip.capo?Object.assign({},P.cap,clip.capo):P.cap;if(clip&&(clip.emphW||clip.mv||clip.mvs||clip.neg)){cfg=Object.assign({},cfg);if(clip.neg){cfg.negMode=clip.neg.mode;if(Array.isArray(clip.neg.words))cfg.negW=clip.neg.words}if(clip.emphW)cfg.emphW=clip.emphW;if(clip.mv){cfg.mvx=+clip.mv.x||0;cfg.mvy=+clip.mv.y||0}if(clip.mvs&&+clip.mvs>0)cfg.size=clamp((cfg.size||1)*(+clip.mvs),.2,4)}return cfg}
+function lineWordRanges(lines){let n=0;return lines.map(L=>{const k=String(L.text||'').trim().split(/\s+/).filter(Boolean).length;const r=[n,n+k];n+=k;return r})}
 function capState(ws,start,dur,c){const cs=CAP_BY[c.style]||CAPSTYLES[0];const so=styleOpts(cs,c);const o=cs.build(ws,c,so);const d3o=o.d3;
-  if(so.blend&&so.blend!=='normal'){const on=cs.stack?(so.negOn||'all'):'all',amt=so.namt??1,flat=L=>{if(!so.nkeep){L.mat='flat';L.c1=so.ncolor||'#ffffff';delete L.cc;delete L.gm}delete L.lglow;delete L.plate};
-    if(on==='all'){o.blend={mode:so.blend,amt};o.lines.forEach(flat);o.glow={on:false};o.shadow={on:false}}
-    else o.lines.filter(L=>on==='accent'?L._acc:!L._acc).forEach(L=>{L.blend={mode:so.blend,amt};flat(L)})}
+  const bm=c.negMode||so.blend;if(bm&&bm!=='normal'){const on=Array.isArray(c.negW)?'words':(cs.stack?(so.negOn||'all'):'all'),amt=so.namt??1,flat=L=>{if(!so.nkeep){L.mat='flat';L.c1=so.ncolor||'#ffffff';delete L.cc;delete L.gm}delete L.lglow;delete L.plate};
+    if(on==='all'){o.blend={mode:bm,amt};o.lines.forEach(flat);o.glow={on:false};o.shadow={on:false}}
+    else if(on==='words'){const rg=lineWordRanges(o.lines);o.lines.forEach((L,i)=>{const r=rg[i];if(r&&r[1]>r[0]&&c.negW.some(w=>w>=r[0]&&w<r[1])){L.blend={mode:bm,amt};flat(L)}})}
+    else o.lines.filter(L=>on==='accent'?L._acc:!L._acc).forEach(L=>{L.blend={mode:bm,amt};flat(L)})}
   const mvx=+c.mvx||0,mvy=+c.mvy||0;
   if(o.anchorTop!=null)o.anchorTop=clamp(c.pos-.1+mvy/heightUnits(),-.6,1.5);else{const shift=(c.pos-.5)*heightUnits()+mvy;o.lines.forEach(L=>{L.dy=(L.dy||0)+shift})}
   if(c.dx||mvx)o.lines.forEach(L=>{L.dx=(L.dx||0)+(c.dx||0)+mvx});
@@ -4219,9 +4311,9 @@ function groupWords(words,maxW){const out=[];let cur=[];const maxC=P.cap&&CAP_BY
     if(cur.length&&(cur.length>=maxW||gap>.55||chars>maxC||/[.!?…]$/.test(prev.w)||(/[,;:]$/.test(prev.w)&&cur.length>=2))){out.push(cur);cur=[]}cur.push(w)});if(cur.length)out.push(cur);return out}
 const capClips=()=>P.clips.filter(c=>c.kind==='caption').sort((a,b)=>a.start-b.start);
 function allCapWords(){return capClips().flatMap(c=>c.words||[])}
-function buildCaptions(words,groups){const keepSel=selClip().kind!=='caption'?P.sel:null;const old=capClips().map(c=>({a:c.start,b:c.start+c.s.dur,capo:c.capo,mv:c.mv,mvs:c.mvs}));P.clips=P.clips.filter(c=>c.kind!=='caption');const gs=groups||groupWords(words,P.cap.maxWords);
+function buildCaptions(words,groups){const keepSel=selClip().kind!=='caption'?P.sel:null;const old=capClips().map(c=>({a:c.start,b:c.start+c.s.dur,capo:c.capo,mv:c.mv,mvs:c.mvs,neg:c.neg}));P.clips=P.clips.filter(c=>c.kind!=='caption');const gs=groups||groupWords(words,P.cap.maxWords);
   gs.forEach((g,i)=>{const nx=gs[i+1];let st=Math.max(0,g[0].s-.05),en=g[g.length-1].e+.5;if(nx)en=Math.min(en,Math.max(nx[0].s-.08,0)-.02);en=Math.max(en,st+.55);if(nx)en=Math.min(en,Math.max(st+.2,nx[0].s-.1));if(P.video)en=Math.min(en,P.video.dur);if(en<=st+.05)return;
-    const c=newClip(null,Math.round(st*1000)/1000,{track:1,kind:'caption',words:g.map(w=>({w:w.w,s:w.s,e:w.e}))});const from=old.find(o=>g[0].s>=o.a-.01&&g[0].s<o.b);if(from&&from.capo)c.capo=structuredClone(from.capo);if(from&&from.mv)c.mv=Object.assign({},from.mv);if(from&&from.mvs)c.mvs=from.mvs;
+    const c=newClip(null,Math.round(st*1000)/1000,{track:1,kind:'caption',words:g.map(w=>({w:w.w,s:w.s,e:w.e}))});const from=old.find(o=>g[0].s>=o.a-.01&&g[0].s<o.b);if(from&&from.capo)c.capo=structuredClone(from.capo);if(from&&from.mv)c.mv=Object.assign({},from.mv);if(from&&from.mvs)c.mvs=from.mvs;if(from&&from.neg)c.neg=structuredClone(from.neg);
     c.s=capState(c.words,c.start,Math.round((en-st)*1000)/1000,capCfg(c));capGen(c);P.clips.push(c)});
   linkProject();P.sel=keepSel&&P.clips.find(c=>c.id===keepSel)?keepSel:(capClips()[0]||P.clips[0]).id;S=selClip().s;sel=0;capTrack()}
 /* keep adjustments: every caption remembers what you changed on it (font, colours, material, glow…) and re-applies it after any rebuild */
@@ -4239,7 +4331,7 @@ function capGen(c){applyKeep(c.s,P.cap.look);c.gen=snapKeep(c.s)}
 function capRebuild(c,dur){const keep=c.gen?diffKeep(c.s,c.gen):(c.keep||null);c.s=capState(c.words,c.start,dur??c.s.dur,capCfg(c));c.s.aspect=P.aspect;c.s.bg=P.bg;capGen(c);applyKeep(c.s,keep);c.keep=keep;
   if(c.id===P.sel){S=c.s;sel=Math.min(sel,S.lines.length-1);capTrack()}}
 /* "Style edits apply to every caption": a change made on one caption in a style tab is copied to every caption and remembered */
-let capPrev=null,styleTouch={t:0,id:''};
+let capPrev=null,styleTouch={t:0,id:''},capLineScope='lineall';
 function capTrack(){const c=selClip();capPrev=c&&c.kind==='caption'?{id:c.id,snap:snapKeep(c.s)}:null}
 ['pointerdown','input','change','keydown'].forEach(ev=>document.addEventListener(ev,e=>{const pn=e.target&&e.target.closest&&e.target.closest('[data-panel]');if(pn)styleTouch={t:performance.now(),id:pn.dataset.panel}},true));
 const STYLE_PANELS=new Set(['text','style','grad','gloss','d3','fx','anim','looks']);
@@ -4247,28 +4339,37 @@ function capPropagate(){const c=selClip();if(!c||c.kind!=='caption'){capPrev=nul
   if(!capPrev||capPrev.id!==c.id||capPrev.snap.l.length!==c.s.lines.length){capTrack();return}
   const now=snapKeep(c.s);const fromStyle=performance.now()-styleTouch.t<2500&&STYLE_PANELS.has(styleTouch.id);
   if(!fromStyle||P.cap.styleAll===false){capPrev.snap=now;return}
-  const d={s:{},la:{}};let any=false;KEEP_S.forEach(k=>{if(now.s[k]!==capPrev.snap.s[k]){d.s[k]=JSON.parse(now.s[k]);any=true}});
-  now.l.forEach((ln,i)=>KEEP_L.forEach(k=>{const was=capPrev.snap.l[i];if(was&&ln[k]!==was[k]){d.la[k]=JSON.parse(ln[k]);any=true}}));
+  const d={s:{},la:{},l:[]};let any=false;KEEP_S.forEach(k=>{if(now.s[k]!==capPrev.snap.s[k]){d.s[k]=JSON.parse(now.s[k]);any=true}});
+  /* line edits: 'all' = every line of every caption (old behaviour) · 'lineall' = only that line position, in every caption · 'one' = only that line of this caption */
+  now.l.forEach((ln,i)=>{const was=capPrev.snap.l[i];if(!was)return;const dl={};KEEP_L.forEach(k=>{if(ln[k]!==was[k])dl[k]=JSON.parse(ln[k])});
+    if(!Object.keys(dl).length)return;if(capLineScope==='all'){Object.assign(d.la,dl);any=true}else if(capLineScope==='lineall'){d.l[i]=dl;any=true}});
   capPrev.snap=now;if(!any)return;
   const look=P.cap.look||(P.cap.look={});look.s=Object.assign(look.s||{},d.s);look.la=Object.assign(look.la||{},d.la);
-  capClips().forEach(x=>{applyKeep(x.s,d);if(x.gen){for(const k in d.s)x.gen.s[k]=kj(d.s[k]);x.gen.l.forEach(gl=>{for(const k in d.la)gl[k]=kj(d.la[k])})}if(x.keep){if(x.keep.s)for(const k in d.s)delete x.keep.s[k];if(x.keep.l)x.keep.l.forEach(dl=>{if(dl)for(const k in d.la)delete dl[k]})}});
+  if(d.l.length){look.l=look.l||[];d.l.forEach((dl,i)=>{if(dl)look.l[i]=Object.assign(look.l[i]||{},dl)})}
+  capClips().forEach(x=>{applyKeep(x.s,d);if(x.gen){for(const k in d.s)x.gen.s[k]=kj(d.s[k]);x.gen.l.forEach(gl=>{for(const k in d.la)gl[k]=kj(d.la[k])});d.l.forEach((dl,i)=>{const gl=x.gen.l[i];if(gl&&dl)for(const k in dl)gl[k]=kj(dl[k])})}if(x.keep){if(x.keep.s)for(const k in d.s)delete x.keep.s[k];if(x.keep.l)x.keep.l.forEach((dl,i)=>{if(dl){for(const k in d.la)delete dl[k];if(d.l[i])for(const k in d.l[i])delete dl[k]}})}});
   capPrev.snap=snapKeep(c.s);dirty=true}
 
 /* ===== My presets on caption styles: any preset saved in Looks (or from a caption) can restyle every caption, or just one ===== */
+function capCfgSnap(c){const f=capCfg(c),o={};['style','color','emph','karaoke','karaokeColor','upper','wordDur','maxWords'].forEach(k=>{if(f[k]!==undefined)o[k]=f[k]});if(f.so)o.so=structuredClone(f.so);return o}
 function capPresetKeep(lk){const ns=fromLook(lk,{aspect:P.aspect,bg:P.bg});const kp={s:{},la:{}};KEEP_S.forEach(k=>{if(ns[k]!==undefined)kp.s[k]=cpv(ns[k])});const L0=(ns.lines&&ns.lines[0])||{};KEEP_L.forEach(k=>{if(L0[k]!==undefined)kp.la[k]=cpv(L0[k])});return kp}
 function capApplyPreset(lk,scope){let kp;try{kp=capPresetKeep(lk)}catch(e){console.warn('preset',e);toast('That preset couldn’t be applied');return false}
+  const cc=lk.capcfg&&lk.capcfg.style&&CAP_BY[lk.capcfg.style]?lk.capcfg:null;
   if(scope==='one'){const c=selClip();if(!c||c.kind!=='caption'){toast('Tap a caption on the timeline first');return false}
-    if(!c.gen)c.gen=snapKeep(c.s);applyKeep(c.s,kp);c.keep=diffKeep(c.s,c.gen);S=c.s;capTrack();linkProject();refreshAll();changed();toast(lk.name+' · this caption only');return true}
-  P.cap.look=kp;P.cap.lookFrom=lk.name;capClips().forEach(c=>{c.gen=null;c.keep=null;capRebuild(c)});S=selClip().s;sel=Math.min(sel,S.lines.length-1);capTrack();linkProject();refreshAll();changed();toast(lk.name+' · all captions');return true}
+    if(cc){c.capo=Object.assign({},cc);delete c.capo.maxWords;if(c.capo.style===P.cap.style&&JSON.stringify(c.capo.so||null)===JSON.stringify(P.cap.so||null)&&c.capo.color===P.cap.color&&c.capo.emph===P.cap.emph&&c.capo.wordDur===P.cap.wordDur&&!c.capo.upper===!P.cap.upper)delete c.capo}
+    c.gen=null;c.keep=null;capRebuild(c);if(!c.gen)c.gen=snapKeep(c.s);applyKeep(c.s,kp);c.keep=diffKeep(c.s,c.gen);S=c.s;capTrack();linkProject();refreshAll();changed();toast(lk.name+' · this caption only');return true}
+  if(cc){const C=P.cap;['style','color','emph','karaoke','karaokeColor','upper','wordDur','maxWords'].forEach(k=>{if(cc[k]!==undefined)C[k]=cc[k]});if(cc.so)C.so=structuredClone(cc.so);capClips().forEach(c=>{delete c.capo})}
+  P.cap.look=kp;P.cap.lookFrom=lk.name;capClips().forEach(c=>{c.gen=null;c.keep=null});
+  if(cc){const ws=allCapWords();if(ws.length)buildCaptions(ws);else capClips().forEach(c=>capRebuild(c))}else capClips().forEach(c=>capRebuild(c));
+  S=selClip().s;sel=Math.min(sel,S.lines.length-1);capTrack();linkProject();refreshAll();changed();toast(lk.name+' · all captions');return true}
 function capPresetSection(C,scope){const mine=myPresets();const g=h('div',{class:'grid2 mypre'});
   mine.forEach((lk,idx)=>{const cv=h('canvas',{width:300,height:200});
     const tile=h('button',{type:'button',class:'tile','data-preset':String(idx),style:'--c:#7a5cff','aria-label':'Use preset '+lk.name+' on captions'},cv,h('span',{class:'name',style:'position:absolute;left:0;right:0;bottom:6px;z-index:3;text-align:center;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.08em;color:rgba(255,255,255,.75);text-transform:uppercase'},lk.name),(P.cap.lookFrom===lk.name)?h('span',{class:'dot',html:svg('check',3.5)}):null);
-    let kp=null;const mk=()=>{if(!kp)kp=capPresetKeep(lk);const ws=splitTimed('how I post four times a week',0,1.6);const c2=Object.assign({},C,{pos:.5,size:1.35,autoFit:true});const st=capState(ws.slice(0,4),0,2,c2);applyKeep(st,kp);st.aspect='3:2';st.autoFit=true;st.bg={mode:'transparent'};return st};
+    let kp=null;const mk=()=>{if(!kp)kp=capPresetKeep(lk);const ws=splitTimed('how I post four times a week',0,1.6);const c2=Object.assign({},C,lk.capcfg&&CAP_BY[lk.capcfg.style]?lk.capcfg:{},{pos:.5,size:1.35,autoFit:true,mvx:0,mvy:0});const st=capState(ws.slice(0,4),0,2,c2);applyKeep(st,kp);st.aspect='3:2';st.autoFit=true;st.bg={mode:'transparent'};return st};
     const draw=()=>queueRender(()=>{try{renderMini(cv,mk(),1.7)}catch(e){console.warn(e)}});draw();hoverPlay(tile,cv,mk,2);tile.addEventListener('pointerleave',draw);
     tile.addEventListener('click',()=>{commit();useRec('looks',lk.name);capApplyPreset(lk,scope)});
     const x=h('span',{class:'x',role:'button','aria-label':'Delete preset '+lk.name},'×');x.addEventListener('click',e=>{e.stopPropagation();const arr=myPresets();arr.splice(idx,1);saveMyPresets(arr);rebuild('video',true);toast('Preset deleted')});tile.append(x);g.append(tile)});
   const nm=h('input',{class:'txtin',placeholder:'Name this caption look (e.g. My gold pop)',maxlength:'40'});
-  const save=h('button',{type:'button',class:'pillbtn',onclick:()=>{const c=selClip();if(!c||c.kind!=='caption'){toast('Tap a caption on the timeline first, then save its look');return}const n=(nm.value||'').trim()||('Caption look '+(mine.length+1));const s_=structuredClone(c.s);delete s_.aspect;delete s_.bg;const arr=myPresets();arr.unshift({name:n,tag:'MINE',s:s_});saveMyPresets(arr.slice(0,40));rebuild('video',true);toast('Saved “'+n+'” to My presets')}},'Save this caption’s look');
+  const save=h('button',{type:'button',class:'pillbtn',onclick:()=>{const c=selClip();if(!c||c.kind!=='caption'){toast('Tap a caption on the timeline first, then save its look');return}const n=(nm.value||'').trim()||('Caption look '+(mine.length+1));const s_=structuredClone(c.s);delete s_.aspect;delete s_.bg;const arr=myPresets();arr.unshift({name:n,tag:'MINE',s:s_,capcfg:capCfgSnap(c)});saveMyPresets(arr.slice(0,40));rebuild('video',true);toast('Saved “'+n+'” to My presets')}},'Save this caption’s look');
   return h('div',{class:'cat',style:'--c:#7a5cff'},h('div',{class:'cat-h'},h('span',{class:'cat-n'},String(mine.length)),h('span',{class:'cat-t'},'my presets · captions')),
     h('p',{class:'hint',style:'margin-top:0'},scope==='one'?'Tap a preset to give only the selected caption that look.':'Tap a preset to restyle every caption with it. Switch “Apply style to” above to use it on one caption.'),
     h('div',{style:'display:flex;gap:8px;margin:0 0 10px'},nm,save),
