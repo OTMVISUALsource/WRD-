@@ -2078,8 +2078,10 @@ const Engine=(()=>{
     const norm=st=>{st=Object.assign({},ST0,st);st.a*=fade;for(const k of SNAPK)if(Math.abs(st[k])<.00008)st[k]=0;if(Math.abs(st.sx-1)<.00008)st.sx=1;if(Math.abs(st.sy-1)<.00008)st.sy=1;return st};
     const allSt=mode==='all'?contMo(norm(A.fn(EIN(gp),lay.block,G)),lay.block,G,S,t):null;
     const R={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};const perLine=S.lines.some(L=>L.shine&&(L.shine.mode==='own'||L.shine.mode==='off'));const SX=[];let PGu=false,PGc=null;
-    for(const ln of lay.lines){
-      if(!ln.glyphs.length||(opts.hide&&opts.hide.has(ln.li)))continue;
+    for(const ln0 of lay.lines){
+      if(!ln0.glyphs.length||(opts.hide&&opts.hide.has(ln0.li)))continue;
+      /* negative pass: draw the line as one flat color (no gradient, glow or plate) without touching the cached layout line */
+      const ln=opts.flatCol?Object.assign(Object.create(ln0),{L:Object.assign({},ln0.L,{mat:'flat',c1:opts.flatCol,cc:undefined,gm:undefined,lglow:undefined,plate:undefined})}):ln0;
       const M=MATS[ln.L.mat]||MATS.flat;const gmP=M.user===2&&ln.L.gm&&ln.L.gm.type==='pulse'&&(ln.L.gm.amt??1)>0;const needPost=!!ln.L.lglow||perLine||gmP||(ln.L.bevel??M.bevel)>0||M.gloss||M.stripes||M.brushed||ln.L.metal>0||M.glass||(ln.L.gl&&ln.L.gl.amt>0);
       const c=needPost?L:X;if(needPost){L.setTransform(1,0,0,1,0,0);L.globalAlpha=1;L.globalCompositeOperation='source-over';L.clearRect(0,0,W,H)}
       c.font=fontStr(ln.L,ln.px);c.textBaseline='alphabetic';c.textAlign='left';const sty=lineStyle(c,ln);
@@ -2088,6 +2090,7 @@ const Engine=(()=>{
       const dl=ln.L.delay||0,tauL=dl&&t<I+dl?clamp(t-dl,0,I):tau;
       const LR={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
       units.forEach((u,ui)=>{let st;
+        if(opts.skipW&&(mL==='char'||mL==='word')&&opts.skipW.has(mL==='word'?u.gi:u.wi))return;
         if(mL==='all')st=allSt;
         else{let pu;
           if(WT){const wi=mL==='word'?u.gi:(u.wi||0);let ts=WT[wi]??0;if(mL==='char'){const nx=WT[wi+1]??ts+.3;ts+=Math.min(.25,Math.max(0,nx-ts)*.8)*(u.wk/Math.max(1,u.wn))}
@@ -3004,6 +3007,7 @@ function buildStyle(){const L=cur();const p=h('div',{class:'panel'});const g=h('
    It can cover the whole look, or only the lines you pick, with its own strength; gradients and gradient motion keep moving inside it */
 let negScope='all';
 let capNegScope='one';
+let capNegPick='word';
 /* Caption negative text. Every control reads its value fresh (never from a copy taken when the panel was built), so a color or Strength change
    always shows on the control and on the video. "This caption" keeps its own lines / color / strength / letter-color mode in clip.neg; "All captions" writes the shared style. */
 const NEG_OWN={ncolor:'color',namt:'amt',nkeep:'keep'};
@@ -3030,17 +3034,22 @@ function capNegSec(){const C=P.cap,cc=selClip(),words=cc.words||[];
   const rg=lineWordRanges(cc.s.lines),total=rg.length?rg[rg.length-1][1]:0;
   const picked=()=>Array.isArray(cc.neg&&cc.neg.words)?cc.neg.words:null;
   const lineOn=i=>{const r=rg[i];if(!r||r[1]<=r[0])return false;const p=picked();if(!p)return true;for(let w=r[0];w<r[1];w++)if(!p.includes(w))return false;return true};
-  const setW=arr=>{commit();if(arr&&total>0){let full=true;for(let w=0;w<total;w++)if(!arr.includes(w)){full=false;break}if(full)arr=null}patchOwn({words:arr});rebuild('text',true)};
+  const nW=words.length||total;
+  const setW=arr=>{commit();if(arr&&nW>0){let full=true;for(let w=0;w<nW;w++)if(!arr.includes(w)){full=false;break}if(full)arr=null}patchOwn({words:arr});rebuild('text',true)};
   const tapLine=i=>{const r=rg[i];if(!r||r[1]<=r[0])return;const idx=[];for(let w=r[0];w<r[1];w++)idx.push(w);const p=picked();
     if(!p)return setW(idx);                           /* everything was on: the first tap picks just that line */
     setW(lineOn(i)?p.filter(w=>!idx.includes(w)):[...new Set([...p,...idx])].sort((x,y)=>x-y))};
+  const wordOn=i=>{const p=picked();return p?p.includes(i):true};
+  const tapWord=i=>{const p=picked();if(!p)return setW([i]);setW(p.includes(i)?p.filter(x=>x!==i):[...p,i].sort((x,y)=>x-y))};
   const box=sec('Negative text (blend)',
     h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Apply to')),seg([{v:'one',label:'This caption (pick lines)'},{v:'all',label:'All captions'}],()=>capNegScope,v=>{capNegScope=v;rebuild('text',true)},{label:'Negative scope',opts:{tl:false}})),
     h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Blend mode')),seg([{v:'normal',label:'Normal'},{v:'difference',label:'Difference'},{v:'subtract',label:'Subtract'}],()=>eff().mode,setMode,{label:'Blend mode',opts:{tl:false}})));
-  if(one&&mode!=='normal'){const sel_=picked();
-    box.append(h('p',{class:'hint',style:'margin-top:0'},sel_?(sel_.length?'Only the lines you picked are negative. Every other line stays normal.':'No lines are negative in this caption.'):'Every line is negative. Tap a line to make just that one negative.'),
-      h('div',{class:'wordchips',style:'--wc:#9fd0ff'},cc.s.lines.map((L,i)=>{const r=rg[i];if(!r||r[1]<=r[0])return null;return h('button',{type:'button','aria-pressed':String(lineOn(i)),onclick:()=>tapLine(i)},(L.text||'Line '+(i+1)))})),
-      h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn',onclick:()=>setW(null)},'All lines'),h('button',{type:'button',class:'pillbtn',onclick:()=>setW([])},'None')))}
+  if(one&&mode!=='normal'){const sel_=picked(),byW=capNegPick==='word';
+    box.append(h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Pick by')),seg([{v:'line',label:'Lines'},{v:'word',label:'Words'}],()=>capNegPick,v=>{capNegPick=v;rebuild('text',true)},{label:'Negative pick mode',opts:{tl:false}})));
+    box.append(h('p',{class:'hint',style:'margin-top:0'},byW?(sel_?(sel_.length?'Only the words you picked are negative. Every other word stays normal.':'No words are negative in this caption.'):'Every word is negative. Tap a word to make just that word negative.'):(sel_?(sel_.length?'Only the lines you picked are negative. Every other line stays normal.':'No lines are negative in this caption.'):'Every line is negative. Tap a line to make just that one negative.')),
+      byW?h('div',{class:'wordchips',style:'--wc:#9fd0ff'},words.map((w,i)=>h('button',{type:'button','aria-pressed':String(wordOn(i)),onclick:()=>tapWord(i)},w.w))):h('div',{class:'wordchips',style:'--wc:#9fd0ff'},cc.s.lines.map((L,i)=>{const r=rg[i];if(!r||r[1]<=r[0])return null;return h('button',{type:'button','aria-pressed':String(lineOn(i)),onclick:()=>tapLine(i)},(L.text||'Line '+(i+1)))})),
+      h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn',onclick:()=>setW(null)},byW?'All words':'All lines'),h('button',{type:'button',class:'pillbtn',onclick:()=>setW([])},'None')));
+    if(byW&&sel_&&sel_.length&&!negWordable(cc.s))box.append(h('p',{class:'hint'},'This caption style moves a whole line at once, so a line turns negative if any of its picked words is in it. Pick a word-by-word or letter-by-letter style to split words inside a line.'))}
   if(!one&&mode!=='normal'&&cs.stack)box.append(h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Negative on')),seg([{v:'all',label:'All words'},{v:'accent',label:'Accent words'},{v:'plain',label:'Other words'}],()=>SO().negOn||'all',v=>{commit();writeShared('negOn',v);capRebuildAll();dirty=true;rebuild('text',true)},{label:'Negative on',opts:{tl:false}})));
   if(mode!=='normal')box.append(slider('Strength',{min:0,max:1,step:.01,get:()=>eff().amt,set:v=>setOpt('namt',v),fmt:v=>Math.round(v*100)+'%',reset:1}),
     h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Letter color')),seg([{v:'one',label:'One color'},{v:'keep',label:'Keep colors & gradient'}],()=>eff().keep?'keep':'one',v=>{commit();setOpt('nkeep',v==='keep');rebuild('text',true)},{label:'Negative letter color',opts:{tl:false}})));
@@ -3227,7 +3236,7 @@ async function makeProxy(){if(PROXY.busy||!VFILE||!P.video||P.video.audioOnly||P
   const v=document.createElement('video');v.muted=true;v.playsInline=true;v.setAttribute('playsinline','');v.preload='auto';v.src=vidURL;
   try{await new Promise((res,rej)=>{v.onloadedmetadata=res;v.onerror=()=>rej(new Error('load'));setTimeout(()=>rej(new Error('timeout')),15000)});
     const vw=v.videoWidth,vh=v.videoHeight,pr_=+proxyRes(),sc=Math.min(1,(pr_===540?(isMob()?480:540):pr_)/Math.min(vw,vh));cvp.width=Math.max(2,Math.round(vw*sc/2)*2);cvp.height=Math.max(2,Math.round(vh*sc/2)*2);
-    if(window.VideoEncoder&&window.Mp4Muxer&&v.requestVideoFrameCallback){let cfg=null,mc='avc';const W_=cvp.width,H_=cvp.height,br=(isMob()?1.4e6:2e6)*Math.max(1,Math.pow(Math.min(W_,H_)/540,1.6));
+    if(window.VideoEncoder&&window.Mp4Muxer&&v.requestVideoFrameCallback){let cfg=null,mc='avc';const W_=cvp.width,H_=cvp.height,br=Math.min((isMob()?1.4e6:2e6)*Math.max(1,Math.pow(Math.min(W_,H_)/540,1.6)),MEM.proxyBr(v.duration||(P.video&&P.video.dur)||60));
       for(const [codec,m_] of [['avc1.640028','avc'],['avc1.4D4028','avc'],['avc1.42E028','avc'],['avc1.640033','avc'],['vp09.00.31.08','vp9']]){const c={codec,width:W_,height:H_,bitrate:br,framerate:30,hardwareAcceleration:'prefer-hardware'};if(m_==='avc')c.avc={format:'avc'};try{const q=await VideoEncoder.isConfigSupported(c);if(q.supported){cfg=c;mc=m_;break}}catch(e){}}
       if(cfg){const mux=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:mc,width:W_,height:H_},fastStart:'in-memory',firstTimestampBehavior:'offset'});let err=null;
         const enc=new VideoEncoder({output:(ch_,m_)=>mux.addVideoChunk(ch_,m_),error:e=>{err=e}});enc.configure(cfg);const cx2=cvp.getContext('2d');let lastTs=-1,lastKey=-1e9,lastUi2=0;
@@ -3239,14 +3248,14 @@ async function makeProxy(){if(PROXY.busy||!VFILE||!P.video||P.video.audioOnly||P
             if(v.ended)finish();else v.requestVideoFrameCallback(cb)};
           v.onended=finish;v.requestVideoFrameCallback(cb);
           /* run the hidden decoder faster than real time, as fast as it can still hand over ~24+ frames per video-second */
-          const maxR=isMob()?2.5:6;let rate=isMob()?1.5:2.5,m0=0,n0=0;v.playbackRate=rate;v.play().catch(rej);
-          const tune=setInterval(()=>{if(fin){clearInterval(tune);return}const mt=v.currentTime,dm=mt-m0,dn=nOut-n0;if(dm>.4){const fps=dn/dm;if(fps<20&&rate>1)rate=Math.max(1,rate*.75);else if(fps>=27&&rate<maxR)rate=Math.min(maxR,rate*1.3);try{v.playbackRate=rate}catch(e){}m0=mt;n0=nOut}
+          const maxR=isMob()?1.8:3.5;let rate=isMob()?1.25:2,m0=0,n0=0;v.playbackRate=rate;v.play().catch(rej);
+          const tune=setInterval(()=>{if(fin){clearInterval(tune);return}const mt=v.currentTime,dm=mt-m0,dn=nOut-n0;if(dm>.4){const fps=dn/dm;if((fps<20||MEM.pressure()>.85)&&rate>1)rate=Math.max(1,rate*.75);else if(fps>=27&&rate<maxR&&MEM.pressure()<.7)rate=Math.min(maxR,rate*1.3);try{v.playbackRate=rate}catch(e){}m0=mt;n0=nOut}
             if(enc.encodeQueueSize>10&&!v.paused){v.pause();const w=setInterval(()=>{if(fin||enc.encodeQueueSize<3){clearInterval(w);if(!fin)v.play().catch(()=>{})}},30)}},700);
           let lpt=-1,lpw=performance.now();
           const chk=setInterval(()=>{if(fin){clearInterval(chk);return}if(v.ended||(v.duration&&v.currentTime>=v.duration-.04)){clearInterval(chk);setTimeout(finish,150);return}if(v.currentTime>lpt+.01){lpt=v.currentTime;lpw=performance.now()}else if(performance.now()-lpw>8000){clearInterval(chk);fin=true;rej(new Error('stall'))}},400)});
         await enc.flush();mux.finalize();enc.close();const blob=new Blob([mux.target.buffer],{type:'video/mp4'});if(!blob.size)throw new Error('empty');
         if(PROXY.url)URL.revokeObjectURL(PROXY.url);PROXY.url=URL.createObjectURL(blob);PROXY.key=key;IDB.put('proxy',{key,blob}).catch(()=>{});toast('Optimized preview ready · playback is smoother, export stays full quality');applyProxy();return}}
-    const cx=cvp.getContext('2d');cx.imageSmoothingQuality='high';const st=cvp.captureStream(30);const rec=new MediaRecorder(st,{mimeType:mt,videoBitsPerSecond:isMob()?1.4e6:2e6});const ch=[];rec.ondataavailable=e=>{if(e.data&&e.data.size)ch.push(e.data)};
+    const cx=cvp.getContext('2d');cx.imageSmoothingQuality='high';const st=cvp.captureStream(30);const rec=new MediaRecorder(st,{mimeType:mt,videoBitsPerSecond:Math.min(isMob()?1.4e6:2e6,MEM.proxyBr(v.duration||(P.video&&P.video.dur)||60))});const ch=[];rec.ondataavailable=e=>{if(e.data&&e.data.size)ch.push(e.data)};
     const done=new Promise(r=>rec.onstop=r);let alive=true,lastUi=0;
     const draw=()=>{if(!alive)return;try{cx.drawImage(v,0,0,cvp.width,cvp.height)}catch(e){}PROXY.p=v.duration?v.currentTime/v.duration:0;const n=performance.now();if(n-lastUi>400){lastUi=n;const b=document.getElementById('vprogBar');if(b)b.style.width=Math.round(PROXY.p*100)+'%';const t_=document.getElementById('vprogTxt');if(t_)t_.textContent='Optimizing preview… '+Math.round(PROXY.p*100)+'%'}
       if(v.requestVideoFrameCallback)v.requestVideoFrameCallback(draw);else requestAnimationFrame(draw)};
@@ -3296,7 +3305,7 @@ async function convertVideo(){if(CONV.busy||!VFILE||!P.video)return;CONV.busy=tr
   try{ff=await loadFF(q=>{CONV.p=q*.05;CONV.msg=`Loading the converter… ${Math.round(q*100)}%`;convUI()});
     const ext=(VFILE.name.split('.').pop()||'mov').toLowerCase().replace(/[^a-z0-9]/g,'')||'mov';let inPath='in.'+ext,mounted=false;
     try{try{await ff.createDir('/wrdin')}catch(e){}await ff.mount('WORKERFS',{files:[VFILE]},'/wrdin');inPath='/wrdin/'+VFILE.name;mounted=true}
-    catch(e){if(VFILE.size>1.5e9)throw new Error('This file is over 1.5 GB, too big to convert in the browser. Trim it or export it as H.264 first.');CONV.msg='Reading your video…';convUI();await ff.writeFile(inPath,new Uint8Array(await VFILE.arrayBuffer()))}
+    catch(e){if(VFILE.size>MEM.info().conv)throw new Error('This file ('+Math.round(VFILE.size/1e6)+' MB) is too big to convert safely on this device. Trim it, or export it as H.264 first.');CONV.msg='Reading your video…';convUI();await ff.writeFile(inPath,new Uint8Array(await VFILE.arrayBuffer()))}
     CONV.t0=performance.now();CONV.msg='Converting… 0%';convUI();
     const prog=q=>{if(!(q>=0))return;CONV.p=.05+clamp(q)*.93;const el=(performance.now()-CONV.t0)/1000,left=q>.02?el/q*(1-q):0;CONV.msg=`Converting… ${Math.round(clamp(q)*100)}%`+(left>1?` · about ${left<90?Math.ceil(left)+' s':Math.ceil(left/60)+' min'} left`:'');convUI()};
     ff.on('log',({message})=>{const m=/time=(\d+):(\d+):([\d.]+)/.exec(message||'');if(m)prog((+m[1]*3600+ +m[2]*60+ +m[3])/dur)});
@@ -3347,6 +3356,9 @@ $('#sndBtn').addEventListener('click',()=>{soundOn=!soundOn;if(soundOn&&playing)
 const TRANSPARENT={mode:'transparent',color:'#00ff00'};
 const layerCv=document.createElement('canvas');
 /* negative text: Difference or Subtract against whatever is underneath (your video in the preview and in Video + Text) */
+/* the animation of this caption can show single words / letters on their own (so a picked word can be negative while its neighbours stay normal) */
+function negWordable(s){const ok=a=>{const A=ANIM_BY[a];return !!A&&(A.unit==='char'||A.unit==='word')};return !!s&&ok(s.anim)&&s.lines.every(L=>!L.anim||ok(L.anim))}
+function negWordSet(c,s){return c&&c.kind==='caption'&&c.neg&&Array.isArray(c.neg.words)&&c.neg.words.length&&negWordable(s)?new Set(c.neg.words):null}
 const blendOf=c=>c&&c.s&&c.s.blend&&c.s.blend.mode&&c.s.blend.mode!=='normal'?c.s.blend:null;
 const lineBlends=c=>c&&c.s&&!blendOf(c)?c.s.lines.filter(L=>L.blend&&L.blend.mode&&L.blend.mode!=='normal'):[];
 let blendCv=null;
@@ -3364,13 +3376,16 @@ function renderSeq(t,target,o={}){const W=target.width,H=target.height,tc=target
   if(layerCv.width!==W||layerCv.height!==H){layerCv.width=W;layerCv.height=H}
   for(const c of act){const s=c.s,keep=s.bg,kf=s.flare;s.bg=TRANSPARENT;s.aspect=P.aspect;s.flare=P.line;const LB=bd?lineBlends(c):[];
     try{if(LB.length){/* negative on chosen lines: the other lines draw normally, then each blended group over the video.
-          Lines are hidden by INDEX through the render options (the layout cache can return older line objects, so a flag on the line itself is not reliable) */
+          Lines are hidden by INDEX through the render options (the layout cache can return older line objects, so a flag on the line itself is not reliable).
+          When individual words are picked (and the animation works per letter/word) the words are skipped by WORD index the same way. */
         const idxs=L=>s.lines.indexOf(L),all_=s.lines.map((_,i)=>i);
         const hideOf=keep_=>new Set(all_.filter(i=>!keep_.has(i)));
         const LBi=new Set(LB.map(idxs));
-        const r=Engine.render(s,t-c.start,layerCv,Object.assign({},o,{hide:LBi}));if(c.id===P.sel)info=r;tc.drawImage(layerCv,0,0);
-        const groups=new Map();LB.forEach(L=>{const k_=L.blend.mode+'|'+(L.blend.amt??1);if(!groups.has(k_))groups.set(k_,[]);groups.get(k_).push(L)});
-        for(const [k_,ls] of groups){const mine=new Set(ls.map(idxs));Engine.render(s,t-c.start,layerCv,Object.assign({},o,{hide:hideOf(mine)}));const [md,am]=k_.split('|');blendLayer(tc,layerCv,bd,W,H,md,+am)}
+        const NW=negWordSet(c,s);
+        const r=NW?Engine.render(s,t-c.start,layerCv,Object.assign({},o,{hide:new Set(),skipW:NW})):Engine.render(s,t-c.start,layerCv,Object.assign({},o,{hide:LBi}));if(c.id===P.sel)info=r;tc.drawImage(layerCv,0,0);
+        const groups=new Map();LB.forEach(L=>{const k_=L.blend.mode+'|'+(L.blend.amt??1)+'|'+(L.blend.flat||'');if(!groups.has(k_))groups.set(k_,[]);groups.get(k_).push(L)});
+        let notW=null;if(NW){notW=new Set();const tot=lineWordRanges(s.lines).reduce((a,x)=>Math.max(a,x[1]),0);for(let i=0;i<tot;i++)if(!NW.has(i))notW.add(i)}
+        for(const [k_,ls] of groups){const mine=new Set(ls.map(idxs));const [md,am,fl]=k_.split('|');Engine.render(s,t-c.start,layerCv,Object.assign({},o,{hide:hideOf(mine),flatCol:fl||undefined,skipW:notW||undefined}));blendLayer(tc,layerCv,bd,W,H,md,+am)}
         continue}
       const r=Engine.render(s,t-c.start,layerCv,o);if(c.id===P.sel)info=r}finally{s.bg=keep;s.flare=kf;s.lines.forEach(L=>{if(L._hide)delete L._hide})}
     const bm=bd&&blendOf(c);if(bm)blendLayer(tc,layerCv,bd,W,H,bm.mode,bm.amt);else tc.drawImage(layerCv,0,0)}
@@ -3674,7 +3689,8 @@ async function loadVideo(file,o={}){if(!file)return;if(!o.restore){IDB.put('vide
   showVid=true;seek(0);setPlaying(false);updAspect();updBg();rebuild('video');changed();
   if(!o.restore)toast(`${file.name} loaded · ${fmtT(dur)}`);
   if(vidOn()){try{bgV.currentTime=.04}catch(e){}}
-  AUDIO_P=decodeAudioFile(file).then(ab=>{if(VFILE!==file)return;AUDIO=ab;playBuf=null;WAVE=peaks(ab,4000);waveW=0;updTimeline();updSound();rebuild('video',true)}).catch(e=>{AUDIO=false;console.warn('audio',e);rebuild('video',true)});
+  const decMark=()=>{try{localStorage.setItem('wrd.decRun',String(Date.now()))}catch(e){}},decOK=()=>{try{localStorage.removeItem('wrd.decRun')}catch(e){}};
+  decMark();AUDIO_P=decodeAudioFile(file).then(ab=>MEM.fit(ab)).then(ab=>{decOK();MEM.note();if(VFILE!==file)return;AUDIO=ab;playBuf=null;WAVE=peaks(ab,4000);waveW=0;updTimeline();updSound();rebuild('video',true)}).catch(e=>{decOK();AUDIO=false;console.warn('audio',e);rebuild('video',true)});
   if(!P.video.noPreview&&!P.video.audioOnly){const key=proxyKey(file);IDB.get('proxy').then(pr=>{if(pr&&pr.key===key&&pr.blob&&proxyKey(VFILE)===key){PROXY.url=URL.createObjectURL(pr.blob);PROXY.key=key;applyProxy();rebuild('video',true)}else if(VPREV==='proxy'&&needsProxy()){Promise.resolve(AUDIO_P).catch(()=>{}).then(()=>{if(proxyKey(VFILE)===key&&!PROXY.url)makeProxy()})}}).catch(()=>{})}}
 bgV.addEventListener('error',()=>{if(vidURL)toast('This browser can’t show this video’s picture (often 4K HEVC 10-bit or ProRes). Timing, captions and export still work.')});
 /* ---------- audio extraction that works on any browser ----------
@@ -3683,6 +3699,44 @@ bgV.addEventListener('error',()=>{if(vidURL)toast('This browser can’t show thi
       PCM (lpcm, twos, sowt, in24, in32, fl32, ipcm…) → decoded here.
    2) Other files: browser decodeAudioData.
    3) Last resort: record the audio while the video plays (silently, at 2× speed). */
+/* ===== Memory guard: keeps WRD inside what the device can really hold, so big videos never crash the page.
+   Budgets follow the device (phone / tablet / computer, reported RAM). Audio is decoded in short slices straight into one compact buffer,
+   the preview copy is sized to fit, and long jobs hand the processor back to the browser (so a YouTube tab keeps playing). ===== */
+const MEM=(()=>{let T=null;const ua=navigator.userAgent||'';
+  const mobile=()=>/iPhone|iPad|iPod|Android/i.test(ua)||(/Mac/.test(ua)&&navigator.maxTouchPoints>1);
+  /* after a page that died while reading audio, the next few videos use half the budget */
+  try{if(localStorage.getItem('wrd.decRun')){localStorage.removeItem('wrd.decRun');localStorage.setItem('wrd.memSafe','3')}}catch(e){}
+  const safeLeft=()=>{try{return Math.max(0,+localStorage.getItem('wrd.memSafe')||0)}catch(e){return 0}};
+  const info=()=>{if(T&&T.safe===safeLeft())return T;const dm=+navigator.deviceMemory||0,mob=mobile(),safe=safeLeft();
+    const tier=mob?(dm>=6?'mid':'low'):(dm&&dm<=4?'mid':'high');
+    const B={low:{audio:100e6,proxy:70e6,conv:3.5e8,chunk:40e6},mid:{audio:190e6,proxy:130e6,conv:6e8,chunk:90e6},high:{audio:440e6,proxy:320e6,conv:1.2e9,chunk:180e6}}[tier];
+    const k=safe?.5:1;T={tier,mob,safe,audio:B.audio*k,proxy:B.proxy*k,conv:B.conv*k,chunk:B.chunk*k};return T};
+  const pressure=()=>{try{const m=performance.memory;return m&&m.jsHeapSizeLimit?m.usedJSHeapSize/m.jsHeapSizeLimit:0}catch(e){return 0}};
+  /* give the browser a breath: other tabs, video playback and the phone's own UI stay smooth while WRD works */
+  let lastY=performance.now();
+  async function tick(ms){const n=performance.now();if(pressure()>.9){await new Promise(r=>setTimeout(r,350));lastY=performance.now();return}
+    if(n-lastY<(ms||30))return;await new Promise(r=>setTimeout(r,info().mob?0:6));lastY=performance.now()}
+  const plan=(secs,chIn,srIn)=>{const cap=info().audio;const o=[[Math.min(chIn,2),srIn],[1,srIn],[1,Math.min(srIn,32000)],[1,Math.min(srIn,24000)],[1,Math.min(srIn,16000)]];
+    for(const [c,sr] of o)if(secs*sr*c*4<=cap)return{ch:c,sr};return{ch:1,sr:Math.min(srIn,16000)}};
+  /* one real AudioBuffer written in place (no second copy later when it is played) */
+  const store=(ch,len,sr)=>{len=Math.max(1,len);let ab=null;try{ab=new AudioBuffer({numberOfChannels:ch,length:len,sampleRate:sr})}catch(e){}
+    if(ab){const c=[];for(let i=0;i<ch;i++)c.push(ab.getChannelData(i));return{ab,c}}
+    const c=[];for(let i=0;i<ch;i++)c.push(new Float32Array(len));return{ab:makeAB(c,sr),c}};
+  async function shrink(ab,ch,sr){const n=Math.max(1,Math.floor(ab.length*sr/ab.sampleRate)),st=store(ch,n,sr),r=ab.sampleRate/sr,ic=ab.numberOfChannels,src=[];
+    for(let c=0;c<ic;c++)src.push(ab.getChannelData(c));
+    for(let i=0;i<n;i++){const a=Math.floor(i*r),b=Math.max(a+1,Math.min(ab.length,Math.floor((i+1)*r)));
+      if(ch===1){let q=0;for(let c=0;c<ic;c++){const x=src[c];for(let j=a;j<b;j++)q+=x[j]}st.c[0][i]=q/(ic*(b-a))}
+      else for(let c=0;c<ch;c++){const x=src[Math.min(c,ic-1)];let q=0;for(let j=a;j<b;j++)q+=x[j];st.c[c][i]=q/(b-a)}
+      if((i&0x7FFFF)===0)await tick(30)}
+    return st.ab}
+  async function fit(ab){try{if(!ab||!ab.length)return ab;const bytes=ab.length*ab.numberOfChannels*4;if(bytes<=info().audio)return ab;
+      const p=plan(ab.duration,ab.numberOfChannels,ab.sampleRate);if(p.ch===ab.numberOfChannels&&p.sr>=ab.sampleRate)return ab;
+      const out=await shrink(ab,p.ch,p.sr);try{toast('Long video · the audio is kept in a compact form so your device stays safe')}catch(e){}return out}
+    catch(e){console.warn('audio fit',e);return ab}}
+  /* the preview copy is encoded at a bitrate that always fits the memory budget (a long clip just gets a lighter copy) */
+  const proxyBr=dur=>Math.max(4e5,info().proxy*8/Math.max(30,dur||60)/1.25);
+  const note=()=>{try{const n=safeLeft();if(n>0)localStorage.setItem('wrd.memSafe',String(n-1))}catch(e){}};
+  return{info,pressure,tick,plan,store,fit,proxyBr,note}})();
 let AUDIO_P=null;
 function makeAB(chs,sr){const len=chs[0]?chs[0].length:0;return{sampleRate:sr,numberOfChannels:chs.length,length:len,duration:len/sr,getChannelData:i=>chs[Math.min(i,chs.length-1)]}}
 const fcc=(dv,o)=>String.fromCharCode(dv.getUint8(o),dv.getUint8(o+1),dv.getUint8(o+2),dv.getUint8(o+3));
@@ -3719,17 +3773,47 @@ async function readChunks(file,list,cb,onP){let done=0;const tot=list.length;
     const buf=new Uint8Array(await file.slice(a,b).arrayBuffer());for(let k=i;k<j;k++)cb(list[k],buf.subarray(list[k].off-a,list[k].off-a+list[k].len));done+=j-i;i=j;if(onP)onP(done/tot)}}
 const SRI=[96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350];
 async function decodeViaContext(bytes){const AC=window.AudioContext||window.webkitAudioContext;const ac=new AC();try{return await new Promise((res,rej)=>{const p=ac.decodeAudioData(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),res,rej);if(p&&p.then)p.then(res,rej)})}finally{try{ac.close()}catch(e){}}}
+
+/* decode AAC in ~40 s slices (3 frames of lead-in each), resample each slice and write it in place at its exact time position:
+   memory stays flat however long the video is, and a slice that fails only leaves a short gap instead of crashing the page */
+/* the ADTS bytes of frames [a,b), read straight from the file */
+async function adtsSlice(src,a,b){let total=0;for(let i=a;i<b;i++)total+=src.fsz[i]+7;const out=new Uint8Array(total),{prof,srIdx,chn}=src;let o=0;
+  for(let i=a;i<b;){let j=i+1,end=src.foff[i]+src.fsz[i];while(j<b&&src.foff[j]===end){end+=src.fsz[j];j++}
+    const buf=new Uint8Array(await src.file.slice(src.foff[i],end).arrayBuffer());let p=0;
+    for(let k=i;k<j;k++){const sz=src.fsz[k],len=sz+7;out[o]=0xFF;out[o+1]=0xF1;out[o+2]=((prof-1)<<6)|((srIdx<0?3:srIdx)<<2)|(chn>>2);out[o+3]=((chn&3)<<6)|(len>>11);out[o+4]=(len>>3)&255;out[o+5]=((len&7)<<5)|31;out[o+6]=0xFC;out.set(buf.subarray(p,p+sz),o+7);o+=len;p+=sz}i=j}
+  return out}
+async function decodeADTSChunked(src,onP){const AC=window.AudioContext||window.webkitAudioContext;const ac=new AC(),nF=src.nF,t=src.t,chn=src.chn;
+  try{const acSr=ac.sampleRate,secs=nF*1024/t.sr,pl=MEM.plan(secs,Math.min(2,chn),acSr),len=Math.max(1,Math.floor(nF*1024*pl.sr/t.sr)),st=MEM.store(pl.ch,len,pl.sr);
+    const FR=Math.max(64,Math.round(40*t.sr/1024)),PRE=3,r=acSr/pl.sr;let bad=0,n=0;
+    for(let s0=0;s0<nF;s0+=FR){const e=Math.min(nF,s0+FR),p0=Math.max(0,s0-PRE);n++;
+      try{const bytes=(await adtsSlice(src,p0,e)).buffer;
+        const ab=await new Promise((res,rej)=>{const pr=ac.decodeAudioData(bytes,res,rej);if(pr&&pr.then)pr.then(res,rej)});
+        const need=Math.round((e-s0)*1024*acSr/t.sr),A=ab.length,start=Math.max(0,A-need),seg=A-start,m=Math.floor(seg/r),endPos=Math.min(len,Math.round(e*1024*pl.sr/t.sr)),d0=endPos-m,ic=ab.numberOfChannels,chd=[];
+        for(let c=0;c<ic;c++)chd.push(ab.getChannelData(c));
+        for(let j=0;j<m;j++){const di=d0+j;if(di<0||di>=len)continue;const a=start+Math.floor(j*r),b=Math.max(a+1,Math.min(A,start+Math.floor((j+1)*r)));
+          if(pl.ch===1){let q=0;for(let c=0;c<ic;c++){const x=chd[c];for(let k=a;k<b;k++)q+=x[k]}st.c[0][di]=q/(ic*(b-a))}
+          else for(let c=0;c<pl.ch;c++){const x=chd[Math.min(c,ic-1)];let q=0;for(let k=a;k<b;k++)q+=x[k];st.c[c][di]=q/(b-a)}}}
+      catch(err){bad++;console.warn('audio slice',s0,err)}
+      if(onP)onP(e/nF);await MEM.tick(20)}
+    if(bad>n/2)throw new Error('audio could not be decoded');return st.ab}
+  finally{try{ac.close()}catch(e){}}}
 async function extractMP4Audio(file,onP){
   const boxes=await topBoxes(file);const mb=boxes.find(b=>b.type==='moov');if(!mb)throw new Error('no moov');if(mb.size>200e6)throw new Error('moov too large');
   const dv=await readRange(file,mb.off,mb.off+mb.size);const t=audioTrack(dv,{body:8,end:dv.byteLength});if(!t)throw new Error('This video has no audio track.');
   const chunks=chunkList(t);const f=t.fmt;
   // ---- AAC
   if(f==='mp4a'&&t.asc){const ot=t.asc[0]>>3,si=((t.asc[0]&7)<<1)|(t.asc[1]>>7),cc=(t.asc[1]>>3)&15;const prof=ot===5||ot===29||ot>4?2:Math.max(1,ot);const srIdx=si<13?si:SRI.indexOf(t.sr);const chn=cc||t.ch;
-    const frames=[];let total=0;
-    await readChunks(file,chunks.map(c=>{let len=0;for(let k=0;k<c.n;k++)len+=t.fixed||t.sizes[c.first+k];return{...c,len}}),(c,buf)=>{let o=0;for(let k=0;k<c.n;k++){const sz=t.fixed||t.sizes[c.first+k];frames.push(buf.slice(o,o+sz));total+=sz+7;o+=sz}},onP);
-    const out=new Uint8Array(total);let o=0;for(const fr of frames){const len=fr.length+7;out[o]=0xFF;out[o+1]=0xF1;out[o+2]=((prof-1)<<6)|((srIdx<0?3:srIdx)<<2)|(chn>>2);out[o+3]=((chn&3)<<6)|(len>>11);out[o+4]=(len>>3)&255;out[o+5]=((len&7)<<5)|31;out[o+6]=0xFC;out.set(fr,o+7);o+=len}
-    window.__lastADTS=out;
+    let nF=0,total=0;for(const c of chunks)for(let k=0;k<c.n;k++){total+=(t.fixed||t.sizes[c.first+k])+7;nF++}
+    /* long audio: only note where each frame sits in the file; slices are read from the file when needed (now for captions/preview, and again at export for full quality) */
+    const big=nF*1024/t.sr*48000*Math.min(2,chn)*4>MEM.info().chunk,lc=(ot===2||ot===1);
+    if(big){if(!lc)throw new Error('long audio needs playback capture');
+      const foff=new Float64Array(nF),fsz=new Uint32Array(nF);let q=0;for(const c of chunks){let p=0;for(let k=0;k<c.n&&q<nF;k++){const sz=t.fixed||t.sizes[c.first+k];foff[q]=c.off+p;fsz[q]=sz;q++;p+=sz}}
+      const src={file,foff,fsz,nF,t,chn,prof,srIdx},ab=await decodeADTSChunked(src,onP);ab.__src=src;return ab}
+    const out=new Uint8Array(total),offs=new Uint32Array(nF+1);let fi=0,o=0;
+    await readChunks(file,chunks.map(c=>{let len=0;for(let k=0;k<c.n;k++)len+=t.fixed||t.sizes[c.first+k];return{...c,len}}),(c,buf)=>{let p=0;for(let k=0;k<c.n;k++){if(fi>=nF)break;const sz=t.fixed||t.sizes[c.first+k],len=sz+7;offs[fi++]=o;
+      out[o]=0xFF;out[o+1]=0xF1;out[o+2]=((prof-1)<<6)|((srIdx<0?3:srIdx)<<2)|(chn>>2);out[o+3]=((chn&3)<<6)|(len>>11);out[o+4]=(len>>3)&255;out[o+5]=((len&7)<<5)|31;out[o+6]=0xFC;out.set(buf.subarray(p,p+sz),o+7);o+=len;p+=sz}},onP);offs[fi]=o;
     try{return await decodeViaContext(out)}catch(e){if(typeof AudioDecoder==='undefined')throw e}
+    const frames=[];for(let i=0;i<fi;i++)frames.push(out.subarray(offs[i]+7,offs[i+1]));
     // WebCodecs fallback
     const pcm=[];for(let c=0;c<chn;c++)pcm.push([]);let sr=t.sr;
     await new Promise((res,rej)=>{const dec=new AudioDecoder({output:ad=>{sr=ad.sampleRate;for(let c=0;c<ad.numberOfChannels&&c<chn;c++){const a=new Float32Array(ad.numberOfFrames);ad.copyTo(a,{planeIndex:c,format:'f32-planar'});pcm[c].push(a)}ad.close()},error:rej});
@@ -3763,18 +3847,23 @@ async function decodeAudioFile(file,onP){
   const isoLike=['mp4','mov','m4a','m4v','3gp','qt'].includes(ext)||/mp4|quicktime|m4a/.test(file.type);
   let err;
   if(isoLike){try{return await extractMP4Audio(file,onP)}catch(e){err=e;console.warn('mp4 audio',e)}}
-  if(file.size<(mob?180e6:600e6)){try{return await decodeViaContext(new Uint8Array(await file.arrayBuffer()))}catch(e){err=e;console.warn('decodeAudioData',e)}}
+  const dur0=(P.video&&P.video.dur)||0;if(dur0*48000*8>MEM.info().audio*1.5)throw err||new Error('long file: the audio is read while it plays');
+  if(file.size<(mob?150e6:500e6)){try{return await decodeViaContext(new Uint8Array(await file.arrayBuffer()))}catch(e){err=e;console.warn('decodeAudioData',e)}}
   throw err||new Error('unreadable audio')}
 async function captureAudioByPlaying(onP,ac){if(!vidURL)throw new Error('no media');const v=document.createElement('video');v.src=vidURL;v.playsInline=true;v.setAttribute('playsinline','');v.preload='auto';
   v.preservesPitch=false;v.webkitPreservesPitch=false;v.mozPreservesPitch=false;
   await new Promise((r,j)=>{v.onloadedmetadata=r;v.onerror=()=>j(new Error('this browser can’t play the file'))});
-  const rate=2,src=ac.createMediaElementSource(v),proc=ac.createScriptProcessor(4096,2,2),mute=ac.createGain();mute.gain.value=0;const L=[],Rr=[];
-  proc.onaudioprocess=e=>{L.push(new Float32Array(e.inputBuffer.getChannelData(0)));Rr.push(new Float32Array(e.inputBuffer.getChannelData(Math.min(1,e.inputBuffer.numberOfChannels-1))))};
+  const rate=2,effSr=ac.sampleRate/rate,secs=(isFinite(v.duration)&&v.duration)||(P.video&&P.video.dur)||0,nch=secs&&secs*effSr*8>MEM.info().audio?1:2;
+  /* one array per channel, sized from the duration and written in place (no list of small pieces to join later) */
+  let cap_=Math.ceil((secs+3)*ac.sampleRate/rate)+16384,L=new Float32Array(cap_),Rr=nch===2?new Float32Array(cap_):null,pos=0;
+  const room=n=>{if(pos+n<=L.length)return;const nl=Math.ceil((pos+n)*1.25),a=new Float32Array(nl);a.set(L.subarray(0,pos));L=a;if(Rr){const b=new Float32Array(nl);b.set(Rr.subarray(0,pos));Rr=b}};
+  const src=ac.createMediaElementSource(v),proc=ac.createScriptProcessor(4096,2,2),mute=ac.createGain();mute.gain.value=0;
+  proc.onaudioprocess=e=>{const a=e.inputBuffer.getChannelData(0);room(a.length);L.set(a,pos);if(Rr)Rr.set(e.inputBuffer.getChannelData(Math.min(1,e.inputBuffer.numberOfChannels-1)),pos);pos+=a.length};
   src.connect(proc);proc.connect(mute);mute.connect(ac.destination);try{await ac.resume()}catch(e){}
   v.playbackRate=rate;await v.play();
   await new Promise(r=>{const tick=()=>{if(v.ended||v.currentTime>=v.duration-.05){r();return}onP&&onP(v.currentTime/v.duration);setTimeout(tick,200)};tick()});
-  v.pause();src.disconnect();proc.disconnect();const join=parts=>{const n=parts.reduce((a,p)=>a+p.length,0),o=new Float32Array(n);let k=0;parts.forEach(p=>{o.set(p,k);k+=p.length});return o};
-  return makeAB([join(L),join(Rr)],ac.sampleRate/rate)}
+  v.pause();src.disconnect();proc.disconnect();
+  return makeAB(Rr?[L.subarray(0,pos),Rr.subarray(0,pos)]:[L.subarray(0,pos)],effSr)}
 function peaks(ab,n){const ch=ab.getChannelData(0),step=Math.max(1,Math.floor(ch.length/n)),out=new Float32Array(n);let mx=1e-6;
   for(let i=0;i<n;i++){let m=0;const s=i*step,e=Math.min(ch.length,s+step);for(let j=s;j<e;j+=8){const v=Math.abs(ch[j]);if(v>m)m=v}out[i]=m;if(m>mx)mx=m}for(let i=0;i<n;i++)out[i]=Math.pow(out[i]/mx,.7);return out}
 function to16k(ab){const n=ab.numberOfChannels,sr=ab.sampleRate,len=ab.length,ratio=sr/16000,out=new Float32Array(Math.floor(len/ratio));const chs=[];for(let c=0;c<n;c++)chs.push(ab.getChannelData(c));
@@ -3835,7 +3924,8 @@ function useWorker(){return !AW.dead&&typeof Worker!=='undefined'&&typeof Blob!=
 function isIOS(){return /iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Mac/.test(navigator.userAgent)&&navigator.maxTouchPoints>1)}
 /* processor threads for the speech model: several cores where the page is cross-origin isolated (see _headers), one otherwise */
 function asrThreads(){if(!self.crossOriginIsolated||lsGet('wrd.asrThreads1','')==='1'||isIOS())return 1;const hc=navigator.hardwareConcurrency||4,lv=asrLevel();
-  if(isMobileUA())return Math.max(1,Math.min(lv>0?2:4,hc-2));return Math.max(1,Math.min(lv>0?4:8,hc-1))}
+  /* never take every core: on phones 2–3 threads, on computers half the cores (max 4), so a YouTube tab and the editor stay smooth. wrd.asrFull=1 lifts the cap */
+  if(isMobileUA())return Math.max(1,Math.min(lv>0?2:(MEM.info().tier==='low'?2:3),hc-2));return Math.max(1,Math.min(lv>0?2:(lsGet('wrd.asrFull','')==='1'?8:4),lsGet('wrd.asrFull','')==='1'?hc-1:Math.max(1,Math.floor(hc/2))))}
 function asrWorkerMain(){
   let TF=null,ASR=null,KEY='',VADM=null;
   const post=(m,t)=>self.postMessage(m,t||[]);
@@ -3895,8 +3985,16 @@ function asrPrewarm(){try{if(ASRBUSY||UPG.busy||!useWorker()||!hasMedia())return
     if(!mob&&asrLevel()===0&&lsGet('wrd.asrUsed','').split(',').includes(key)&&!ASRBUSY){await getASR(key,null);asrEnd()}}catch(e){console.info('prewarm skipped',e&&e.message)}})}catch(e){}}
 
 /* clean audio for the model: proper anti-aliased resample to 16 kHz, rumble filter, level normalisation */
-async function prepAudio(ab){try{const len=Math.ceil(ab.duration*16000);const oc=new OfflineAudioContext(1,len,16000);const src=oc.createBufferSource();src.buffer=ab;
-    const hp=oc.createBiquadFilter();hp.type='highpass';hp.frequency.value=70;hp.Q.value=.7;src.connect(hp);hp.connect(oc.destination);src.start();const r=await oc.startRendering();const a=r.getChannelData(0).slice();
+async function prepAudio(ab){try{const sr0=ab.sampleRate,dur=ab.duration,len=Math.ceil(dur*16000);let a;
+    const render=async(src_,n16)=>{const oc=new OfflineAudioContext(1,Math.max(1,n16),16000);const src=oc.createBufferSource();src.buffer=src_;
+      const hp=oc.createBiquadFilter();hp.type='highpass';hp.frequency.value=70;hp.Q.value=.7;src.connect(hp);hp.connect(oc.destination);src.start();return await oc.startRendering()};
+    if(dur<=420){const r=await render(ab,len);a=r.getChannelData(0).slice()}
+    else{/* long audio: 5-minute pieces, so the processor and memory are never hit with one huge job */
+      a=new Float32Array(len);const SEG=300,ic=ab.numberOfChannels;
+      for(let t0=0;t0<dur;t0+=SEG){const s0=Math.floor(t0*sr0),s1=Math.min(ab.length,Math.floor((t0+SEG)*sr0)),n=s1-s0;if(n<2)break;
+        let seg;try{seg=new AudioBuffer({numberOfChannels:ic,length:n,sampleRate:sr0})}catch(e){seg=null}if(!seg)throw new Error('no segment buffers');
+        for(let c=0;c<ic;c++)seg.copyToChannel(ab.getChannelData(c).subarray(s0,s1),c);
+        const r=await render(seg,Math.round(n/sr0*16000));a.set(r.getChannelData(0).subarray(0,Math.max(0,Math.min(r.length,len-Math.floor(t0*16000)))),Math.floor(t0*16000));seg=null;await MEM.tick(10)}}
     let pk=0;for(let i=0;i<a.length;i++){const v=Math.abs(a[i]);if(v>pk)pk=v}const g=pk>1e-4?Math.min(20,.9/pk):1;if(Math.abs(g-1)>.05)for(let i=0;i<a.length;i++)a[i]*=g;return a}
   catch(e){console.warn('prepAudio',e);return to16k(ab)}}
 /* Whisper understands these 100 languages (or detects the language itself) */
@@ -4314,7 +4412,7 @@ function lineWordRanges(lines){let n=0;return lines.map(L=>{const k=String(L.tex
 function capState(ws,start,dur,c){const cs=CAP_BY[c.style]||CAPSTYLES[0];const so=styleOpts(cs,c);const o=cs.build(ws,c,so);const d3o=o.d3;
   const bm=c.negMode||so.blend;if(bm&&bm!=='normal'){const on=Array.isArray(c.negW)?'words':(cs.stack?(so.negOn||'all'):'all'),amt=clamp(c.negAmt!=null?c.negAmt:(so.namt??1),0,1),nkeep=c.negKeep!=null?c.negKeep:so.nkeep,ncol=c.negColor||so.ncolor||'#ffffff',flat=L=>{if(!nkeep){L.mat='flat';L.c1=ncol;L._negFlat=ncol;delete L.cc;delete L.gm}delete L.lglow;delete L.plate};
     if(on==='all'){o.blend={mode:bm,amt};o.lines.forEach(flat);o.glow={on:false};o.shadow={on:false}}
-    else if(on==='words'){const rg=lineWordRanges(o.lines);o.lines.forEach((L,i)=>{const r=rg[i];if(r&&r[1]>r[0]&&c.negW.some(w=>w>=r[0]&&w<r[1])){L.blend={mode:bm,amt};flat(L)}})}
+    else if(on==='words'){const rg=lineWordRanges(o.lines);o.lines.forEach((L,i)=>{const r=rg[i];if(r&&r[1]>r[0]&&c.negW.some(w=>w>=r[0]&&w<r[1])){L.blend={mode:bm,amt,flat:nkeep?null:ncol}}})}
     else o.lines.filter(L=>on==='accent'?L._acc:!L._acc).forEach(L=>{L.blend={mode:bm,amt};flat(L)})}
   const mvx=+c.mvx||0,mvy=+c.mvy||0;
   if(o.anchorTop!=null)o.anchorTop=clamp(c.pos-.1+mvy/heightUnits(),-.6,1.5);else{const shift=(c.pos-.5)*heightUnits()+mvy;o.lines.forEach(L=>{L.dy=(L.dy||0)+shift})}
@@ -5241,7 +5339,32 @@ function drawCover(ctx,v,w,hh){const vw=v.videoWidth||w,vh=v.videoHeight||hh,k=M
 async function resampleAB(ab,sr,ch){if(ab.sampleRate===sr&&ab.numberOfChannels===ch)return ab;const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;const len=Math.ceil(ab.duration*sr);const oc=new OAC(ch,len,sr);const src=oc.createBufferSource();src.buffer=ab;src.connect(oc.destination);src.start();return await oc.startRendering()}
 async function pickAudio(ab,opusOnly){if(!ab||typeof AudioEncoder==='undefined'||typeof AudioData==='undefined')return null;const ch=Math.min(2,ab.numberOfChannels||1);
   for(const [codec,mux,rates] of (opusOnly?[['opus','opus',[48000]]]:[['mp4a.40.2','aac',[48000,44100]],['opus','opus',[48000]]])){for(const sr of (rates.includes(ab.sampleRate)?[ab.sampleRate,...rates]:rates)){for(const br of (mux==='aac'?[320000,256000,192000]:[256000,192000])){const c={codec,sampleRate:sr,numberOfChannels:ch,bitrate:br};try{const r=await AudioEncoder.isConfigSupported(c);if(r&&r.supported)return{cfg:c,mux,sr,ch}}catch(e){}}}}return null}
-async function encodeAudioInto(mux,a,ab,D){let err=null;const enc=new AudioEncoder({output:(c,m)=>mux.addAudioChunk(c,m),error:e=>{err=e}});enc.configure(a.cfg);
+/* one slice of the sound effects mixed over a slice of the voice (times shifted to the slice start) */
+async function sfxMixSlice(seg,t0,sr){const C=sfxCfg();if(!C.on)return seg;const ev=sfxScoped();if(!ev.length)return seg;
+  const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,dur=seg.length/sr,oc=new OAC(2,seg.length,sr);
+  {const s=oc.createBufferSource();s.buffer=seg;s.connect(oc.destination);s.start(0)}const bus=oc.createGain();bus.gain.value=C.vol;bus.connect(oc.destination);
+  ev.forEach(e=>{if(!SFXB[e.s])return;const st=e.st-t0;if(st>dur||st+(e.dur||8)+2<0)return;const s=oc.createBufferSource();s.buffer=SFXB[e.s];s.playbackRate.value=e.rate;s.connect(sfxChain(oc,e,bus));if(st>=0)s.start(st);else s.start(0,-st*e.rate)});
+  const r=await oc.startRendering();let pk=0;for(let c=0;c<r.numberOfChannels;c++){const d=r.getChannelData(c);for(let i=0;i<d.length;i++){const v=Math.abs(d[i]);if(v>pk)pk=v}}
+  if(pk>.99){const k=.99/pk;for(let c=0;c<r.numberOfChannels;c++){const d=r.getChannelData(c);for(let i=0;i<d.length;i++)d[i]*=k}}return r}
+/* Full-quality sound for long videos: the original audio is decoded again in ~30 s slices at the export rate and fed to the encoder one slice at a time.
+   Memory stays flat and the sound is never reduced, however long the video is. */
+async function encodeAudioStreaming(mux,a,src,D){let err=null;const enc=new AudioEncoder({output:(c,m)=>mux.addAudioChunk(c,m),error:e=>{err=e}});enc.configure(a.cfg);
+  const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,dc=new OAC(2,1,a.sr);const useSfx=!!(P.sfx&&P.sfx.on);if(useSfx){try{await sfxLoad();sfxDirty()}catch(e){}}
+  const total=Math.ceil(D*a.sr),N=2048,FR=Math.max(64,Math.round(30*src.t.sr/1024)),PRE=3;let cur=0;
+  const push=async(chs,n)=>{for(let off=0;off<n&&cur<total;off+=N){if(cancelEx){try{enc.close()}catch(e){}throw'cancel'}if(err)throw err;const m=Math.min(N,n-off,total-cur),data=new Float32Array(m*a.ch);for(let c=0;c<a.ch;c++)data.set(chs[c].subarray(off,off+m),c*m);
+      const ad=new AudioData({format:'f32-planar',sampleRate:a.sr,numberOfFrames:m,numberOfChannels:a.ch,timestamp:Math.round(cur/a.sr*1e6),data});enc.encode(ad);ad.close();cur+=m;if(enc.encodeQueueSize>32)await sleep(1)}};
+  try{for(let s0=0;s0<src.nF&&cur<total;s0+=FR){const e=Math.min(src.nF,s0+FR),p0=Math.max(0,s0-PRE);let dec=null;
+      try{const u=await adtsSlice(src,p0,e);dec=await new Promise((res,rej)=>{const pr=dc.decodeAudioData(u.buffer,res,rej);if(pr&&pr.then)pr.then(res,rej)})}catch(x){console.warn('export audio slice',s0,x)}
+      const need=Math.round((e-s0)*1024*a.sr/src.t.sr),endPos=Math.round(e*1024*a.sr/src.t.sr),A=dec?dec.length:need,start=dec?Math.max(0,A-need):0,seg=A-start,ss=endPos-seg;
+      let chans=[];if(dec){for(let c=0;c<dec.numberOfChannels;c++)chans.push(dec.getChannelData(c).subarray(start))}else chans=[new Float32Array(seg)];
+      if(useSfx&&seg>1){try{const sb=new AudioBuffer({numberOfChannels:2,length:seg,sampleRate:a.sr});sb.copyToChannel(chans[0],0);sb.copyToChannel(chans[Math.min(1,chans.length-1)],1);const r=await sfxMixSlice(sb,ss/a.sr,a.sr);chans=[r.getChannelData(0),r.getChannelData(1)]}catch(x){console.warn('sfx slice',x)}}
+      const oc=[];for(let c=0;c<a.ch;c++){if(a.ch===1&&chans.length>1){const m=new Float32Array(seg);for(let i=0;i<seg;i++){let q=0;for(let k=0;k<chans.length;k++)q+=chans[k][i];m[i]=q/chans.length}oc.push(m)}else oc.push(chans[Math.min(c,chans.length-1)])}
+      if(ss>cur){const g=Math.min(ss-cur,total-cur),z=new Float32Array(g);await push(new Array(a.ch).fill(z),g)}
+      const skip=Math.max(0,cur-ss);if(skip<seg)await push(oc.map(x=>x.subarray(skip)),seg-skip);
+      await MEM.tick(20)}
+    await enc.flush();if(err)throw err;enc.close()}
+  catch(e){try{enc.close()}catch(_){}throw e}}
+async function encodeAudioInto(mux,a,ab,D){if(ab&&ab.__src)return encodeAudioStreaming(mux,a,ab.__src,D);let err=null;const enc=new AudioEncoder({output:(c,m)=>mux.addAudioChunk(c,m),error:e=>{err=e}});enc.configure(a.cfg);
   const buf=await resampleAB(ab,a.sr,a.ch);const total=Math.min(buf.length,Math.ceil(D*a.sr)),N=2048,chs=[];for(let c=0;c<a.ch;c++)chs.push(buf.getChannelData(Math.min(c,buf.numberOfChannels-1)));
   for(let off=0;off<total;off+=N){if(cancelEx){try{enc.close()}catch(e){}throw'cancel'}if(err)throw err;const n=Math.min(N,total-off),data=new Float32Array(n*a.ch);for(let c=0;c<a.ch;c++)data.set(chs[c].subarray(off,off+n),c*n);
     const ad=new AudioData({format:'f32-planar',sampleRate:a.sr,numberOfFrames:n,numberOfChannels:a.ch,timestamp:Math.round(off/a.sr*1e6),data});enc.encode(ad);ad.close();if(enc.encodeQueueSize>32)await sleep(1)}
@@ -5255,14 +5378,14 @@ async function encodeFull(cv,w,hh,fps,frames,bitrate){
   if(!hasFullSrc())throw new Error('Add your video in the Video tab first.');
   const D=frames/fps,ctx=cv.getContext('2d'),ov=document.createElement('canvas');ov.width=w;ov.height=hh;const pic=!P.video.audioOnly;
   const bgA=EX.bg.mode==='transparent'?{mode:'black',color:'#000000'}:EX.bg;
-  setProg(0,'Reading the sound…');if(!AUDIO&&AUDIO_P){try{await AUDIO_P}catch(e){}}let ab=AUDIO||null;try{if(P.sfx&&P.sfx.on){setProg(0,'Mixing sound effects…');ab=await sfxMix(ab,D)}}catch(e){console.warn('sfx mix',e)}const withSfx=!!(P.sfx&&P.sfx.on&&sfxEvents().length);
+  setProg(0,'Reading the sound…');if(!AUDIO&&AUDIO_P){try{await AUDIO_P}catch(e){}}let ab=AUDIO||null;try{if(P.sfx&&P.sfx.on&&!(ab&&ab.__src)){setProg(0,'Mixing sound effects…');ab=await sfxMix(ab,D)}}catch(e){console.warn('sfx mix',e)}const withSfx=!!(P.sfx&&P.sfx.on&&sfxEvents().length);
   let v=null;if(pic){setProg(0,'Opening your video…');v=await openExportVideo()}
   const paint=t=>{if(v){ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';ctx.fillStyle='#000';ctx.fillRect(0,0,w,hh);drawCover(ctx,v,w,hh);renderSeq(t,ov,{bg:TRANSPARENT,maxLayers:180,backdrop:v});ctx.drawImage(ov,0,0)}else renderSeq(t,cv,{bg:bgA,maxLayers:180,backdrop:bgColor(bgA)||null})};
   const cleanup=()=>{if(v){try{v.pause();v.removeAttribute('src');v.load()}catch(e){}v.remove()}};
   try{
     const hasWC=typeof VideoEncoder!=='undefined'&&typeof VideoFrame!=='undefined'&&window.Mp4Muxer;let vcfg=null;
     if(hasWC){for(const codec of['avc1.640034','avc1.640033','avc1.640028','avc1.4d0034','avc1.42003e']){const c={codec,width:w,height:hh,bitrate,framerate:fps,avc:{format:'avc'}};try{const r=await VideoEncoder.isConfigSupported(c);if(r.supported){vcfg=c;break}}catch(e){}}}
-    const acfg=vcfg&&ab?await pickAudio(ab):null;
+    const acfg=vcfg&&ab?await pickAudio(ab.__src?{numberOfChannels:Math.min(2,ab.__src.chn),sampleRate:ab.__src.t.sr}:ab):null;
     if(vcfg&&(acfg||!ab)){
       const mux=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:'avc',width:w,height:hh,frameRate:fps},audio:acfg?{codec:acfg.mux,numberOfChannels:acfg.ch,sampleRate:acfg.sr}:undefined,fastStart:'in-memory',firstTimestampBehavior:'offset'});
       if(acfg){setProg(.01,'Encoding the sound…');await encodeAudioInto(mux,acfg,ab,D)}
