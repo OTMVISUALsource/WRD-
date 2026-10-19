@@ -1798,6 +1798,7 @@ const Engine=(()=>{
     const tx=px+st.x*pem,ty=py+st.y*pem;
     c.translate(tx,ty);if(st.rot)c.rotate(st.rot);const sk=(st.skx||0)+(ln.skew||0);if(sk)c.transform(1,0,sk,1,0,0);
     c.scale(Math.abs(st.sx)<1e-4?1e-4:st.sx,Math.abs(st.sy)<1e-4?1e-4:st.sy);c.translate(-px,-py);
+    if(st.wordClip){c.beginPath();for(const r of st.wordClip)c.rect(r[0],r[1],r[2],r[3]);c.clip()}
     const A=st.a;let P,K=c;
     if(u.img){P=(a,ox=0,oy=0)=>{K.globalAlpha=clamp(a);K.drawImage(u.img,u.x0+ox,u.top+oy,u.x1-u.x0,u.bottom-u.top)}}
     else if(st.reel!=null){const step=(ln.bottom-ln.top)*1.1,fl=Math.floor(st.reel),fr=st.reel-fl;
@@ -2087,9 +2088,14 @@ const Engine=(()=>{
       c.font=fontStr(ln.L,ln.px);c.textBaseline='alphabetic';c.textAlign='left';const sty=lineStyle(c,ln);
       const AL=(ln.L.anim&&ANIM_BY[ln.L.anim])||A,own=AL!==A,mL=own?AL.unit:mode;
       const units=mL==='char'?ln.glyphs:mL==='word'?ln.words:[ln.unit];
-      /* gradient on picked words only: the other words of a gradient line draw in the plain caption color */
-      const gwS=Array.isArray(S.gradW)&&(mL==='char'||mL==='word')&&userGrad(ln.L)?new Set(S.gradW):null;let lnP=null,styP=null;
-      if(gwS){lnP=Object.assign(Object.create(ln),{L:Object.assign({},ln.L,{mat:'flat',c1:S.gradPlain||'#ffffff',c2:undefined,c3:undefined,cc:undefined,gm:undefined})});styP=lineStyle(c,lnP)}
+      /* gradient on picked words only: the other words of a gradient line draw in the plain caption color.
+         The fill lives on the canvas context, so both fills are kept and swapped around each draw. */
+      const gwOn=Array.isArray(S.gradW)&&userGrad(ln.L),gwS=gwOn&&(mL==='char'||mL==='word')?new Set(S.gradW):null,gwL=gwOn&&!gwS?new Set(S.gradW):null;let lnP=null,styP=null,fillP,strokeP,lwP;
+      const fillG=c.fillStyle,strokeG=c.strokeStyle,lwG=c.lineWidth,LPg=LP;
+      if(gwOn){lnP=Object.assign(Object.create(ln),{L:Object.assign({},ln.L,{mat:'flat',c1:S.gradPlain||'#ffffff',c2:undefined,c3:undefined,cc:undefined,gm:undefined,plate:undefined})});styP=lineStyle(c,lnP);fillP=c.fillStyle;strokeP=c.strokeStyle;lwP=c.lineWidth;c.fillStyle=fillG;c.strokeStyle=strokeG;c.lineWidth=lwG;LP=LPg}
+      const setP=()=>{c.fillStyle=fillP;c.strokeStyle=strokeP;c.lineWidth=lwP},setG=()=>{c.fillStyle=fillG;c.strokeStyle=strokeG;c.lineWidth=lwG};
+      /* styles that move a whole line at once: the line is drawn twice, each time clipped to its gradient / plain words */
+      const rc=want=>{const out=[],ws=ln.words,em=ln.px;for(let k=0;k<ws.length;k++){if(gwL.has(ws[k].gi)!==want)continue;const x0=k?(ws[k-1].x1+ws[k].x0)/2:ln.x0-em*3,x1=k<ws.length-1?(ws[k].x1+ws[k+1].x0)/2:ln.x1+em*3;out.push([x0,ln.top-em*1.5,x1-x0,ln.bottom-ln.top+em*3])}return out};
       const dl=ln.L.delay||0,tauL=dl&&t<I+dl?clamp(t-dl,0,I):tau;
       const LR={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
       units.forEach((u,ui)=>{let st;
@@ -2103,7 +2109,10 @@ const Engine=(()=>{
           if(SM&&outQ!==0){const OP=OUTS[AL.out]||OUTS.fade;const oi=own?ui:u.gi,on=own?units.length:n;let qu=outQ;if(on>1){const s_=OP.stag??Math.min(.55,S.stagger*.75);const k_=orderIdx(oi,on,OP.order||S.order);qu=outQ<0?outQ:clamp((outQ-k_/(on-1)*s_)/Math.max(.05,1-s_))}if(qu!==0)st=applyOut(st,OP.fn(qu,u,G))}
           st=contMo(st,u,G,S,t);if(ln.L.rot)st.rot=(st.rot||0)+ln.L.rot;
           if(mL!=='line'){const wi=mL==='word'?u.gi:u.wi;if(S.emph&&S.emph.includes(wi))st.color=S.emphColor;if(S.karaoke&&WT){const ws=WT[wi]??0,we=WT[wi+1]??1e9;if(t>=ws&&t<we)st.color=S.karaokeColor}}}
-        const useP=gwS&&!gwS.has(mL==='word'?u.gi:u.wi);drawUnit(c,useP?lnP:ln,u,st,useP?styP:sty,mL==='all'?lay.block:u,LR)});
+        const pv_=mL==='all'?lay.block:u;
+        if(gwL){setG();drawUnit(c,ln,u,Object.assign({},st,{wordClip:rc(true)}),sty,pv_,LR);setP();drawUnit(c,lnP,u,Object.assign({},st,{wordClip:rc(false)}),styP,pv_,LR);setG()}
+        else if(gwS&&!gwS.has(mL==='word'?u.gi:u.wi)){setP();drawUnit(c,lnP,u,st,styP,pv_,LR);setG()}
+        else drawUnit(c,ln,u,st,sty,pv_,LR)});
       c.shadowBlur=0;c.shadowColor='rgba(0,0,0,0)';c.globalAlpha=1;
       if(LR.x1>LR.x0){R.x0=Math.min(R.x0,LR.x0);R.y0=Math.min(R.y0,LR.y0);R.x1=Math.max(R.x1,LR.x1);R.y1=Math.max(R.y1,LR.y1)}
       if(needPost&&LR.x1>LR.x0){const r=reg(LR,W,H,4+ln.px*(ln.L.lglow?.9:.25));postLine(sc,ln,M,r);if(perLine){const es=effShine(ln.L,S);if(es&&es.on){const spL=shineP(es,t);if(spL>=0){const own=ln.L.shine&&ln.L.shine.mode==='own';const geo=own?{block:{x0:ln.x0,x1:ln.x1,top:ln.top,bottom:ln.bottom,cx:ln.cx,cy:ln.cy},em:ln.px,glyphs:ln.glyphs}:null;shine(L,S,spL,G,lay,es,geo);SX.push({sh:es,sp:spL,geo})}}}if(gmP&&LP>.002&&r.w>0){if(!PGu){PGc=small(sc,'PGc',W,H);PGc.x.setTransform(1,0,0,1,0,0);PGc.x.globalAlpha=1;PGc.x.globalCompositeOperation='source-over';PGc.x.clearRect(0,0,W,H);PGu=true}const a_=(ln.L.gm.amt??1);for(const [rr,al,key] of [[ln.px*.15*(1+.3*LP),.9,'gPw'],[ln.px*.045,.7,'gPt']]){const bl=blurred(sc,sc.L.c,W,H,Math.max(1,rr),null,key);PGc.x.globalAlpha=clamp(LP*a_*al);PGc.x.drawImage(bl,0,0,W,H)}PGc.x.globalAlpha=1}if(r.w>0&&r.h>0){const lg=ln.L.lglow;if(lg&&lg.int>0){for(const [rad,ia,key] of (FAST?[[lg.size*ln.px*1.1,lg.int*1.7,'lgW']]:[[lg.size*ln.px*1.3,lg.int*1.3,'lgW'],[lg.size*ln.px*.38,lg.int*1.0,'lgT']])){const bl=blurred(sc,sc.L.c,W,H,Math.max(1,rad),lg.color,key);let a=ia;while(a>.01){X.globalAlpha=Math.min(1,a);X.drawImage(bl,0,0,W,H);a-=1}}X.globalAlpha=1}X.drawImage(sc.L.c,r.x,r.y,r.w,r.h,r.x,r.y,r.w,r.h)}}
@@ -2305,7 +2314,7 @@ function selectClip(id,o={}){const c=P.clips.find(x=>x.id===id);if(!c)return;P.s
   if(!o.noPanels)Object.keys(panelEls).forEach(k=>{if(k!=='looks'&&k!=='video')rebuild(k,true)});else{try{rebuild('size',true)}catch(e){}}
   if(!o.noTL)updTimeline();updKey();dirty=true}
 function styleOnto(ns,old){ns.lines=old.lines.map((L,i)=>{const src=ns.lines[Math.min(i,ns.lines.length-1)];return Object.assign({},src,{text:L.text,dx:L.dx,dy:L.dy,size:L.size,align:L.align,anim:undefined,delay:0})});
-  ['words','emph','emphColor','karaoke','karaokeColor','wordDur','dur','inDur','outMode','outDur','stagger'].forEach(k=>{ns[k]=old[k]});ns.autoFit=old.autoFit;return ns}
+  ['words','emph','emphColor','gradW','gradPlain','karaoke','karaokeColor','wordDur','dur','inDur','outMode','outDur','stagger'].forEach(k=>{ns[k]=old[k]});ns.autoFit=old.autoFit;return ns}
 
 /* =====================================================================
    UI helpers
@@ -4425,7 +4434,7 @@ function capLook(id,text,name,so){try{const cs=CAP_BY[id];if(!cs)return null;con
  .forEach(([id,txt,name,so])=>{const lk=capLook(id,txt,name,so);if(lk)LOOKS.push(lk)});
 function heightUnits(){const [aw,ah]=aspectWH(P.aspect);return 1080*ah/Math.min(aw,ah)}
 /* per-caption overrides: a caption can have its own style (c.capo) and its own highlighted words (c.emphW) */
-function capCfg(clip){if(P.cap&&P.cap.style==='stkfire')P.cap.style='stacked';if(clip&&clip.capo&&clip.capo.style==='stkfire')clip.capo.style='stacked';let cfg=clip&&clip.capo?Object.assign({},P.cap,clip.capo):P.cap;if(clip&&(clip.emphW||clip.mv||clip.mvs||clip.neg)){cfg=Object.assign({},cfg);if(clip.neg){if(clip.neg.mode)cfg.negMode=clip.neg.mode;if(Array.isArray(clip.neg.words))cfg.negW=clip.neg.words;if(clip.neg.color)cfg.negColor=clip.neg.color;if(clip.neg.amt!=null&&isFinite(+clip.neg.amt))cfg.negAmt=+clip.neg.amt;if(clip.neg.keep!=null)cfg.negKeep=!!clip.neg.keep}if(clip.emphW)cfg.emphW=clip.emphW;if(clip.mv){cfg.mvx=+clip.mv.x||0;cfg.mvy=+clip.mv.y||0}if(clip.mvs&&+clip.mvs>0)cfg.size=clamp((cfg.size||1)*(+clip.mvs),.2,4)}return cfg}
+function capCfg(clip){if(P.cap&&P.cap.style==='stkfire')P.cap.style='stacked';if(clip&&clip.capo&&clip.capo.style==='stkfire')clip.capo.style='stacked';let cfg=clip&&clip.capo?Object.assign({},P.cap,clip.capo):P.cap;if(clip&&(clip.emphW||clip.gradW||clip.mv||clip.mvs||clip.neg)){cfg=Object.assign({},cfg);if(Array.isArray(clip.gradW))cfg.gradW=clip.gradW;if(clip.neg){if(clip.neg.mode)cfg.negMode=clip.neg.mode;if(Array.isArray(clip.neg.words))cfg.negW=clip.neg.words;if(clip.neg.color)cfg.negColor=clip.neg.color;if(clip.neg.amt!=null&&isFinite(+clip.neg.amt))cfg.negAmt=+clip.neg.amt;if(clip.neg.keep!=null)cfg.negKeep=!!clip.neg.keep}if(clip.emphW)cfg.emphW=clip.emphW;if(clip.mv){cfg.mvx=+clip.mv.x||0;cfg.mvy=+clip.mv.y||0}if(clip.mvs&&+clip.mvs>0)cfg.size=clamp((cfg.size||1)*(+clip.mvs),.2,4)}return cfg}
 function lineWordRanges(lines){let n=0;return lines.map(L=>{const k=String(L.text||'').trim().split(/\s+/).filter(Boolean).length;const r=[n,n+k];n+=k;return r})}
 function capState(ws,start,dur,c){const cs=CAP_BY[c.style]||CAPSTYLES[0];const so=styleOpts(cs,c);const o=cs.build(ws,c,so);const d3o=o.d3;
   const bm=c.negMode||so.blend;if(bm&&bm!=='normal'){const on=Array.isArray(c.negW)?'words':(cs.stack?(so.negOn||'all'):'all'),amt=clamp(c.negAmt!=null?c.negAmt:(so.namt??1),0,1),nkeep=c.negKeep!=null?c.negKeep:so.nkeep,ncol=c.negColor||so.ncolor||'#ffffff',flat=L=>{if(!nkeep){L.mat='flat';L.c1=ncol;L._negFlat=ncol;delete L.cc;delete L.gm}delete L.lglow;delete L.plate};
