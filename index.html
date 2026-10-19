@@ -2081,12 +2081,15 @@ const Engine=(()=>{
     for(const ln0 of lay.lines){
       if(!ln0.glyphs.length||(opts.hide&&opts.hide.has(ln0.li)))continue;
       /* negative pass: draw the line as one flat color (no gradient, glow or plate) without touching the cached layout line */
-      const ln=opts.flatCol?Object.assign(Object.create(ln0),{L:Object.assign({},ln0.L,{mat:'flat',c1:opts.flatCol,cc:undefined,gm:undefined,lglow:undefined,plate:undefined})}):ln0;
+      const fc=opts.flatMap?opts.flatMap.get(ln0.li):opts.flatCol;const ln=fc?Object.assign(Object.create(ln0),{L:Object.assign({},ln0.L,{mat:'flat',c1:fc,cc:undefined,gm:undefined,lglow:undefined,plate:undefined})}):ln0;
       const M=MATS[ln.L.mat]||MATS.flat;const gmP=M.user===2&&ln.L.gm&&ln.L.gm.type==='pulse'&&(ln.L.gm.amt??1)>0;const needPost=!!ln.L.lglow||perLine||gmP||(ln.L.bevel??M.bevel)>0||M.gloss||M.stripes||M.brushed||ln.L.metal>0||M.glass||(ln.L.gl&&ln.L.gl.amt>0);
       const c=needPost?L:X;if(needPost){L.setTransform(1,0,0,1,0,0);L.globalAlpha=1;L.globalCompositeOperation='source-over';L.clearRect(0,0,W,H)}
       c.font=fontStr(ln.L,ln.px);c.textBaseline='alphabetic';c.textAlign='left';const sty=lineStyle(c,ln);
       const AL=(ln.L.anim&&ANIM_BY[ln.L.anim])||A,own=AL!==A,mL=own?AL.unit:mode;
       const units=mL==='char'?ln.glyphs:mL==='word'?ln.words:[ln.unit];
+      /* gradient on picked words only: the other words of a gradient line draw in the plain caption color */
+      const gwS=Array.isArray(S.gradW)&&(mL==='char'||mL==='word')&&userGrad(ln.L)?new Set(S.gradW):null;let lnP=null,styP=null;
+      if(gwS){lnP=Object.assign(Object.create(ln),{L:Object.assign({},ln.L,{mat:'flat',c1:S.gradPlain||'#ffffff',c2:undefined,c3:undefined,cc:undefined,gm:undefined})});styP=lineStyle(c,lnP)}
       const dl=ln.L.delay||0,tauL=dl&&t<I+dl?clamp(t-dl,0,I):tau;
       const LR={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
       units.forEach((u,ui)=>{let st;
@@ -2100,7 +2103,7 @@ const Engine=(()=>{
           if(SM&&outQ!==0){const OP=OUTS[AL.out]||OUTS.fade;const oi=own?ui:u.gi,on=own?units.length:n;let qu=outQ;if(on>1){const s_=OP.stag??Math.min(.55,S.stagger*.75);const k_=orderIdx(oi,on,OP.order||S.order);qu=outQ<0?outQ:clamp((outQ-k_/(on-1)*s_)/Math.max(.05,1-s_))}if(qu!==0)st=applyOut(st,OP.fn(qu,u,G))}
           st=contMo(st,u,G,S,t);if(ln.L.rot)st.rot=(st.rot||0)+ln.L.rot;
           if(mL!=='line'){const wi=mL==='word'?u.gi:u.wi;if(S.emph&&S.emph.includes(wi))st.color=S.emphColor;if(S.karaoke&&WT){const ws=WT[wi]??0,we=WT[wi+1]??1e9;if(t>=ws&&t<we)st.color=S.karaokeColor}}}
-        drawUnit(c,ln,u,st,sty,mL==='all'?lay.block:u,LR)});
+        const useP=gwS&&!gwS.has(mL==='word'?u.gi:u.wi);drawUnit(c,useP?lnP:ln,u,st,useP?styP:sty,mL==='all'?lay.block:u,LR)});
       c.shadowBlur=0;c.shadowColor='rgba(0,0,0,0)';c.globalAlpha=1;
       if(LR.x1>LR.x0){R.x0=Math.min(R.x0,LR.x0);R.y0=Math.min(R.y0,LR.y0);R.x1=Math.max(R.x1,LR.x1);R.y1=Math.max(R.y1,LR.y1)}
       if(needPost&&LR.x1>LR.x0){const r=reg(LR,W,H,4+ln.px*(ln.L.lglow?.9:.25));postLine(sc,ln,M,r);if(perLine){const es=effShine(ln.L,S);if(es&&es.on){const spL=shineP(es,t);if(spL>=0){const own=ln.L.shine&&ln.L.shine.mode==='own';const geo=own?{block:{x0:ln.x0,x1:ln.x1,top:ln.top,bottom:ln.bottom,cx:ln.cx,cy:ln.cy},em:ln.px,glyphs:ln.glyphs}:null;shine(L,S,spL,G,lay,es,geo);SX.push({sh:es,sp:spL,geo})}}}if(gmP&&LP>.002&&r.w>0){if(!PGu){PGc=small(sc,'PGc',W,H);PGc.x.setTransform(1,0,0,1,0,0);PGc.x.globalAlpha=1;PGc.x.globalCompositeOperation='source-over';PGc.x.clearRect(0,0,W,H);PGu=true}const a_=(ln.L.gm.amt??1);for(const [rr,al,key] of [[ln.px*.15*(1+.3*LP),.9,'gPw'],[ln.px*.045,.7,'gPt']]){const bl=blurred(sc,sc.L.c,W,H,Math.max(1,rr),null,key);PGc.x.globalAlpha=clamp(LP*a_*al);PGc.x.drawImage(bl,0,0,W,H)}PGc.x.globalAlpha=1}if(r.w>0&&r.h>0){const lg=ln.L.lglow;if(lg&&lg.int>0){for(const [rad,ia,key] of (FAST?[[lg.size*ln.px*1.1,lg.int*1.7,'lgW']]:[[lg.size*ln.px*1.3,lg.int*1.3,'lgW'],[lg.size*ln.px*.38,lg.int*1.0,'lgT']])){const bl=blurred(sc,sc.L.c,W,H,Math.max(1,rad),lg.color,key);let a=ia;while(a>.01){X.globalAlpha=Math.min(1,a);X.drawImage(bl,0,0,W,H);a-=1}}X.globalAlpha=1}X.drawImage(sc.L.c,r.x,r.y,r.w,r.h,r.x,r.y,r.w,r.h)}}
@@ -2959,6 +2962,14 @@ function buildGrad(){const p=h('div',{class:'panel'});const T=gTargets(),L=T[0],
     p.append(sec('Apply gradient to',h('div',{class:'linechips'},h('button',{type:'button','aria-pressed':String(gradTgt<0),onclick:()=>{gradTgt=-1;rebuild('grad',true)}},'All lines'),
       S.lines.map((ln,i)=>h('button',{type:'button','aria-pressed':String(gradTgt===i),onclick:()=>{gradTgt=i;rebuild('grad',true)}},(ln.text||'Line '+(i+1)).slice(0,18),gmOn(ln)?h('i',{class:'ic sm',html:svg('spark',2)}):null))),
       h('p',{class:'hint'},allT?'Changes here apply to every line.':'Changes here apply to this line only. The other lines are not touched.')))}
+  {const cc=selClip();if(cc&&cc.kind==='caption'&&Array.isArray(cc.words)&&cc.words.length){const words=cc.words,nW=words.length,gw=Array.isArray(cc.gradW)?cc.gradW:null,on=i=>gw?gw.includes(i):true;
+    const setGW=arr=>{commit();if(arr&&arr.length>=nW)arr=null;if(arr)cc.gradW=arr;else delete cc.gradW;capRebuild(cc);linkProject();changed();rebuild('grad',true)};
+    p.append(sec('Gradient on words',h('p',{class:'hint',style:'margin-top:0'},gw?(gw.length?'Only the words you picked get the gradient. Every other word stays plain.':'No words have the gradient on this caption.'):'Every word has the gradient. Tap a word to put it on just that word.'),
+      h('div',{class:'wordchips',style:'--wc:#c28bff'},words.map((w,i)=>h('button',{type:'button','aria-pressed':String(on(i)),onclick:()=>{if(!gw)return setGW([i]);setGW(gw.includes(i)?gw.filter(x=>x!==i):[...gw,i].sort((a,b)=>a-b))}},w.w))),
+      h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn',onclick:()=>setGW(null)},'All words'),h('button',{type:'button',class:'pillbtn',onclick:()=>setGW([])},'No words'))))}}
+  {const hasG=T.some(o=>userGrad(o));
+   p.append(sec('Gradient',h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn','aria-pressed':String(!hasG),onclick:()=>{commit();each(o=>{Object.assign(o,{mat:'flat',c1:'#ffffff',c2:undefined,c3:undefined,bevel:null,metal:0});delete o.gm});rebuild('style',true);rebuild('grad',true);changed();toast('Gradient removed · '+(allT?'all lines':'this line only'))}},'None · no gradient')),
+     h('p',{class:'hint'},'Pick a color set or motion below to add a gradient, or tap None to take it off. With negative text on, your gradient shows through the negative effect.')))}
   p.append(gradMotionSec());
   const isG=T.every(o=>(MATS[o.mat]||{}).user===2);
   p.append(sec('Colors & shape',
@@ -3219,7 +3230,10 @@ const PRES_OPTS=[['540','Light'],['720','720p'],['1080','1080p']];
 function proxyRes(){const v=lsGet('wrd.pres','');if(v==='540'||v==='720'||v==='1080')return v;return isMob()?'720':'1080'}
 const proxyKey=f=>vidKey(f)+'|'+proxyRes();
 function bigVideo(){const v=P.video;return!!(v&&!v.audioOnly&&!v.noPreview&&Math.min(v.w||0,v.h||0)>1080)}
-function setProxyRes(r){lsSet('wrd.pres',r);if(VPREV!=='proxy'){VPREV='proxy';try{localStorage.setItem('wrd.vprev','proxy')}catch(e){}}showVid=true;if(PROXY.busy){PROXY.want=r;toast('Switching to '+r+'p as soon as the current copy is done');return}resetProxy();applyProxy();makeProxy();rebuild('video',true)}
+function setProxyRes(r){lsSet('wrd.pres',r);if(VPREV!=='proxy'){VPREV='proxy';try{localStorage.setItem('wrd.vprev','proxy')}catch(e){}}showVid=true;if(PROXY.busy){PROXY.want=r;toast('Switching to '+r+'p as soon as the current copy is done');return}
+  if(PROXY.url&&PROXY.key===vidKey(VFILE)+'|'+r){applyProxy();rebuild('video',true);return}
+  /* the current preview keeps playing until the new size is ready; falling back to the original would go black on files this browser can't show */
+  PROXY.fail='';toast('Building the '+(r==='540'?'Light':r+'p')+' preview · your current preview keeps playing');makeProxy();rebuild('video',true)}
 const vT=t=>proxyOn()?t*PROXY.k:t;
 const proxyOn=()=>!!(PROXY.url&&VPREV==='proxy'&&vidOn());
 const vidKey=f=>f?[f.name,f.size,f.lastModified||0].join('|'):'';
@@ -3264,7 +3278,7 @@ async function makeProxy(){if(PROXY.busy||!VFILE||!P.video||P.video.audioOnly||P
     alive=false;cx.drawImage(v,0,0,cvp.width,cvp.height);await new Promise(r=>setTimeout(r,250));rec.stop();await done;st.getTracks().forEach(t=>t.stop());
     const blob=new Blob(ch,{type:mt.split(';')[0]});if(!blob.size)throw new Error('empty');
     if(PROXY.url)URL.revokeObjectURL(PROXY.url);PROXY.url=URL.createObjectURL(blob);PROXY.key=key;IDB.put('proxy',{key,blob}).catch(()=>{});toast('Optimized preview ready · playback is smoother, export stays full quality');applyProxy()}
-  catch(e){console.warn('proxy',e);if(e&&e.message==='stall'){P.video.slowDecode=true;PROXY.fail='Your browser decodes this file too slowly to build an optimized preview. Use “Convert video” above for smooth playback.'}else PROXY.fail='Couldn’t build the optimized preview on this device. Use “Convert video” above, or Original.'}
+  catch(e){console.warn('proxy',e);if(e&&e.message==='stall'){P.video.slowDecode=true;PROXY.fail='Your browser decodes this file too slowly to build an optimized preview. Use “Convert video” above for smooth playback.'}else{PROXY.fail='Couldn’t build the optimized preview on this device. Use “Convert video” above, or Original.';if(PROXY.url)toast('Couldn’t build that size on this device · keeping your current preview')}}
   finally{PROXY.busy=false;try{v.pause();v.removeAttribute('src');v.load()}catch(e){}rebuild('video',true);if(PROXY.want){const w_=PROXY.want;PROXY.want=null;if(PROXY.key!==vidKey(VFILE)+'|'+w_)setTimeout(()=>setProxyRes(w_),50)}}}
 /* ---------- camera files the browser can't decode (e.g. 4K HEVC 10-bit 4:2:2): one-time conversion to a smooth 1080p H.264 copy ---------- */
 const CONV={busy:false,p:0,msg:'',fail:'',ff:null,t0:0};
@@ -3358,6 +3372,10 @@ const layerCv=document.createElement('canvas');
 /* negative text: Difference or Subtract against whatever is underneath (your video in the preview and in Video + Text) */
 /* the animation of this caption can show single words / letters on their own (so a picked word can be negative while its neighbours stay normal) */
 function negWordable(s){const ok=a=>{const A=ANIM_BY[a];return !!A&&(A.unit==='char'||A.unit==='word')};return !!s&&ok(s.anim)&&s.lines.every(L=>!L.anim||ok(L.anim))}
+/* a gradient (or other look) you set yourself in the Gradient tab shows through the negative; only untouched lines are flattened to the negative color */
+const matSig=L=>JSON.stringify([L.mat,L.c1,L.c2,L.c3,L.gAng,L.gH,L.gm||null,L.metal||0]);
+const negMatChanged=L=>!!(L.blend&&L.blend.sig&&L.blend.sig!==matSig(L));
+const userGrad=L=>{const m=MATS[L.mat];return !!(m&&m.user===2)||!!(L.gm&&L.gm.type&&L.gm.type!=='none')};
 function negWordSet(c,s){return c&&c.kind==='caption'&&c.neg&&Array.isArray(c.neg.words)&&c.neg.words.length&&negWordable(s)?new Set(c.neg.words):null}
 const blendOf=c=>c&&c.s&&c.s.blend&&c.s.blend.mode&&c.s.blend.mode!=='normal'?c.s.blend:null;
 const lineBlends=c=>c&&c.s&&!blendOf(c)?c.s.lines.filter(L=>L.blend&&L.blend.mode&&L.blend.mode!=='normal'):[];
@@ -3383,9 +3401,9 @@ function renderSeq(t,target,o={}){const W=target.width,H=target.height,tc=target
         const LBi=new Set(LB.map(idxs));
         const NW=negWordSet(c,s);
         const r=NW?Engine.render(s,t-c.start,layerCv,Object.assign({},o,{hide:new Set(),skipW:NW})):Engine.render(s,t-c.start,layerCv,Object.assign({},o,{hide:LBi}));if(c.id===P.sel)info=r;tc.drawImage(layerCv,0,0);
-        const groups=new Map();LB.forEach(L=>{const k_=L.blend.mode+'|'+(L.blend.amt??1)+'|'+(L.blend.flat||'');if(!groups.has(k_))groups.set(k_,[]);groups.get(k_).push(L)});
+        const groups=new Map();LB.forEach(L=>{const k_=L.blend.mode+'|'+(L.blend.amt??1);if(!groups.has(k_))groups.set(k_,[]);groups.get(k_).push(L)});
         let notW=null;if(NW){notW=new Set();const tot=lineWordRanges(s.lines).reduce((a,x)=>Math.max(a,x[1]),0);for(let i=0;i<tot;i++)if(!NW.has(i))notW.add(i)}
-        for(const [k_,ls] of groups){const mine=new Set(ls.map(idxs));const [md,am,fl]=k_.split('|');Engine.render(s,t-c.start,layerCv,Object.assign({},o,{hide:hideOf(mine),flatCol:fl||undefined,skipW:notW||undefined}));blendLayer(tc,layerCv,bd,W,H,md,+am)}
+        for(const [k_,ls] of groups){const mine=new Set(ls.map(idxs));const [md,am]=k_.split('|');const fm=new Map();ls.forEach(L=>{if(L.blend.flat&&!negMatChanged(L))fm.set(idxs(L),L.blend.flat)});Engine.render(s,t-c.start,layerCv,Object.assign({},o,{hide:hideOf(mine),flatMap:fm,skipW:notW||undefined}));blendLayer(tc,layerCv,bd,W,H,md,+am)}
         continue}
       const r=Engine.render(s,t-c.start,layerCv,o);if(c.id===P.sel)info=r}finally{s.bg=keep;s.flare=kf;s.lines.forEach(L=>{if(L._hide)delete L._hide})}
     const bm=bd&&blendOf(c);if(bm)blendLayer(tc,layerCv,bd,W,H,bm.mode,bm.amt);else tc.drawImage(layerCv,0,0)}
@@ -3691,8 +3709,8 @@ async function loadVideo(file,o={}){if(!file)return;if(!o.restore){IDB.put('vide
   if(vidOn()){try{bgV.currentTime=.04}catch(e){}}
   const decMark=()=>{try{localStorage.setItem('wrd.decRun',String(Date.now()))}catch(e){}},decOK=()=>{try{localStorage.removeItem('wrd.decRun')}catch(e){}};
   decMark();AUDIO_P=decodeAudioFile(file).then(ab=>MEM.fit(ab)).then(ab=>{decOK();MEM.note();if(VFILE!==file)return;AUDIO=ab;playBuf=null;WAVE=peaks(ab,4000);waveW=0;updTimeline();updSound();rebuild('video',true)}).catch(e=>{decOK();AUDIO=false;console.warn('audio',e);rebuild('video',true)});
-  if(!P.video.noPreview&&!P.video.audioOnly){const key=proxyKey(file);IDB.get('proxy').then(pr=>{if(pr&&pr.key===key&&pr.blob&&proxyKey(VFILE)===key){PROXY.url=URL.createObjectURL(pr.blob);PROXY.key=key;applyProxy();rebuild('video',true)}else if(VPREV==='proxy'&&needsProxy()){Promise.resolve(AUDIO_P).catch(()=>{}).then(()=>{if(proxyKey(VFILE)===key&&!PROXY.url)makeProxy()})}}).catch(()=>{})}}
-bgV.addEventListener('error',()=>{if(vidURL)toast('This browser can’t show this video’s picture (often 4K HEVC 10-bit or ProRes). Timing, captions and export still work.')});
+  if(!P.video.noPreview&&!P.video.audioOnly){const key=proxyKey(file);IDB.get('proxy').then(pr=>{if(pr&&pr.blob&&pr.key&&pr.key.startsWith(vidKey(file)+'|')&&vidKey(VFILE)===vidKey(file)){PROXY.url=URL.createObjectURL(pr.blob);PROXY.key=pr.key;applyProxy();rebuild('video',true);if(pr.key!==key&&VPREV==='proxy')setTimeout(()=>{if(proxyKey(VFILE)===key&&PROXY.key!==key&&!PROXY.busy)makeProxy()},1200)}else if(VPREV==='proxy'&&needsProxy()){Promise.resolve(AUDIO_P).catch(()=>{}).then(()=>{if(proxyKey(VFILE)===key&&!PROXY.url)makeProxy()})}}).catch(()=>{})}}
+bgV.addEventListener('error',()=>{if(PROXY.url&&bgV.src!==PROXY.url&&!P.video.conv){showVid=true;VPREV='proxy';applyProxy();rebuild('video',true);return}if(vidURL)toast('This browser can’t show this video’s picture (often 4K HEVC 10-bit or ProRes). Timing, captions and export still work.')});
 /* ---------- audio extraction that works on any browser ----------
    1) MP4/MOV/M4A: read only the audio track straight from the file (no full load):
       AAC → ADTS stream → decodeAudioData (Safari, Chrome, Firefox) or WebCodecs;
@@ -4420,11 +4438,12 @@ function capState(ws,start,dur,c){const cs=CAP_BY[c.style]||CAPSTYLES[0];const s
   const g0=o.glow;Object.assign(o,{dur,inDur:.3,outMode:o.outMode||'fade',outDur:o.outDur??.12,stagger:0,wordDur:c.wordDur,words:ws.map(w=>Math.max(0,w.s-start-.02)),shine:capShineFor(c.shine,dur),glow:g0||{on:false},flare:{on:false},d3:d3o?Object.assign({depth:0},d3o):{depth:0},lineGap:o.lineGap??-6});
   if(cs.emph){let bi=0,bv=-1;ws.forEach((w,i)=>{const v=wscore(w.w);if(v>bv){bv=v;bi=i}});o.emph=bv>=3?[bi]:[];o.emphColor=c.emph}
   if(Array.isArray(c.emphW)){o.emph=c.emphW.filter(i=>i>=0&&i<ws.length);o.emphColor=c.emph}
+  if(Array.isArray(c.gradW)){o.gradW=c.gradW.filter(i=>i>=0&&i<ws.length);o.gradPlain=c.color||'#ffffff'}
   if(cs.karaoke||c.karaoke){o.karaoke=true;o.karaokeColor=c.karaokeColor||c.emph}
   if(c.autoFit===false)o.autoFit=false;
   /* scaled up in Size: the caption really grows (auto-fit only keeps the normal size inside the frame) */
   if((c.size||1)>1)o.fitK=c.size;
-  return fromLook({s:o})}
+  const R=fromLook({s:o});R.lines.forEach(L=>{if(L.blend&&L.blend.flat)L.blend.sig=matSig(L)});return R}
 /* names and brands (Capitalised Runs, or phrases from your word list) never get split across two captions */
 function keepTogether(prev,w,prev2){if(!prev||/[.!?…,;:]$/.test(prev.w))return false;const a=coreOf(prev.w),b=coreOf(w.w);if(!a||!b)return false;
   const cap=x=>/^[\p{Lu}\d]/u.test(x)&&x!=='I';const startOfSentence=!prev2||/[.!?…]$/.test(prev2.w);if(cap(a)&&cap(b)&&!(startOfSentence&&STOPW.has(a.toLowerCase())))return true;
@@ -4449,7 +4468,7 @@ function diffKeep(s,gen){if(!gen||!gen.s)return null;const now=snapKeep(s);const
   KEEP_S.forEach(k=>{if(now.s[k]!==gen.s[k]){o.s[k]=JSON.parse(now.s[k]);any=true}});
   now.l.forEach((ln,i)=>{const g=gen.l[i];if(!g)return;const d={};KEEP_L.forEach(k=>{if(ln[k]!==g[k]){d[k]=JSON.parse(ln[k]);any=true}});if(Object.keys(d).length)o.l[i]=d});return any?o:null}
 const cpv=v=>v==null?undefined:structuredClone(v);
-function negFlatKeep(s){if(s&&s.lines)s.lines.forEach(L=>{if(L&&L._negFlat){L.mat='flat';L.c1=L._negFlat;delete L.cc;delete L.gm}})}
+function negFlatKeep(s){if(s&&s.lines)s.lines.forEach(L=>{if(L&&L._negFlat&&!userGrad(L)){L.mat='flat';L.c1=L._negFlat;delete L.cc;delete L.gm}})}
 function applyKeep(s,kp){if(!kp||!s)return;try{applyKeep_(s,kp)}finally{negFlatKeep(s)}}
 function applyKeep_(s,kp){if(kp.s)for(const k in kp.s)s[k]=cpv(kp.s[k]);if(kp.la)s.lines.forEach(L=>{for(const k in kp.la)L[k]=cpv(kp.la[k])});
   if(kp.l)kp.l.forEach((d,i)=>{const L=s.lines[i];if(L&&d)for(const k in d)L[k]=cpv(d[k])})}
