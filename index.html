@@ -2580,7 +2580,7 @@ function buildLooks(){const g=h('div',{class:'grid2'});const lkHint=capClips().l
     x.addEventListener('click',e=>{e.stopPropagation();const arr=myPresets();arr.splice(idx,1);saveMyPresets(arr);rebuild('looks');toast('Preset deleted')});tile.append(x)});
   const nm=h('input',{class:'txtin',placeholder:'Name this preset (e.g. Views counter)',maxlength:'40'});
   const mine=h('div',{class:'cat',style:'--c:#7a5cff'},h('div',{class:'cat-h'},h('span',{class:'cat-n'},String(myp.length)),h('span',{class:'cat-t'},'my presets')),cloudBlock(),
-    h('div',{style:'display:flex;gap:8px;margin:0 0 10px'},nm,h('button',{type:'button',class:'pillbtn',onclick:()=>{if(selClip().draft&&!S.lines.length){toast('Make a title first');return}const n=(nm.value||'').trim()||('Preset '+(myp.length+1));const s_=structuredClone(S);delete s_.aspect;delete s_.bg;const arr=myPresets();const pr={name:n,tag:s_.counter&&s_.counter.on?'COUNTER':'MINE',s:s_};if(selClip().kind==='caption')pr.capcfg=capCfgSnap(selClip());arr.unshift(pr);saveMyPresets(arr.slice(0,40));rebuild('looks');toast('Saved “'+n+'” to My presets')}},'Save current')),
+    h('div',{style:'display:flex;gap:8px;margin:0 0 10px'},nm,h('button',{type:'button',class:'pillbtn',onclick:()=>{if(selClip().draft&&!S.lines.length){toast('Make a title first');return}const n=(nm.value||'').trim()||('Preset '+(myp.length+1));const s_=structuredClone(S);delete s_.aspect;delete s_.bg;const arr=myPresets();const pr={name:n,tag:s_.counter&&s_.counter.on?'COUNTER':'MINE',s:s_};if(selClip().kind==='caption'){pr.capcfg=capCfgSnap(selClip());pr.caplook=capLookSnap(selClip())}arr.unshift(pr);saveMyPresets(arr.slice(0,40));rebuild('looks');toast('Saved “'+n+'” to My presets')}},'Save current')),
     myp.length?mg:h('p',{class:'hint'},'Save the selected title (animation, styling, counter, easing, motion) as your own preset to reuse it in one tap.'));
   return h('div',{class:'panel'},tileLineToggle(),glowLineBox(),mine,recentBlock('looks',(id,gg)=>{const lk=LOOKS.find(l=>l.name===id);if(lk)mkLook(lk,gg)}),h('div',{class:'cat',style:'--c:#f2b33d'},h('div',{class:'cat-h'},h('span',{class:'cat-n'},String(LOOKS.length)),h('span',{class:'cat-t'},'looks · newest first')),lkHint,g),h('p',{class:'hint'},'A look replaces text, fonts, animation, shine and 3D. Your aspect ratio and background stay. None removes it.'))}
 let animTgt=-1;
@@ -4491,7 +4491,7 @@ function negFlatKeep(s){if(s&&s.lines)s.lines.forEach(L=>{if(L&&L._negFlat&&!use
 function applyKeep(s,kp){if(!kp||!s)return;try{applyKeep_(s,kp)}finally{negFlatKeep(s)}}
 function applyKeep_(s,kp){if(kp.s)for(const k in kp.s)s[k]=cpv(kp.s[k]);if(kp.la)s.lines.forEach(L=>{for(const k in kp.la)L[k]=cpv(kp.la[k])});
   if(kp.l)kp.l.forEach((d,i)=>{const L=s.lines[i];if(L&&d)for(const k in d)L[k]=cpv(d[k])})}
-function capGen(c){applyKeep(c.s,P.cap.look);c.gen=snapKeep(c.s)}
+function capGen(c){if(!(c.capo&&c.capo.pure))applyKeep(c.s,P.cap.look);c.gen=snapKeep(c.s)}
 function capRebuild(c,dur){const keep=c.gen?diffKeep(c.s,c.gen):(c.keep||null);c.s=capState(c.words,c.start,dur??c.s.dur,capCfg(c));c.s.aspect=P.aspect;c.s.bg=P.bg;capGen(c);applyKeep(c.s,keep);c.keep=keep;
   if(c.id===P.sel){S=c.s;sel=Math.min(sel,S.lines.length-1);capTrack()}}
 /* "Style edits apply to every caption": a change made on one caption in a style tab is copied to every caption and remembered */
@@ -4517,7 +4517,9 @@ function capPropagate(){const c=selClip();if(!c||c.kind!=='caption'){capPrev=nul
 
 /* ===== My presets on caption styles: any preset saved in Looks (or from a caption) can restyle every caption, or just one ===== */
 function capCfgSnap(c){const f=capCfg(c),o={};['style','color','emph','karaoke','karaokeColor','upper','wordDur','maxWords'].forEach(k=>{if(f[k]!==undefined)o[k]=f[k]});if(f.so)o.so=structuredClone(f.so);return o}
-function capPresetKeep(lk){const ns=fromLook(lk,{aspect:P.aspect,bg:P.bg});const kp={s:{},la:{}};KEEP_S.forEach(k=>{if(ns[k]!==undefined)kp.s[k]=cpv(ns[k])});const L0=(ns.lines&&ns.lines[0])||{};KEEP_L.forEach(k=>{if(L0[k]!==undefined)kp.la[k]=cpv(L0[k])});return kp}
+function capLookSnap(c){const L=P.cap.look||{},K=(c&&c.keep)||{};const o={s:Object.assign({},structuredClone(L.s||{}),structuredClone(K.s||{})),la:structuredClone(L.la||{}),l:[]};
+  const n=Math.max((L.l||[]).length,(K.l||[]).length);for(let i=0;i<n;i++){const d=Object.assign({},structuredClone((L.l||[])[i]||{}),structuredClone((K.l||[])[i]||{}));o.l[i]=Object.keys(d).length?d:null}return o}
+function capPresetKeep(lk){if(lk&&lk.caplook)return structuredClone(lk.caplook);const ns=fromLook(lk,{aspect:P.aspect,bg:P.bg});const kp={s:{},la:{}};KEEP_S.forEach(k=>{if(ns[k]!==undefined)kp.s[k]=cpv(ns[k])});const L0=(ns.lines&&ns.lines[0])||{};KEEP_L.forEach(k=>{if(L0[k]!==undefined)kp.la[k]=cpv(L0[k])});return kp}
 function capApplyPreset(lk,scope){let kp;try{kp=capPresetKeep(lk)}catch(e){console.warn('preset',e);toast('That preset couldn’t be applied');return false}
   const cc=lk.capcfg&&lk.capcfg.style&&CAP_BY[lk.capcfg.style]?lk.capcfg:null;
   if(scope==='one'){const c=selClip();if(!c||c.kind!=='caption'){toast('Tap a caption on the timeline first');return false}
@@ -4535,11 +4537,16 @@ function capPresetSection(C,scope){const mine=myPresets();const g=h('div',{class
     tile.addEventListener('click',()=>{commit();useRec('looks',lk.name);capApplyPreset(lk,scope)});
     const x=h('span',{class:'x',role:'button','aria-label':'Delete preset '+lk.name},'×');x.addEventListener('click',e=>{e.stopPropagation();const arr=myPresets();arr.splice(idx,1);saveMyPresets(arr);rebuild('video',true);toast('Preset deleted')});tile.append(x);g.append(tile)});
   const nm=h('input',{class:'txtin',placeholder:'Name this caption look (e.g. My gold pop)',maxlength:'40'});
-  const save=h('button',{type:'button',class:'pillbtn',onclick:()=>{const c=selClip();if(!c||c.kind!=='caption'){toast('Tap a caption on the timeline first, then save its look');return}const n=(nm.value||'').trim()||('Caption look '+(mine.length+1));const s_=structuredClone(c.s);delete s_.aspect;delete s_.bg;const arr=myPresets();arr.unshift({name:n,tag:'MINE',s:s_,capcfg:capCfgSnap(c)});saveMyPresets(arr.slice(0,40));rebuild('video',true);toast('Saved “'+n+'” to My presets')}},'Save this caption’s look');
+  const save=h('button',{type:'button',class:'pillbtn',onclick:()=>{const c=selClip();if(!c||c.kind!=='caption'){toast('Tap a caption on the timeline first, then save its look');return}const n=(nm.value||'').trim()||('Caption look '+(mine.length+1));const s_=structuredClone(c.s);delete s_.aspect;delete s_.bg;const arr=myPresets();arr.unshift({name:n,tag:'MINE',s:s_,capcfg:capCfgSnap(c),caplook:capLookSnap(c)});saveMyPresets(arr.slice(0,40));rebuild('video',true);toast('Saved “'+n+'” to My presets')}},'Save this caption’s look');
   return h('div',{class:'cat',style:'--c:#7a5cff'},h('div',{class:'cat-h'},h('span',{class:'cat-n'},String(mine.length)),h('span',{class:'cat-t'},'my presets · captions')),
     h('p',{class:'hint',style:'margin-top:0'},scope==='one'?'Tap a preset to give only the selected caption that look.':'Tap a preset to restyle every caption with it. Switch “Apply style to” above to use it on one caption.'),
     h('div',{style:'display:flex;gap:8px;margin:0 0 10px'},nm,save),
     mine.length?g:h('p',{class:'hint'},'No presets yet. Save one from the Looks tab, or style a caption and tap “Save this caption’s look”.'))}
+/* picking a caption style always gives its ORIGINAL look: font, colours, materials, accents, options.
+   Your own changes are dropped (Undo brings them back) – save them first in My presets · captions to keep them. Positions, sizes and picked highlight words stay. */
+function capStylePure(cs,clips){const C=P.cap;C.look=null;C.lookFrom=null;C.style=cs.id;C.pos=cs.pos;C.maxWords=cs.max;C.color=cs.color||CAP0.color;C.emph=CAP0.emph;C.karaokeColor=CAP0.karaokeColor;C.wordDur=cs.wordDur||CAP0.wordDur;C.upper=false;
+  if(C.so)delete C.so[cs.id];delete C.gradWords;delete C.gradAllW;C.shine={on:false};
+  (clips||capClips()).forEach(c=>{c.gen=null;c.keep=null;delete c.gradW;delete c.gradAll;delete c.neg})}
 function capResetLook(){commit();P.cap.look=null;P.cap.lookFrom=null;capClips().forEach(c=>{c.gen=null;c.keep=null;c.s=capState(c.words,c.start,c.s.dur,capCfg(c));c.s.aspect=P.aspect;c.s.bg=P.bg;capGen(c)});linkProject();S=selClip().s;sel=Math.min(sel,S.lines.length-1);capTrack();refreshAll();changed();toast('Caption style reset to the caption preset')}
 let capShineSig='';
 /* caption shine always carries every setting (an empty {on:false} left the Shine sliders at NaN, so a shine picked on a caption never showed) */
@@ -4961,12 +4968,13 @@ function buildVideo(){const p=h('div',{class:'panel'});const C=P.cap;
     tile.addEventListener('click',()=>{commit();
       if(capScope==='one'){const c=selClip();if(!c||c.kind!=='caption'){toast('Tap a caption on the timeline first');return}
         if(cs.id===C.style&&!c.capo){toast('This caption already uses '+cs.name);return}
-        c.capo=cs.id===C.style?null:Object.assign({style:cs.id,pos:cs.pos},cs.color?{color:cs.color}:{},cs.wordDur?{wordDur:cs.wordDur}:{});if(!c.capo)delete c.capo;c.gen=null;c.keep=null;capRebuild(c);linkProject();refreshAll();changed();toast(cs.name+' · this caption only');return}
-      const hadLook=P.cap.lookFrom;if(hadLook){P.cap.look=null;P.cap.lookFrom=null;capClips().forEach(c=>{c.gen=null;c.keep=null})}
-      C.style=cs.id;C.pos=cs.pos;C.maxWords=cs.max;if(cs.color)C.color=cs.color;if(cs.wordDur)C.wordDur=cs.wordDur;
-      if(capKeepOwn===false)capClips().forEach(c=>{delete c.capo});const ws=allCapWords();if(ws.length)buildCaptions(ws);refreshAll();changed();toast(cs.name+' · all captions'+(hadLook?' · look “'+hadLook+'” removed (Undo to keep it)':''))});g.append(tile)});
+        c.capo=Object.assign({style:cs.id,pos:cs.pos,color:cs.color||CAP0.color,emph:CAP0.emph,wordDur:cs.wordDur||CAP0.wordDur,upper:false,pure:1});c.gen=null;c.keep=null;delete c.gradW;delete c.gradAll;delete c.neg;capRebuild(c);linkProject();refreshAll();changed();toast(cs.name+' · this caption only');return}
+      const hadLook=P.cap.lookFrom,edited=!!(P.cap.look&&((P.cap.look.s&&Object.keys(P.cap.look.s).length)||(P.cap.look.la&&Object.keys(P.cap.look.la).length)));
+      capStylePure(cs,capClips().filter(c=>capKeepOwn===false||!c.capo));
+      if(capKeepOwn===false)capClips().forEach(c=>{delete c.capo});const ws=allCapWords();if(ws.length)buildCaptions(ws);refreshAll();changed();toast(cs.name+' · all captions · original style'+(hadLook?' · look “'+hadLook+'” removed':edited?' · your edits removed':'')+(hadLook||edited?' (Undo to get them back)':''))});g.append(tile)});
   const nOwn=capClips().filter(c=>c.capo).length;
   p.append(sec('Caption style',h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Apply style to')),seg([{v:'all',label:'All captions'},{v:'one',label:selCap?'This caption':'This caption (tap one)'}],()=>one?'one':'all',v=>{if(v==='one'&&!selCap){toast('Tap a caption on the timeline first, then pick a style');return}capScope=v;rebuild('video',true)},{label:'Caption style scope',opts:{tl:false}})),
+    h('p',{class:'hint',style:'color:#9fd0ff'},'Every caption style always opens with its original font, colours and materials. Made it your own? Save it in My presets · captions below before picking another style.'),
     h('p',{class:'hint'},one?`Styling only the caption at ${fmtT(selCap.start)} (“${capText(selCap).slice(0,28)}${capText(selCap).length>28?'…':''}”). The rest keep their own style. Tap another caption on the timeline to style it.`:'Picking a style restyles every caption.'+(nOwn?` ${nOwn} caption${nOwn>1?'s have':' has'} its own style and ${capKeepOwn===false?'will be reset':'will keep it'}.`:'')),
     nOwn&&!one?toggle('Keep captions that have their own style',()=>capKeepOwn!==false,v=>{capKeepOwn=v},{opts:{tl:false}}):null,
     one&&selCap.capo?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();delete selCap.capo;selCap.gen=null;selCap.keep=null;capRebuild(selCap);refreshAll();changed();toast('Caption back to the main style')}},'Use the main style for this caption'):null,
