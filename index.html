@@ -2108,7 +2108,8 @@ const Engine=(()=>{
           st=norm(AL.fn(EIN(pu),u,G));
           if(SM&&outQ!==0){const OP=OUTS[AL.out]||OUTS.fade;const oi=own?ui:u.gi,on=own?units.length:n;let qu=outQ;if(on>1){const s_=OP.stag??Math.min(.55,S.stagger*.75);const k_=orderIdx(oi,on,OP.order||S.order);qu=outQ<0?outQ:clamp((outQ-k_/(on-1)*s_)/Math.max(.05,1-s_))}if(qu!==0)st=applyOut(st,OP.fn(qu,u,G))}
           st=contMo(st,u,G,S,t);if(ln.L.rot)st.rot=(st.rot||0)+ln.L.rot;
-          if(mL!=='line'){const wi=mL==='word'?u.gi:u.wi;if(S.emph&&S.emph.includes(wi))st.color=S.emphColor;if(S.karaoke&&WT){const ws=WT[wi]??0,we=WT[wi+1]??1e9;if(t>=ws&&t<we)st.color=S.karaokeColor}}}
+          /* a negative word in one colour takes that colour, even if it is the highlighted or karaoke word */
+          if(mL!=='line'&&!fc&&!ln.L._negFlat){const wi=mL==='word'?u.gi:u.wi;if(S.emph&&S.emph.includes(wi)&&!(gwS&&gwS.has(wi)))st.color=S.emphColor;if(S.karaoke&&WT){const ws=WT[wi]??0,we=WT[wi+1]??1e9;if(t>=ws&&t<we)st.color=S.karaokeColor}}}
         const pv_=mL==='all'?lay.block:u;
         if(gwL){setG();drawUnit(c,ln,u,Object.assign({},st,{wordClip:rc(true)}),sty,pv_,LR);setP();drawUnit(c,lnP,u,Object.assign({},st,{wordClip:rc(false)}),styP,pv_,LR);setG()}
         else if(gwS&&!gwS.has(mL==='word'?u.gi:u.wi)){setP();drawUnit(c,lnP,u,st,styP,pv_,LR);setG()}
@@ -2973,10 +2974,10 @@ function buildGrad(){const p=h('div',{class:'panel'});const T=gTargets(),L=T[0],
     const words=cc.words,nW=words.length,mode=!!(P.cap&&P.cap.gradWords),picked=cc.gradAll?words.map((_,i)=>i):(Array.isArray(cc.gradW)?cc.gradW:[]),on=i=>!mode||picked.includes(i);
     const setPick=arr=>{commit();if(!P.cap.gradWords){P.cap.gradWords=true;capClips().forEach(x=>{if(x!==cc)capRebuild(x)})}
       if(arr.length>=nW){cc.gradAll=true;delete cc.gradW}else{delete cc.gradAll;cc.gradW=arr}capRebuild(cc);linkProject();changed();rebuild('grad',true)};
-    const allCaps=()=>{commit();P.cap.gradWords=false;capClips().forEach(x=>{delete x.gradW;delete x.gradAll});capRebuildAll();changed();rebuild('grad',true)};
+    const allCaps=()=>{commit();P.cap.gradWords=false;P.cap.gradAllW=true;capClips().forEach(x=>{delete x.gradW;delete x.gradAll});capRebuildAll();changed();rebuild('grad',true)};
     p.append(sec('Apply gradient to',h('p',{class:'hint',style:'margin-top:0'},!mode?'Every word of every caption has the gradient. Tap a word to put it on just that word.':(picked.length?'Only the words you tap get the gradient. Every other word, in every caption, stays plain.':'No words have the gradient in this caption yet. Tap the words you want.')),
       h('div',{class:'wordchips',style:'--wc:#c28bff'},words.map((w,i)=>h('button',{type:'button','aria-pressed':String(on(i)),onclick:()=>{if(!mode)return setPick([i]);setPick(picked.includes(i)?picked.filter(x=>x!==i):[...picked,i].sort((x,y)=>x-y))}},w.w))),
-      h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn',onclick:()=>setPick(words.map((_,i)=>i))},'All words'),h('button',{type:'button',class:'pillbtn',onclick:()=>setPick([])},'No words'),h('button',{type:'button',class:'pillbtn',onclick:allCaps},'All captions'))))}
+      h('div',{class:'pillrow'},h('button',{type:'button',class:'pillbtn','aria-pressed':String(!mode),onclick:()=>{allCaps();toast('Gradient on every word of every caption')}},'All words · every caption'),h('button',{type:'button',class:'pillbtn',onclick:()=>setPick(words.map((_,i)=>i))},'All words · this caption'),h('button',{type:'button',class:'pillbtn',onclick:()=>setPick([])},'No words · this caption'))))}
    else if(S.lines.length>1){const gmOn=o=>o.gm&&o.gm.type&&o.gm.type!=='none';
     p.append(sec('Apply gradient to',h('div',{class:'linechips'},h('button',{type:'button','aria-pressed':String(gradTgt<0),onclick:()=>{gradTgt=-1;rebuild('grad',true)}},'All lines'),
       S.lines.map((ln,i)=>h('button',{type:'button','aria-pressed':String(gradTgt===i),onclick:()=>{gradTgt=i;rebuild('grad',true)}},(ln.text||'Line '+(i+1)).slice(0,18),gmOn(ln)?h('i',{class:'ic sm',html:svg('spark',2)}):null))),
@@ -4456,6 +4457,7 @@ function capState(ws,start,dur,c){const cs=CAP_BY[c.style]||CAPSTYLES[0];const s
   if(c.gradAll){o.gradW=ws.map((_,i)=>i);o.gradPlain=c.color||'#ffffff'}
   else if(Array.isArray(c.gradW)){o.gradW=c.gradW.filter(i=>i>=0&&i<ws.length);o.gradPlain=c.color||'#ffffff'}
   else if(c.gradWords){o.gradW=[];o.gradPlain=c.color||'#ffffff'}
+  else if(c.gradAllW){o.gradW=ws.map((_,i)=>i);o.gradPlain=c.color||'#ffffff'}
   if(cs.karaoke||c.karaoke){o.karaoke=true;o.karaokeColor=c.karaokeColor||c.emph}
   if(c.autoFit===false)o.autoFit=false;
   /* scaled up in Size: the caption really grows (auto-fit only keeps the normal size inside the frame) */
