@@ -3725,7 +3725,7 @@ function audioCtx(){if(!AC_PLAY){const AC=window.AudioContext||window.webkitAudi
 const audOn=()=>!!(AUDIO&&soundOn&&(!vidOn()||proxyOn()));
 function stopAudio(){if(playSrc){try{playSrc.onended=null;playSrc.stop()}catch(e){}try{playSrc.disconnect()}catch(e){}playSrc=null}}
 function startAudio(){stopAudio();if(!audOn()||!playing)return;const ac=audioCtx();
-  if(!playBuf||playBuf.__src!==AUDIO){if(typeof AudioBuffer!=='undefined'&&AUDIO instanceof AudioBuffer)playBuf=AUDIO;else{const b=ac.createBuffer(AUDIO.numberOfChannels,Math.max(1,AUDIO.length),AUDIO.sampleRate);for(let c=0;c<AUDIO.numberOfChannels;c++)b.getChannelData(c).set(AUDIO.getChannelData(c));playBuf=b}playBuf.__src=AUDIO}
+  if(!playBuf||playBuf.__pfor!==AUDIO){if(typeof AudioBuffer!=='undefined'&&AUDIO instanceof AudioBuffer)playBuf=AUDIO;else{const b=ac.createBuffer(AUDIO.numberOfChannels,Math.max(1,AUDIO.length),AUDIO.sampleRate);for(let c=0;c<AUDIO.numberOfChannels;c++)b.getChannelData(c).set(AUDIO.getChannelData(c));playBuf=b}playBuf.__pfor=AUDIO}
   if(T>=playBuf.duration-.02)return;playSrc=ac.createBufferSource();playSrc.buffer=playBuf;playSrc.connect(ac.destination);playOff=T;playT0=ac.currentTime+.03;playSrc.start(playT0,T)}
 const audioClock=()=>playOff+Math.max(0,AC_PLAY.currentTime-playT0);
 function updSound(){const b=$('#sndBtn');if(!b)return;b.hidden=!AUDIO||(vidOn()&&!proxyOn());b.classList.toggle('on',soundOn);b.setAttribute('aria-pressed',String(soundOn));b.innerHTML=soundOn?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>'}
@@ -5839,7 +5839,9 @@ async function encodeAudioStreaming(mux,a,src,D){let err=null;const enc=new Audi
       await MEM.tick(20)}
     await enc.flush();if(err)throw err;enc.close()}
   catch(e){try{enc.close()}catch(_){}throw e}}
-async function encodeAudioInto(mux,a,ab,D){if(ab&&ab.__src)return encodeAudioStreaming(mux,a,ab.__src,D);let err=null;const enc=new AudioEncoder({output:(c,m)=>mux.addAudioChunk(c,m),error:e=>{err=e}});enc.configure(a.cfg);
+/* the original file's audio frames, kept for long videos (decoded again slice by slice at export) */
+const audSrc=ab=>ab&&ab.__src&&ab.__src.t&&ab.__src.file&&ab.__src.foff?ab.__src:null;
+async function encodeAudioInto(mux,a,ab,D){if(audSrc(ab))return encodeAudioStreaming(mux,a,audSrc(ab),D);let err=null;const enc=new AudioEncoder({output:(c,m)=>mux.addAudioChunk(c,m),error:e=>{err=e}});enc.configure(a.cfg);
   const buf=await resampleAB(ab,a.sr,a.ch);const total=Math.min(buf.length,Math.ceil(D*a.sr)),N=2048,chs=[];for(let c=0;c<a.ch;c++)chs.push(buf.getChannelData(Math.min(c,buf.numberOfChannels-1)));
   for(let off=0;off<total;off+=N){if(cancelEx){try{enc.close()}catch(e){}throw'cancel'}if(err)throw err;const n=Math.min(N,total-off),data=new Float32Array(n*a.ch);for(let c=0;c<a.ch;c++)data.set(chs[c].subarray(off,off+n),c*n);
     const ad=new AudioData({format:'f32-planar',sampleRate:a.sr,numberOfFrames:n,numberOfChannels:a.ch,timestamp:Math.round(off/a.sr*1e6),data});enc.encode(ad);ad.close();if(enc.encodeQueueSize>32)await sleep(1)}
@@ -5853,14 +5855,14 @@ async function encodeFull(cv,w,hh,fps,frames,bitrate){
   if(!hasFullSrc())throw new Error('Add your video in the Video tab first.');
   const D=frames/fps,ctx=cv.getContext('2d'),ov=document.createElement('canvas');ov.width=w;ov.height=hh;const pic=!P.video.audioOnly;
   const bgA=EX.bg.mode==='transparent'?{mode:'black',color:'#000000'}:EX.bg;
-  setProg(0,'Reading the sound…');if(!AUDIO&&AUDIO_P){try{await AUDIO_P}catch(e){}}let ab=AUDIO||null;try{if(P.sfx&&P.sfx.on&&!(ab&&ab.__src)){setProg(0,'Mixing sound effects…');ab=await sfxMix(ab,D)}}catch(e){console.warn('sfx mix',e)}const withSfx=!!(P.sfx&&P.sfx.on&&sfxEvents().length);
+  setProg(0,'Reading the sound…');if(!AUDIO&&AUDIO_P){try{await AUDIO_P}catch(e){}}let ab=AUDIO||null;try{if(P.sfx&&P.sfx.on&&!audSrc(ab)){setProg(0,'Mixing sound effects…');ab=await sfxMix(ab,D)}}catch(e){console.warn('sfx mix',e)}const withSfx=!!(P.sfx&&P.sfx.on&&sfxEvents().length);
   let v=null;if(pic){setProg(0,'Opening your video…');v=await openExportVideo()}
   const paint=t=>{if(v){ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';ctx.fillStyle='#000';ctx.fillRect(0,0,w,hh);drawCover(ctx,v,w,hh);renderSeq(t,ov,{bg:TRANSPARENT,maxLayers:180,backdrop:v});ctx.drawImage(ov,0,0)}else renderSeq(t,cv,{bg:bgA,maxLayers:180,backdrop:bgColor(bgA)||null})};
   const cleanup=()=>{if(v){try{v.pause();v.removeAttribute('src');v.load()}catch(e){}v.remove()}};
   try{
     const hasWC=typeof VideoEncoder!=='undefined'&&typeof VideoFrame!=='undefined'&&window.Mp4Muxer;let vcfg=null;
     if(hasWC){for(const codec of['avc1.640034','avc1.640033','avc1.640028','avc1.4d0034','avc1.42003e']){const c={codec,width:w,height:hh,bitrate,framerate:fps,avc:{format:'avc'}};try{const r=await VideoEncoder.isConfigSupported(c);if(r.supported){vcfg=c;break}}catch(e){}}}
-    const acfg=vcfg&&ab?await pickAudio(ab.__src?{numberOfChannels:Math.min(2,ab.__src.chn),sampleRate:ab.__src.t.sr}:ab):null;
+    const acfg=vcfg&&ab?await pickAudio(audSrc(ab)?{numberOfChannels:Math.min(2,audSrc(ab).chn||2),sampleRate:audSrc(ab).t.sr}:ab):null;
     if(vcfg&&(acfg||!ab)){
       const mux=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:'avc',width:w,height:hh,frameRate:fps},audio:acfg?{codec:acfg.mux,numberOfChannels:acfg.ch,sampleRate:acfg.sr}:undefined,fastStart:'in-memory',firstTimestampBehavior:'offset'});
       if(acfg){setProg(.01,'Encoding the sound…');await encodeAudioInto(mux,acfg,ab,D)}
