@@ -1616,7 +1616,9 @@ const OUTS={
  bsRight:{fn:q=>{const e=E.inCubic(q);return{x:e*.9,blur:e*.2,a:1-q}}},
  bsLeft:{fn:q=>{const e=E.inCubic(q);return{x:-e*.9,blur:e*.2,a:1-q}}},
 };
-function outKind(S){if(S.outMode!=='smart')return S.outMode;const A=ANIM_BY[S.anim];return A&&A.out?'smart':'reverse'}
+/* a creator-picked exit: any animation played backwards (per line or for the whole title) */
+function outAnimOf(L,S){const id=(L&&L.outAnim)||S.outAnim;const A=id&&ANIM_BY[id];return A&&!A.overlay&&!A.custom&&!A.global&&A.unit!=='all'?A:null}
+function outKind(S){if(S.outMode==='smart'&&(S.outAnim||(S.lines&&S.lines.some(L=>L.outAnim))))return 'smart';if(S.outMode!=='smart')return S.outMode;const A=ANIM_BY[S.anim];return A&&A.out?'smart':'reverse'}
 function applyOut(st,o){const r=Object.assign({},st);for(const k in o){const v=o[k];if(k==='sx'||k==='sy'||k==='a')r[k]=(r[k]??1)*v;else if(typeof v==='number'&&k in ST0)r[k]=(r[k]||0)+v;else r[k]=v}return r}
 const CATS=[{id:'motion',t:'text motion',c:'#5ee0ff',hex:'#5ee0ff'},{id:'social',t:'trending',c:'#ffcf3a',hex:'#ffcf3a'},{id:'pop',t:'pop & flicker',c:'#ff5fd2',hex:'#ff5fd2'},{id:'multi',t:'multi-word',c:'var(--c-multi)',hex:'#3d7bff'},{id:'single',t:'single-word',c:'var(--c-single)',hex:'#b44dff'},{id:'misc',t:'miscellaneous',c:'var(--c-misc)',hex:'#2ee6c8'},{id:'3d',t:'3D motion',c:'var(--c-3d)',hex:'#ff4d7d'}];
 const SHINES=[{id:'sweep',name:'Sweep'},{id:'double',name:'Double'},{id:'prism',name:'Prism'},{id:'roll',name:'Chrome Roll'},{id:'pulse',name:'Pulse'},{id:'shimmer',name:'Shimmer'},{id:'glint',name:'Glint'},{id:'lens',name:'Lens Glare'},{id:'sheen',name:'Satin Sheen',tag:'NEW'},{id:'flash',name:'Flash Glare',tag:'NEW'},{id:'scan',name:'Light Scan',tag:'NEW'},{id:'gloss',name:'Gloss Swipe',tag:'NEW'},{id:'aurora',name:'Aurora',tag:'NEW'},{id:'triple',name:'Triple Streak',tag:'NEW'},{id:'cross',name:'Cross Glare',tag:'NEW'},{id:'edge',name:'Edge Light',tag:'NEW'}];
@@ -1879,7 +1881,7 @@ function mgDraw(c,S,t,o){const m=S.mg,G=mgGeom(S,o.W,o.H),d=G.d;const I=Math.max
     const u={ln,isLine:1,x0,x1,top,bottom,cx:G.cx,cy:G.cy,em,glyphs:[],gi:0,wi:0,r1:.5,r2:.5,r3:.5};const blk={x0,x1,top,bottom,cx:G.cx,cy:G.cy,em};
     const GG={t,p:clamp(t/I),S,W:o.W,H:o.H,block:blk,lines:[ln],em,base:G.base,nL:1,nWords:1};const ein=o.EIN||(x=>x);
     let st;try{st=Object.assign({},ST0,A.fn(ein(clamp(t/I)),u,GG)||{})}catch(e){st=Object.assign({},ST0)}
-    if(q>0){if(S.outMode==='smart'){const OP=OUTS[A.out]||OUTS.fade;try{st=applyOut(st,OP.fn(q,u,GG))}catch(e){st.a*=1-q}}else if(S.outMode==='reverse'){try{st=Object.assign({},ST0,A.fn(ein(clamp(1-q)),u,GG)||{})}catch(e){}}else st.a*=1-q}
+    if(q>0){const OA=outAnimOf(null,S);if(OA&&S.outMode==='smart'){try{st=Object.assign({},ST0,OA.fn(ein(clamp(1-q)),u,GG)||{})}catch(e){st.a*=1-q}}else if(S.outMode==='smart'){const OP=OUTS[A.out]||OUTS.fade;try{st=applyOut(st,OP.fn(q,u,GG))}catch(e){st.a*=1-q}}else if(S.outMode==='reverse'){try{st=Object.assign({},ST0,A.fn(ein(clamp(1-q)),u,GG)||{})}catch(e){}}else st.a*=1-q}
     if(st.a>.002){const sc=MGSC.cv;c.save();c.globalAlpha=clamp(st.a);const py=st.piv==='b'?bottom:st.piv==='t'?top:G.cy;c.translate(G.cx+(st.x||0)*em,py+(st.y||0)*em);if(st.rot)c.rotate(st.rot);if(st.skx)c.transform(1,0,st.skx,1,0,0);
       c.scale(Math.abs(st.sx)<1e-4?1e-4:st.sx,Math.abs(st.sy)<1e-4?1e-4:st.sy);c.translate(-G.cx,-py);
       if(st.reveal!=null&&st.reveal<1){c.beginPath();c.rect(x0-pad,top-pad,(G.w+pad*2)*clamp(st.reveal),G.h+pad*2);c.clip()}
@@ -2394,7 +2396,10 @@ const Engine=(()=>{
             pu=clamp((t-ts)/Math.max(.05,S.wordDur||.3));if(outQ>0&&OM==='reverse')pu=Math.min(pu,1-outQ)}
           else pu=AL.custom?gp:(own?unitP(ui,units.length,tauL,I,S,AL):unitP(u.gi,n,tauL,I,S,AL));
           st=norm(AL.fn(EIN(pu),u,G));
-          if(SM&&outQ!==0){const OP=OUTS[AL.out]||OUTS.fade;const oi=own?ui:u.gi,on=own?units.length:n;let qu=outQ;if(on>1){const s_=OP.stag??Math.min(.55,S.stagger*.75);const k_=orderIdx(oi,on,OP.order||S.order);qu=outQ<0?outQ:clamp((outQ-k_/(on-1)*s_)/Math.max(.05,1-s_))}if(qu!==0)st=applyOut(st,OP.fn(qu,u,G))}
+          const OA=outAnimOf(ln.L,S);
+          if(OA&&SM&&outQ>0){const oi=own?ui:u.gi,on=own?units.length:n;let qu=outQ;if(on>1){const s_=clamp(OA.stag!=null?OA.stag*.8:S.stagger*.6,0,.9);const k_=orderIdx(oi,on,OA.order||S.order);qu=clamp((outQ-k_/(on-1)*s_)/Math.max(.05,1-s_))}
+            if(qu>0){const keep=st;st=norm(OA.fn(EIN(clamp(1-qu)),u,G));if(keep.color&&!st.color)st.color=keep.color}}
+          else if(SM&&outQ!==0){const OP=OUTS[AL.out]||OUTS.fade;const oi=own?ui:u.gi,on=own?units.length:n;let qu=outQ;if(on>1){const s_=OP.stag??Math.min(.55,S.stagger*.75);const k_=orderIdx(oi,on,OP.order||S.order);qu=outQ<0?outQ:clamp((outQ-k_/(on-1)*s_)/Math.max(.05,1-s_))}if(qu!==0)st=applyOut(st,OP.fn(qu,u,G))}
           st=contMo(st,u,G,S,t);if(ln.L.rot)st.rot=(st.rot||0)+ln.L.rot;
           /* a negative word in one colour takes that colour, even if it is the highlighted or karaoke word */
           if(mL!=='line'&&!fc&&!ln.L._negFlat){const wi=mL==='word'?u.gi:u.wi;if(S.emph&&S.emph.includes(wi)&&!(gwS&&gwS.has(wi)))st.color=S.emphColor;if(S.karaoke&&WT){const ws=WT[wi]??0,we=WT[wi+1]??1e9;if(t>=ws&&t<we)st.color=S.karaokeColor}}}
@@ -2874,7 +2879,7 @@ function buildLooks(){const g=h('div',{class:'grid2'});const lkHint=capClips().l
     h('div',{style:'display:flex;gap:8px;margin:0 0 10px'},nm,h('button',{type:'button',class:'pillbtn',onclick:()=>{if(selClip().draft&&!S.lines.length){toast('Make a title first');return}const n=(nm.value||'').trim()||('Preset '+(myp.length+1));const s_=structuredClone(S);delete s_.aspect;delete s_.bg;const arr=myPresets();const pr={name:n,tag:s_.counter&&s_.counter.on?'COUNTER':'MINE',s:s_};if(selClip().kind==='caption'){pr.capcfg=capCfgSnap(selClip());pr.caplook=capLookSnap(selClip())}arr.unshift(pr);saveMyPresets(arr.slice(0,40));rebuild('looks');toast('Saved “'+n+'” to My presets')}},'Save current')),
     myp.length?mg:h('p',{class:'hint'},'Save the selected title (animation, styling, counter, easing, motion) as your own preset to reuse it in one tap.'));
   return h('div',{class:'panel'},tileLineToggle(),glowLineBox(),mine,recentBlock('looks',(id,gg)=>{const lk=LOOKS.find(l=>l.name===id);if(lk)mkLook(lk,gg)}),h('div',{class:'cat',style:'--c:#f2b33d'},h('div',{class:'cat-h'},h('span',{class:'cat-n'},String(LOOKS.length)),h('span',{class:'cat-t'},'looks · newest first')),lkHint,g),h('p',{class:'hint'},'A look replaces text, fonts, animation, shine and 3D. Your aspect ratio and background stay. None removes it.'))}
-let animTgt=-1;
+let animTgt=-1,animSide='in';
 const lineAnimOK=a=>!(a.overlay||a.custom||a.unit==='all'||a.global);
 function curAnimId(){const L=animTgt>=0?S.lines[animTgt]:null;return L&&L.anim?L.anim:S.anim}
 function buildAnim(){const p=h('div',{class:'panel'});if(animTgt>=S.lines.length)animTgt=-1;
@@ -2887,9 +2892,24 @@ function buildAnim(){const p=h('div',{class:'panel'});if(animTgt>=S.lines.length
       h('p',{class:'hint'},own?'This line has its own animation. Pick one below; the other lines keep theirs.':'This line follows the animation set for All lines. Pick one below to give it its own.'))}
     else if(S.lines.some(L=>L.anim||L.delay))box.append(h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();S.lines.forEach(L=>{delete L.anim;L.delay=0});changed();rebuild('anim',true);toast('Every line now uses the same animation')}},'Clear line overrides'));
     p.append(box)}
-  const mkAnim=(a,g)=>{const cat=CATS.find(c=>c.id===a.cat)||CATS[0];const cv=h('canvas',{class:'hov',width:300,height:200});const na=!!tgtL&&!lineAnimOK(a);const tile=h('button',{type:'button',class:'tile'+(na?' na':''),'data-anim':a.id,style:`--c:${cat.hex}`,'aria-pressed':String(curAnimId()===a.id),title:na?'This one moves the whole text block, so it’s only available for All lines':''},h('span',{class:'lbl'},a.name),cv,a.isNew?h('span',{class:'newtag'},'NEW'):null,h('span',{class:'dot',html:svg('check',3.5)}));
-      tile.addEventListener('click',()=>{if(na){toast('“'+a.name+'” moves the whole text, so pick it under All lines');return}useRec('anim',a.id);commit();
-        if(tgtL){tgtL.anim=a.id}else{S.anim=a.id;if(a.fx)S.fx=a.fx;if(S.mg)S.mg.useAnim=1}markAnim();seekClip(0);setPlaying(true);changed();rebuild('anim',true)});
+  /* In / Out: every tile can be the entrance, or the exit (the exit plays the animation backwards) */
+  {const isCapC=selClip().kind==='caption';const outId=(tgtL&&tgtL.outAnim)||(!tgtL&&S.outAnim)||null;const nm=id=>(ANIM_BY[id]||{}).name||id;
+    const side=sec('In & out',
+      seg([{v:'in',label:'In animation'},{v:'out',label:'Out animation'}],()=>animSide,v=>{animSide=v;rebuild('anim',true)},{label:'Pick the in or the out animation',opts:{tl:false}}),
+      h('div',{class:'pillrow'},
+        h('button',{type:'button',class:'pillbtn','aria-pressed':String(animSide==='in'),onclick:()=>{animSide='in';seekClip(0);setPlaying(true);rebuild('anim',true)}},'In: '+nm(curAnimId())),
+        h('button',{type:'button',class:'pillbtn','aria-pressed':String(animSide==='out'),onclick:()=>{animSide='out';seekClip(Math.max(0,S.dur-(S.outDur||.6)-.5));setPlaying(true);rebuild('anim',true)}},'Out: '+(outId?nm(outId):S.outMode==='none'?'Hold (none)':'Automatic')),
+        outId?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();if(tgtL)delete tgtL.outAnim;else{delete S.outAnim;S.lines.forEach(L=>delete L.outAnim)}changed();rebuild('anim',true);toast('Exit back to automatic')}},'Automatic exit'):null),
+      h('p',{class:'hint'},animSide==='in'?'Tap an animation below to set how '+(tgtL?'this line':'your text')+' comes in.':'Tap an animation below to set how '+(tgtL?'this line':'your text')+' leaves: it plays that animation backwards. Outro length (in Timing) sets how long it takes.'+(isCapC?' Captions use their style’s exit.':'')));
+    p.append(side)}
+  const mkAnim=(a,g)=>{const cat=CATS.find(c=>c.id===a.cat)||CATS[0];const cv=h('canvas',{class:'hov',width:300,height:200});const na=!!tgtL&&!lineAnimOK(a)||(animSide==='out'&&(a.overlay||a.custom||a.global||a.unit==='all'));const outCur=(tgtL&&tgtL.outAnim)||(!tgtL&&S.outAnim);const tile=h('button',{type:'button',class:'tile'+(na?' na':''),'data-anim':a.id,style:`--c:${cat.hex}`,'aria-pressed':String(animSide==='out'?outCur===a.id:curAnimId()===a.id),title:na?'This one moves the whole text block, so it’s only available for All lines':''},h('span',{class:'lbl'},a.name),cv,a.isNew?h('span',{class:'newtag'},'NEW'):null,h('span',{class:'dot',html:svg('check',3.5)}));
+      tile.addEventListener('click',()=>{if(na){toast(animSide==='out'?'“'+a.name+'” can’t play as an exit. Pick another one for Out.':'“'+a.name+'” moves the whole text, so pick it under All lines');return}useRec('anim',a.id);commit();
+        if(animSide==='out'){if(tgtL)tgtL.outAnim=a.id;else{S.outAnim=a.id;S.lines.forEach(L=>delete L.outAnim)}S.outMode='smart';if(!(S.outDur>=.3))S.outDur=.6;
+          seekClip(Math.max(0,S.dur-(S.outDur||.6)-.4));setPlaying(true);changed();rebuild('anim',true);toast('Out: '+a.name);return}
+        if(tgtL){tgtL.anim=a.id}else{S.anim=a.id;if(a.fx)S.fx=a.fx;if(S.mg)S.mg.useAnim=1;
+          /* All lines really means all lines: line overrides from a look are cleared, and a title made from a caption look stops following word timing, so the animation and the Timing sliders take over */
+          const isCapC=selClip().kind==='caption';S.lines.forEach(L=>{delete L.anim});if(!isCapC&&Array.isArray(S.words)&&S.words.length){S.words=null;if(!(S.stagger>0))S.stagger=.45;if(!(S.inDur>=.4))S.inDur=1}}
+        markAnim();seekClip(0);setPlaying(true);changed();rebuild('anim',true)});
       hoverPlay(tile,cv,()=>miniState({anim:a.id,fx:a.fx||'#ff3b3b',lines:[Ln({text:a.name,size:250,track:-.05})],glow:{on:true,color:cat.hex,size:22,int:.5},d3:a.cat==='3d'?{depth:.15,rx:6,ry:-8}:{depth:0}}),1.9);
       g.append(tile)};
   const NEWL=ANIMS.filter(a=>a.isNew);
