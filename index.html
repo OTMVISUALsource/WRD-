@@ -3563,7 +3563,7 @@ async function makeProxy(){if(PROXY.busy||!VFILE||!P.video||P.video.audioOnly||P
       for(const [codec,m_] of [['avc1.640028','avc'],['avc1.4D4028','avc'],['avc1.42E028','avc'],['avc1.640033','avc'],['vp09.00.31.08','vp9']]){const c={codec,width:W_,height:H_,bitrate:br,framerate:30,hardwareAcceleration:'prefer-hardware'};if(m_==='avc')c.avc={format:'avc'};try{const q=await VideoEncoder.isConfigSupported(c);if(q.supported){cfg=c;mc=m_;break}}catch(e){}}
       if(cfg){const mux=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:mc,width:W_,height:H_},fastStart:'in-memory',firstTimestampBehavior:'offset'});let err=null;
         const enc=new VideoEncoder({output:(ch_,m_)=>mux.addVideoChunk(ch_,m_),error:e=>{err=e}});enc.configure(cfg);const cx2=cvp.getContext('2d');let lastTs=-1,lastKey=-1e9,lastUi2=0;
-        let nOut=0;const put=ts=>{if(ts<=lastTs||(lastTs>=0&&ts-lastTs<30000))return;nOut++;cx2.drawImage(v,0,0,W_,H_);const key=ts-lastKey>1e6;const vf=new VideoFrame(cvp,{timestamp:ts});enc.encode(vf,{keyFrame:key});vf.close();if(key)lastKey=ts;lastTs=ts};
+        let nOut=0;const put=ts=>{if(ts<=lastTs||(lastTs>=0&&ts-lastTs<30000))return;nOut++;cx2.drawImage(v,0,0,W_,H_);const key=ts-lastKey>1e6;const vf=mkFrame(cvp,{timestamp:ts});enc.encode(vf,{keyFrame:key});vf.close();if(key)lastKey=ts;lastTs=ts};
         v.currentTime=0;await new Promise(r=>{v.onseeked=r;setTimeout(r,800)});put(0);
         await new Promise((res,rej)=>{let fin=false;const finish=()=>{if(!fin){fin=true;res()}};
           const cb=(now,md)=>{if(fin)return;if(err){fin=true;rej(err);return}put(Math.round((md&&md.mediaTime!=null?md.mediaTime:v.currentTime)*1e6));PROXY.p=v.duration?v.currentTime/v.duration:0;
@@ -5787,15 +5787,15 @@ async function encodeVideo(cv,w,hh,fps,frames,bitrate){
   const hasWC=typeof VideoEncoder!=='undefined'&&typeof VideoFrame!=='undefined';
   if(hasWC){
     let cfg=null,mux=null,ext='',how='';let sab=null,acfg=null;try{if(sfxActive()){setProg(0,'Mixing sound effects…');sab=await sfxMix(null,frames/fps,48000);acfg=sab?await pickAudio(sab,EX.fmt==='webm'):null}}catch(e){console.warn('sfx',e);sab=null;acfg=null}
-    if(EX.fmt==='mp4'&&window.Mp4Muxer){for(const codec of['avc1.640034','avc1.640033','avc1.640028','avc1.4d0034','avc1.42003e']){const c={codec,width:w,height:hh,bitrate,framerate:fps,avc:{format:'avc'}};try{const s=await VideoEncoder.isConfigSupported(c);if(s.supported){cfg=c;break}}catch(e){}}
+    if(EX.fmt==='mp4'&&window.Mp4Muxer){for(const codec of['avc1.640034','avc1.640033','avc1.640028','avc1.4d0034','avc1.42003e']){const c={codec,width:w,height:hh,bitrate,framerate:fps,latencyMode:'quality',avc:{format:'avc'}};try{const s=await VideoEncoder.isConfigSupported(c);if(s.supported){cfg=c;break}}catch(e){}}
       if(cfg){mux=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:'avc',width:w,height:hh,frameRate:fps},audio:acfg?{codec:acfg.mux,numberOfChannels:acfg.ch,sampleRate:acfg.sr}:undefined,fastStart:'in-memory',firstTimestampBehavior:'offset'});ext='mp4';how='H.264 MP4'}}
     if(EX.fmt==='webm'&&window.WebMMuxer){const tries=wantAlpha?[['vp09.00.41.08','V_VP9',true],['vp8','V_VP8',true]]:[['vp09.00.41.08','V_VP9',false],['vp8','V_VP8',false]];
       for(const [codec,mc,al] of tries){const c={codec,width:w,height:hh,bitrate,framerate:fps};if(al)c.alpha='keep';try{const s=await VideoEncoder.isConfigSupported(c);if(s.supported){cfg=c;mux=new WebMMuxer.Muxer({target:new WebMMuxer.ArrayBufferTarget(),video:{codec:mc,width:w,height:hh,frameRate:fps,alpha:al},audio:acfg&&acfg.mux==='opus'?{codec:'A_OPUS',numberOfChannels:acfg.ch,sampleRate:acfg.sr}:undefined,firstTimestampBehavior:'offset'});ext='webm';how=(mc==='V_VP9'?'VP9':'VP8')+' WebM'+(al?' with alpha':'');break}}catch(e){}}}
     if(cfg&&mux){if(acfg&&sab&&(ext==='mp4'||acfg.mux==='opus')){setProg(.01,'Adding sound effects…');await encodeAudioInto(mux,acfg,sab,frames/fps);how+=' + SFX'}
       let err=null;const enc=new VideoEncoder({output:(chunk,meta)=>mux.addVideoChunk(chunk,meta),error:e=>{err=e}});enc.configure(cfg);
       for(let f=0;f<frames;f++){if(cancelEx){try{enc.close()}catch(e){}throw'cancel'}if(err)throw err;
-        frameAt(f/fps,cv);const vf=new VideoFrame(cv,{timestamp:Math.round(f*1e6/fps),duration:Math.round(1e6/fps),alpha:cfg.alpha==='keep'?'keep':'discard'});
-        enc.encode(vf,{keyFrame:f%(fps*2)===0});vf.close();while(enc.encodeQueueSize>4){await new Promise(r=>setTimeout(r,2))}
+        frameAt(f/fps,cv);const vf=mkFrame(cv,{timestamp:Math.round(f*1e6/fps),duration:Math.round(1e6/fps)},cfg.alpha==='keep');
+        enc.encode(vf,{keyFrame:f%fps===0});vf.close();while(enc.encodeQueueSize>3){await new Promise(r=>setTimeout(r,2))}
         setProg((f+1)/frames*.96,`Frame ${f+1} of ${frames}`);if(f%2===0)await yieldUI()}
       setProg(.98,'Finishing…');await enc.flush();if(err)throw err;mux.finalize();enc.close();
       return{blob:new Blob([mux.target.buffer],{type:ext==='mp4'?'video/mp4':'video/webm'}),ext,how}}
@@ -5812,6 +5812,10 @@ async function encodeVideo(cv,w,hh,fps,frames,bitrate){
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function drawCover(ctx,v,w,hh){const vw=v.videoWidth||w,vh=v.videoHeight||hh,k=Math.max(w/vw,hh/vh),dw=vw*k,dh=vh*k;ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(v,(w-dw)/2,(hh-dh)/2,dw,dh)}
 async function resampleAB(ab,sr,ch){if(ab.sampleRate===sr&&ab.numberOfChannels===ch)return ab;const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;const len=Math.ceil(ab.duration*sr);const oc=new OAC(ch,len,sr);const src=oc.createBufferSource();src.buffer=ab;src.connect(oc.destination);src.start();return await oc.startRendering()}
+/* every exported frame is copied to its own pixel buffer before it goes to the encoder.
+   Handing the encoder the live canvas lets some graphics drivers (notably hardware H.264 on Macs) read a frame while the
+   next one is already being drawn, which shows up as a smeared, blocky frame. A private copy can never change under it. */
+function mkFrame(cv,init,alpha){try{const x=cv.getContext('2d');const id=x.getImageData(0,0,cv.width,cv.height);return new VideoFrame(id.data,Object.assign({format:alpha?'RGBA':'RGBX',codedWidth:cv.width,codedHeight:cv.height},init))}catch(e){return new VideoFrame(cv,init)}}
 async function pickAudio(ab,opusOnly){if(!ab||typeof AudioEncoder==='undefined'||typeof AudioData==='undefined')return null;const ch=Math.min(2,ab.numberOfChannels||1);
   for(const [codec,mux,rates] of (opusOnly?[['opus','opus',[48000]]]:[['mp4a.40.2','aac',[48000,44100]],['opus','opus',[48000]]])){for(const sr of (rates.includes(ab.sampleRate)?[ab.sampleRate,...rates]:rates)){for(const br of (mux==='aac'?[320000,256000,192000]:[256000,192000])){const c={codec,sampleRate:sr,numberOfChannels:ch,bitrate:br};try{const r=await AudioEncoder.isConfigSupported(c);if(r&&r.supported)return{cfg:c,mux,sr,ch}}catch(e){}}}}return null}
 /* one slice of the sound effects mixed over a slice of the voice (times shifted to the slice start) */
@@ -5861,15 +5865,15 @@ async function encodeFull(cv,w,hh,fps,frames,bitrate){
   const cleanup=()=>{if(v){try{v.pause();v.removeAttribute('src');v.load()}catch(e){}v.remove()}};
   try{
     const hasWC=typeof VideoEncoder!=='undefined'&&typeof VideoFrame!=='undefined'&&window.Mp4Muxer;let vcfg=null;
-    if(hasWC){for(const codec of['avc1.640034','avc1.640033','avc1.640028','avc1.4d0034','avc1.42003e']){const c={codec,width:w,height:hh,bitrate,framerate:fps,avc:{format:'avc'}};try{const r=await VideoEncoder.isConfigSupported(c);if(r.supported){vcfg=c;break}}catch(e){}}}
+    if(hasWC){for(const codec of['avc1.640034','avc1.640033','avc1.640028','avc1.4d0034','avc1.42003e']){const c={codec,width:w,height:hh,bitrate,framerate:fps,latencyMode:'quality',avc:{format:'avc'}};try{const r=await VideoEncoder.isConfigSupported(c);if(r.supported){vcfg=c;break}}catch(e){}}}
     const acfg=vcfg&&ab?await pickAudio(audSrc(ab)?{numberOfChannels:Math.min(2,audSrc(ab).chn||2),sampleRate:audSrc(ab).t.sr}:ab):null;
     if(vcfg&&(acfg||!ab)){
       const mux=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:'avc',width:w,height:hh,frameRate:fps},audio:acfg?{codec:acfg.mux,numberOfChannels:acfg.ch,sampleRate:acfg.sr}:undefined,fastStart:'in-memory',firstTimestampBehavior:'offset'});
       if(acfg){setProg(.01,'Encoding the sound…');await encodeAudioInto(mux,acfg,ab,D)}
       let err=null;const enc=new VideoEncoder({output:(c,m)=>mux.addVideoChunk(c,m),error:e=>{err=e}});enc.configure(vcfg);
       const t0=performance.now();
-      const emit=async f=>{if(cancelEx)throw'cancel';if(err)throw err;paint(f/fps);const vf=new VideoFrame(cv,{timestamp:Math.round(f*1e6/fps),duration:Math.round(1e6/fps)});enc.encode(vf,{keyFrame:f%(fps*2)===0});vf.close();
-        while(enc.encodeQueueSize>6){if(err)throw err;await sleep(2)}const el=(performance.now()-t0)/1000,left=el/(f+1)*(frames-f-1);setProg(.02+(f+1)/frames*.94,`Frame ${f+1} of ${frames}`+(f>fps?` · about ${left<60?Math.ceil(left)+'s':Math.ceil(left/60)+' min'} left`:''))};
+      const emit=async f=>{if(cancelEx)throw'cancel';if(err)throw err;paint(f/fps);const vf=mkFrame(cv,{timestamp:Math.round(f*1e6/fps),duration:Math.round(1e6/fps)});enc.encode(vf,{keyFrame:f%fps===0});vf.close();
+        while(enc.encodeQueueSize>3){if(err)throw err;await sleep(2)}const el=(performance.now()-t0)/1000,left=el/(f+1)*(frames-f-1);setProg(.02+(f+1)/frames*.94,`Frame ${f+1} of ${frames}`+(f>fps?` · about ${left<60?Math.ceil(left)+'s':Math.ceil(left/60)+' min'} left`:''))};
       let f=0;
       if(!v){for(;f<frames;f++){await emit(f);if(f%3===0)await yieldUI()}}
       else if(v.requestVideoFrameCallback){
