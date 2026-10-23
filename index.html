@@ -2223,7 +2223,20 @@ const Engine=(()=>{
     X.globalCompositeOperation='source-atop';X.fillStyle=`rgba(0,0,0,${.18+.1*amt})`;const step=Math.max(2,Math.round(em*.03));for(let yy=0;yy<H;yy+=step*2)X.fillRect(0,yy,W,step);X.globalCompositeOperation='source-over';
   }
 
-  function shine(c,S,sp,G,lay,sh0,geo){
+  /* white text + white light shows nothing, so for light text these shines are drawn as a light pattern, masked to the letters,
+     added on top of slightly dimmed letters, with a soft bloom: the light visibly travels across white captions too */
+  const SH_LIGHTP=new Set(['pulse','shimmer','scan','flash','roll','gloss','sparkle']);let SHP=null,SHM=null;
+  function shine(c,S,sp,G,lay,sh0,geo){const sh=sh0||S.shine;
+    if(sh&&SH_LIGHTP.has(sh.type)&&someLight(S,sh.color)){try{const W=c.canvas.width,H=c.canvas.height;const mk=v=>{if(!v){v=document.createElement('canvas')}if(v.width!==W||v.height!==H){v.width=W;v.height=H}return v};SHP=mk(SHP);SHM=mk(SHM);
+      const px=SHP.getContext('2d');px.setTransform(1,0,0,1,0,0);px.globalAlpha=1;px.globalCompositeOperation='source-over';px.clearRect(0,0,W,H);px.fillStyle='#000';px.fillRect(0,0,W,H);
+      shineRaw(px,S,sp,G,lay,Object.assign({},sh,{bloom:0}),geo);
+      const mx=SHM.getContext('2d');mx.setTransform(1,0,0,1,0,0);mx.globalAlpha=1;mx.globalCompositeOperation='source-over';mx.clearRect(0,0,W,H);mx.drawImage(SHP,0,0);mx.globalCompositeOperation='destination-in';mx.drawImage(c.canvas,0,0);mx.drawImage(c.canvas,0,0);mx.drawImage(c.canvas,0,0);mx.globalCompositeOperation='source-over';
+      const env=clamp(bump(clamp(sp))*1.2)*clamp(sh.int??.9,0,1.5),em=geo?geo.em:lay.em;
+      c.save();c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-atop';c.fillStyle=`rgba(8,12,26,${clamp(.38*env)})`;c.fillRect(0,0,W,H);
+      c.globalCompositeOperation='lighter';c.globalAlpha=1;c.drawImage(SHM,0,0);
+      if(!FAST){c.globalAlpha=clamp(.75*env);c.shadowColor=rgba(sh.color==='#ffffff'?'#bcd4ff':sh.color,1);c.shadowBlur=em*.3;c.drawImage(SHM,0,0)}c.restore();return}catch(e){}}
+    return shineRaw(c,S,sp,G,lay,sh0,geo)}
+  function shineRaw(c,S,sp,G,lay,sh0,geo){
     const sh=sh0||S.shine,b=geo?geo.block:lay.block,em=geo?geo.em:lay.em,GL=geo?geo.glyphs:lay.glyphs,I=sh.int,col=sh.color;c.save();c.globalCompositeOperation='source-atop';
     const cx=b.cx,cy=b.cy,R=Math.hypot(b.x1-b.x0,b.bottom-b.top)/2+em*.6,bw=Math.max(4,sh.width*em*1.4);
     /* light text (white captions): a light band alone is invisible on it, so the sweep gets soft shadow flanks (a chrome edge) and a bloom glow that travels with it */
@@ -2241,7 +2254,7 @@ const Engine=(()=>{
         c.fillStyle=g;c.fillRect(-R*2,-R*2,R*4,R*4);break}
       case'pulse':{const e=E.outCubic(sp),r=e*R*1.25,env=(1-sp*sp)*I;const g=c.createRadialGradient(cx,cy,Math.max(0,r-bw),cx,cy,r+bw);g.addColorStop(0,rgba(col,0));g.addColorStop(.5,rgba(col,env));g.addColorStop(1,rgba(col,0));c.fillStyle=g;c.fillRect(cx-R*2,cy-R*2,R*4,R*4);
         c.fillStyle=rgba(col,Math.pow(1-sp,3)*.45*I);c.fillRect(cx-R*2,cy-R*2,R*4,R*4);break}
-      case'shimmer':{const gl=GL,n=gl.length;gl.forEach((g,k)=>{const v=bump(clamp((sp*(n+3)-k)/3));if(v>0){c.fillStyle=rgba(col,v*I*.85);c.fillRect(g.x0-2,g.top-em*.4,g.x1-g.x0+4,g.bottom-g.top+em*.6)}});break}
+      case'shimmer':{const gl=GL,n=gl.length;gl.forEach((g,k)=>{const v=bump(clamp((sp*(n+3)-k)/3));if(v>0){const gx=c.createLinearGradient(g.x0-em*.08,0,g.x1+em*.08,0);gx.addColorStop(0,rgba(col,0));gx.addColorStop(.5,rgba(col,v*I*.9));gx.addColorStop(1,rgba(col,0));c.fillStyle=gx;c.fillRect(g.x0-em*.08,g.top-em*.05,g.x1-g.x0+em*.16,g.bottom-g.top+em*.1)}});break}
       case'glint':band(tr(E.inOutCubic(sp)),bw*.35,I*.8);break;
       case'lens':band(tr(E.inOutSine(sp)),bw*1.6,I*.5);break;
       case'sheen':{const e=E.inOutSine(sp),env=bump(sp);const w=bw*2.4,tint=mix(col,'#cfe3ff',.35);band(tr(e),w,I*.55*env,[[0,rgba(tint,0)],[.28,rgba(tint,.32*I*env)],[.5,rgba('#ffffff',.85*I*env)],[.72,rgba(tint,.32*I*env)],[1,rgba(tint,0)]]);band(tr(e),bw*.25,I*env);break}
@@ -2267,6 +2280,8 @@ const Engine=(()=>{
       BL.forEach(([pos,w,alpha,ang])=>{k.save();k.translate(cx,cy);k.rotate((ang??sh.angle)*DEG);const g=k.createLinearGradient(pos-w*.6,0,pos+w*.6,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.5,`rgba(255,255,255,${clamp(alpha)})`);g.addColorStop(1,'rgba(255,255,255,0)');k.fillStyle=g;k.fillRect(pos-w,-R*2,w*2,R*4);k.restore()});
       const amt=clamp((sh.bloom??(light?1:.55))*I*bump(clamp(sp)),0,1.4);if(amt>.01){c.save();c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='lighter';c.globalAlpha=clamp(amt*.8);c.shadowColor=rgba(col,1);c.shadowBlur=em*.35;c.drawImage(SHBL,0,0);c.shadowBlur=em*.12;c.globalAlpha=clamp(amt*.5);c.drawImage(SHBL,0,0);c.restore()}}catch(e){}}
   let SHBL=null;
+  /* at least one line is light (white or near white): plain white light would vanish on it */
+  function someLight(S,col){try{const lum=h=>{const [r,g,b]=hex2rgb(h);return(.2126*r+.7152*g+.0722*b)/255};return lum(col||'#ffffff')>.7&&(S.lines||[]).some(L=>{const m=MATS[L.mat]||MATS.flat;return(m===MATS.flat||m.user===2)&&lum(L.c1||'#ffffff')>.72})}catch(e){return false}}
   function lightText(S,col){try{const L_=S.lines||[];if(!L_.length)return false;const lum=h=>{const [r,g,b]=hex2rgb(h);return(.2126*r+.7152*g+.0722*b)/255};
     return lum(col||'#ffffff')>.7&&L_.every(L=>{const m=MATS[L.mat]||MATS.flat;return(m===MATS.flat||m.user===2)&&lum(L.c1||'#ffffff')>.72&&(m!==MATS.flat||!L.c2||lum(L.c2)>.72||m.user!==2)})}catch(e){return false}}
 
@@ -2571,7 +2586,7 @@ let P;
 const uidc=()=>'c'+Math.random().toString(36).slice(2,9);
 function newClip(s,start=0,o={}){return Object.assign({id:uidc(),start,track:0,kind:'title',s},o)}
 function linkProject(){P.clips.forEach(c=>{if(c.s){c.s.aspect=P.aspect;c.s.bg=P.bg}});if(P.draft){P.draft.aspect=P.aspect;P.draft.bg=P.bg}}
-function hydrate(p){try{const sv=localStorage.getItem('wrd.vocab');if(sv&&p&&p.cap&&!p.cap.vocab)p.cap.vocab=sv}catch(e){}p.safe=Object.assign({},SAFE0_,p.safe||{});p.line=Object.assign(structuredClone(LINE0),p.line||{});p.clips.forEach(c=>{c.s=fromLook({s:c.s});if(c.kind==='caption'&&(!c.s.shine||!isFinite(+c.s.shine.int)))c.s.shine=capShineFor(c.s.shine,c.s.dur)});p.draft=p.draft?fromLook({s:p.draft}):fromLook(LOOKS.find(l=>l.name==='Blur Caption')||LOOKS[0]);p.cap=Object.assign(structuredClone(CAP0),p.cap||{});if(!p.bg)p.bg={mode:'transparent',color:'#00ff00'};if(!p.pid)p.pid='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);p.sfx=Object.assign({on:false,vol:.85,rand:true,match:false,speed:1,tone:0,titleSound:'auto',capSound:'auto',snd:{},titles:true,caps:'key',exits:false,preview:true},p.sfx||{});p.sfx.use=Object.assign({woosh:true,light:true,fast:true,click:true},p.sfx.use||{});return p}
+function hydrate(p){try{const sv=localStorage.getItem('wrd.vocab');if(sv&&p&&p.cap&&!p.cap.vocab)p.cap.vocab=sv}catch(e){}p.safe=Object.assign({},SAFE0_,p.safe||{});p.line=Object.assign(structuredClone(LINE0),p.line||{});p.clips.forEach(c=>{c.s=fromLook({s:c.s});if(c.kind==='caption'&&(!c.s.shine||!isFinite(+c.s.shine.int)))c.s.shine=capShineFor(c.s.shine,c.s.dur,capReady(c.s.words,c.s.wordDur))});p.draft=p.draft?fromLook({s:p.draft}):fromLook(LOOKS.find(l=>l.name==='Blur Caption')||LOOKS[0]);p.cap=Object.assign(structuredClone(CAP0),p.cap||{});if(!p.bg)p.bg={mode:'transparent',color:'#00ff00'};if(!p.pid)p.pid='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);p.sfx=Object.assign({on:false,vol:.85,rand:true,match:false,speed:1,tone:0,titleSound:'auto',capSound:'auto',snd:{},titles:true,caps:'key',exits:false,preview:true},p.sfx||{});p.sfx.use=Object.assign({woosh:true,light:true,fast:true,click:true},p.sfx.use||{});return p}
 try{const raw=localStorage.getItem('wrd.project.v2');if(raw){const q=JSON.parse(raw);if(q&&q.v===2&&Array.isArray(q.clips))P=hydrate(q)}}catch(e){}
 if(!P){let s0=null;try{const raw=localStorage.getItem('wrd.state.v1');if(raw){const q=JSON.parse(raw);if(q&&q.v===1&&Array.isArray(q.lines)&&q.lines.length)s0=fromLook({s:q})}}catch(e){}
   P=hydrate({v:2,aspect:(s0&&s0.aspect)||'9:16',bg:structuredClone((s0&&s0.bg)||{mode:'transparent',color:'#00ff00'}),video:null,cap:structuredClone(CAP0),clips:s0?[newClip(s0,0)]:[],sel:null,cleaned:true})}
@@ -2962,12 +2977,14 @@ function lineShineMode(i){const L=S.lines[i];return L&&L.shine?L.shine.mode:'all
 function shineFor(v){const caps=capClips(),titles=P.clips.filter(c=>c.kind!=='caption');const at=a=>a.find(c=>T>=c.start&&T<c.start+c.s.dur)||a[0];
   if(v==='cap'){if(!caps.length){toast('Generate captions first in the Video tab');return}selectClip(at(caps).id)}else{if(!titles.length){toast('Add a look or + Text first: right now your timeline only has captions');return}selectClip(at(titles).id)}
   shineTgt=-1;refreshAll();rebuild('shine',true);rebuild('d3',true)}
+/* the moment every line of a title is fully on screen: shine that starts earlier would sweep across empty space */
+function textReady(S){if(!S)return 0;if(Array.isArray(S.words)&&S.words.length)return Math.max(...S.words)+(S.wordDur||.3)*.9;const dl=Math.max(0,...S.lines.map(L=>+L.delay||0));return Math.min(S.dur*.6,(S.inDur||1)+dl)}
 function buildShine(){const p=h('div',{class:'panel'});if(shineTgt>=S.lines.length)shineTgt=-1;
   {const caps=capClips(),isCap=selClip().kind==='caption';if(caps.length){const titles=P.clips.filter(c=>c.kind!=='caption');
     const box=sec('Shine for',seg([{v:'cap',label:'Caption styles'},{v:'look',label:'This look'}],()=>isCap?'cap':'look',v=>shineFor(v),{label:'Shine for'}),
       h('p',{class:'hint'},isCap?'Every caption gets this shine, whatever caption style you use. Pick a shine below and tune it.':'This shine is only on the selected look or text. Switch to Caption styles to shine your captions.'));
-    if(isCap&&P.cap.shine&&P.cap.shine.on)box.append(h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();P.cap.shine=Object.assign({},P.cap.shine,{on:false});caps.forEach(c=>{c.s.shine=capShineFor(P.cap.shine,c.s.dur)});S=selClip().s;changed();rebuild('shine',true);toast('Shine removed from captions')}},'Remove shine from captions'));
-    if(!isCap&&titles.length&&S.shine&&S.shine.on)box.append(h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();const {mode:_m,...rest}=S.shine;P.cap.shine=structuredClone(rest);caps.forEach(c=>{c.s.shine=capShineFor(P.cap.shine,c.s.dur)});capShineSig='';changed();toast('This shine is now on every caption too')}},'Use this shine on captions too'));
+    if(isCap&&P.cap.shine&&P.cap.shine.on)box.append(h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();P.cap.shine=Object.assign({},P.cap.shine,{on:false});caps.forEach(c=>{c.s.shine=capShineFor(P.cap.shine,c.s.dur,capReady(c.s.words,c.s.wordDur))});S=selClip().s;changed();rebuild('shine',true);toast('Shine removed from captions')}},'Remove shine from captions'));
+    if(!isCap&&titles.length&&S.shine&&S.shine.on)box.append(h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();const {mode:_m,...rest}=S.shine;P.cap.shine=structuredClone(rest);caps.forEach(c=>{c.s.shine=capShineFor(P.cap.shine,c.s.dur,capReady(c.s.words,c.s.wordDur))});capShineSig='';changed();toast('This shine is now on every caption too')}},'Use this shine on captions too'));
     p.append(box)}}
   const multi=S.lines.length>1,tgtL=shineTgt>=0?S.lines[shineTgt]:null,mode=tgtL?lineShineMode(shineTgt):'all';
   if(multi){const chips=h('div',{class:'linechips'},h('button',{type:'button','aria-pressed':String(shineTgt<0),onclick:()=>{shineTgt=-1;rebuild('shine',true)}},'All lines'),
@@ -2983,7 +3000,7 @@ function buildShine(){const p=h('div',{class:'panel'});if(shineTgt>=S.lines.leng
     const still=['pulse','flash'].includes(sh.id)?.3:.5;
     queueRender(()=>renderMini(cv,mk(),still));
     tile.addEventListener('click',()=>{commit();useRec('shine',sh.id);let o;if(shineTgt>=0){const L=S.lines[shineTgt];if(!L.shine||L.shine.mode!=='own')L.shine=Object.assign(structuredClone(L.shine&&L.shine.mode==='own'?L.shine:S.shine),{mode:'own'});o=L.shine}else o=S.shine;
-      o.type=sh.id;o.on=true;seekClip(Math.max(0,o.start-.25));setPlaying(true);changed();rebuild('shine',true)});
+      o.type=sh.id;o.on=true;{const rd=textReady(S);if(!(+o.start>=rd-.05))o.start=Math.round(rd*100)/100;const od=+o.dur||.8;if(o.start+od>S.dur-.05)o.start=Math.max(0,Math.round((S.dur-od-.1)*100)/100)}seekClip(Math.max(0,o.start-.25));setPlaying(true);changed();rebuild('shine',true)});
     tile.addEventListener('pointerleave',()=>queueRender(()=>renderMini(cv,mk(),still)));
     hoverPlay(tile,cv,mk,1.3);g.append(tile)};newFirst(SHINES,x=>x.tag).forEach(sh=>mkShine(sh,g));
   p.append(recentBlock('shine',(id,gg)=>{const sh=SHINES.find(x=>x.id===id);if(sh)mkShine(sh,gg)}));
@@ -4854,7 +4871,7 @@ function capState(ws,start,dur,c){const cs=CAP_BY[c.style]||CAPSTYLES[0];const s
   const mvx=+c.mvx||0,mvy=+c.mvy||0;
   if(o.anchorTop!=null)o.anchorTop=clamp(c.pos-.1+mvy/heightUnits(),-.6,1.5);else{const shift=(c.pos-.5)*heightUnits()+mvy;o.lines.forEach(L=>{L.dy=(L.dy||0)+shift})}
   if(c.dx||mvx)o.lines.forEach(L=>{L.dx=(L.dx||0)+(c.dx||0)+mvx});
-  const g0=o.glow;Object.assign(o,{dur,inDur:.3,outMode:o.outMode||'fade',outDur:o.outDur??.12,stagger:0,wordDur:c.wordDur,words:ws.map(w=>Math.max(0,w.s-start-.02)),shine:capShineFor(c.shine,dur),glow:g0||{on:false},flare:{on:false},d3:d3o?Object.assign({depth:0},d3o):{depth:0},lineGap:o.lineGap??-6});
+  const g0=o.glow;Object.assign(o,{dur,inDur:.3,outMode:o.outMode||'fade',outDur:o.outDur??.12,stagger:0,wordDur:c.wordDur,words:ws.map(w=>Math.max(0,w.s-start-.02)),shine:capShineFor(c.shine,dur,capReady(ws.map(w=>Math.max(0,w.s-start-.02)),c.wordDur)),glow:g0||{on:false},flare:{on:false},d3:d3o?Object.assign({depth:0},d3o):{depth:0},lineGap:o.lineGap??-6});
   if(cs.emph){let bi=0,bv=-1;ws.forEach((w,i)=>{const v=wscore(w.w);if(v>bv){bv=v;bi=i}});o.emph=bv>=3?[bi]:[];o.emphColor=c.emph}
   if(Array.isArray(c.emphW)){o.emph=c.emphW.filter(i=>i>=0&&i<ws.length);o.emphColor=c.emph}
   /* gradient words: picked words only. Once words are being picked (gradWords), a caption with no picks gets none, so the gradient never spills onto the rest */
@@ -4954,9 +4971,11 @@ function capStylePure(cs,clips){const C=P.cap;C.look=null;C.lookFrom=null;C.styl
 function capResetLook(){commit();P.cap.look=null;P.cap.lookFrom=null;capClips().forEach(c=>{c.gen=null;c.keep=null;c.s=capState(c.words,c.start,c.s.dur,capCfg(c));c.s.aspect=P.aspect;c.s.bg=P.bg;capGen(c)});linkProject();S=selClip().s;sel=Math.min(sel,S.lines.length-1);capTrack();refreshAll();changed();toast('Caption style reset to the caption preset')}
 let capShineSig='';
 /* caption shine always carries every setting (an empty {on:false} left the Shine sliders at NaN, so a shine picked on a caption never showed) */
-function capShineFor(sh,dur){const CAPSH0={on:false,type:'sweep',start:.15,dur:.8,loop:false,every:1.6,color:'#ffffff',int:.9,width:.35,angle:18};const o=Object.assign({},CAPSH0,sh?structuredClone(sh):{});delete o.mode;o.on=!!(sh&&sh.on);for(const k of['start','dur','every','int','width','angle'])if(!isFinite(+o[k]))o[k]=CAPSH0[k];
-  o.start=Math.min(+o.start,Math.max(0,dur*.35));o.dur=Math.min(+o.dur,Math.max(.35,dur*.85));return o}
-function syncCapShine(){const c=selClip();if(!c||c.kind!=='caption')return;const sig=JSON.stringify(c.s.shine);if(sig===capShineSig)return;capShineSig=sig;if(sig===JSON.stringify(capShineFor(P.cap.shine,c.s.dur)))return;P.cap.shine=structuredClone(c.s.shine);capClips().forEach(x=>{x.s.shine=capShineFor(P.cap.shine,x.s.dur)});if(c.id===P.sel)S=c.s;capShineSig=JSON.stringify(c.s.shine)}
+function capShineFor(sh,dur,ready){const CAPSH0={on:false,type:'sweep',start:.15,dur:.8,loop:false,every:1.6,color:'#ffffff',int:.9,width:.35,angle:18};const o=Object.assign({},CAPSH0,sh?structuredClone(sh):{});delete o.mode;o.on=!!(sh&&sh.on);for(const k of['start','dur','every','int','width','angle'])if(!isFinite(+o[k]))o[k]=CAPSH0[k];
+  o.start=Math.min(+o.start,Math.max(0,dur*.35));if(ready>0)o.start=Math.max(o.start,Math.min(ready,Math.max(0,dur-o.dur*.7)));o.dur=Math.min(+o.dur,Math.max(.35,dur*.85));return o}
+/* when a caption has fully appeared (its last word in), relative to the caption start */
+function capReady(words,wd){return Array.isArray(words)&&words.length?Math.max(...words)+(wd||.3)*.9:0}
+function syncCapShine(){const c=selClip();if(!c||c.kind!=='caption')return;const sig=JSON.stringify(c.s.shine);if(sig===capShineSig)return;capShineSig=sig;if(sig===JSON.stringify(capShineFor(P.cap.shine,c.s.dur,capReady(c.s.words,c.s.wordDur))))return;P.cap.shine=structuredClone(c.s.shine);capClips().forEach(x=>{x.s.shine=capShineFor(P.cap.shine,x.s.dur,capReady(x.s.words,x.s.wordDur))});if(c.id===P.sel)S=c.s;capShineSig=JSON.stringify(c.s.shine)}
 function capRebuildAll(){capClips().forEach(c=>capRebuild(c));linkProject();S=selClip().s}
 /* caption text editing: the word list is the single source of truth, so a confirmed edit survives every restyle, re-split and reload */
 const CAPDRAFT=new Map(),CAPSTALE=new Set();
