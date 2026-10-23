@@ -2227,16 +2227,26 @@ const Engine=(()=>{
 
   /* white text + white light shows nothing, so for light text these shines are drawn as a light pattern, masked to the letters,
      added on top of slightly dimmed letters, with a soft bloom: the light visibly travels across white captions too */
-  const SH_LIGHTP=new Set(['pulse','shimmer','scan','flash','roll','gloss','sparkle']);let SHP=null,SHM=null;
-  function shine(c,S,sp,G,lay,sh0,geo){const sh=sh0||S.shine;
-    if(sh&&SH_LIGHTP.has(sh.type)&&someLight(S,sh.color)){try{const W=c.canvas.width,H=c.canvas.height;const mk=v=>{if(!v){v=document.createElement('canvas')}if(v.width!==W||v.height!==H){v.width=W;v.height=H}return v};SHP=mk(SHP);SHM=mk(SHM);
+  const SH_LIGHTP=new Set(['pulse','shimmer','scan','flash','roll','gloss','sparkle']);let SHP=null,SHM=null,SHD=null;
+  /* with 3D depth the face is stacked into the extrusion, so a glow drawn into it would be copied into every layer (a big banded blob): no bloom there */
+  function shine(c,S,sp,G,lay,sh0,geo){const sh=sh0||S.shine,deep=!!(S.d3&&S.d3.depth>0);
+    if(sh&&SH_LIGHTP.has(sh.type)&&someLight(S,sh.color)){try{const W=c.canvas.width,H=c.canvas.height;const mk=v=>{if(!v){v=document.createElement('canvas')}if(v.width!==W||v.height!==H){v.width=W;v.height=H}return v};SHP=mk(SHP);SHM=mk(SHM);SHD=mk(SHD);
       const px=SHP.getContext('2d');px.setTransform(1,0,0,1,0,0);px.globalAlpha=1;px.globalCompositeOperation='source-over';px.clearRect(0,0,W,H);px.fillStyle='#000';px.fillRect(0,0,W,H);
       shineRaw(px,S,sp,G,lay,Object.assign({},sh,{bloom:0}),geo);
       const mx=SHM.getContext('2d');mx.setTransform(1,0,0,1,0,0);mx.globalAlpha=1;mx.globalCompositeOperation='source-over';mx.clearRect(0,0,W,H);mx.drawImage(SHP,0,0);mx.globalCompositeOperation='destination-in';mx.drawImage(c.canvas,0,0);mx.drawImage(c.canvas,0,0);mx.drawImage(c.canvas,0,0);mx.globalCompositeOperation='source-over';
       const env=clamp(bump(clamp(sp))*1.2)*clamp(sh.int??.9,0,1.5),em=geo?geo.em:lay.em;
-      c.save();c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-atop';c.fillStyle=`rgba(8,12,26,${clamp(.38*env)})`;c.fillRect(0,0,W,H);
+      /* the letters are dimmed only where they are solid: soft edges, blur and motion trails never turn grey over your video */
+      const dx=SHD.getContext('2d');dx.setTransform(1,0,0,1,0,0);dx.globalAlpha=1;dx.globalCompositeOperation='source-over';dx.clearRect(0,0,W,H);dx.fillStyle='rgb(8,12,26)';dx.fillRect(0,0,W,H);dx.globalCompositeOperation='destination-in';for(let k=0;k<4;k++)dx.drawImage(c.canvas,0,0);dx.globalCompositeOperation='source-over';
+      c.save();c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-atop';c.globalAlpha=clamp(.38*env);c.drawImage(SHD,0,0);c.globalAlpha=1;
       c.globalCompositeOperation='lighter';c.globalAlpha=1;c.drawImage(SHM,0,0);
-      if(!FAST){c.globalAlpha=clamp(.75*env);c.shadowColor=rgba(sh.color==='#ffffff'?'#bcd4ff':sh.color,1);c.shadowBlur=em*.3;c.drawImage(SHM,0,0)}c.restore();return}catch(e){}}
+      if(!FAST&&!deep){c.globalAlpha=clamp(.75*env);c.shadowColor=rgba(sh.color==='#ffffff'?'#bcd4ff':sh.color,1);c.shadowBlur=em*.3;c.drawImage(SHM,0,0)}c.restore();return}catch(e){}}
+    /* every other shine is drawn on a copy and laid back only where the letters are solid,
+       so blur, motion trails, glow halos and soft edges never pick up dark flanks or bands (no grey ghosts over the video) */
+    try{const W=c.canvas.width,H=c.canvas.height;const mk=v=>{if(!v){v=document.createElement('canvas')}if(v.width!==W||v.height!==H){v.width=W;v.height=H}return v};SHP=mk(SHP);SHD=mk(SHD);
+      const cx=SHP.getContext('2d');cx.setTransform(1,0,0,1,0,0);cx.globalAlpha=1;cx.globalCompositeOperation='copy';cx.drawImage(c.canvas,0,0);cx.globalCompositeOperation='source-over';
+      const r=shineRaw(cx,S,sp,G,lay,Object.assign({},sh,{_nob:1}),geo);
+      const dx=SHD.getContext('2d');dx.setTransform(1,0,0,1,0,0);dx.globalAlpha=1;dx.globalCompositeOperation='copy';dx.drawImage(SHP,0,0);dx.globalCompositeOperation='destination-in';dx.drawImage(c.canvas,0,0);dx.globalCompositeOperation='source-over';
+      c.save();c.setTransform(1,0,0,1,0,0);c.globalAlpha=1;c.globalCompositeOperation='source-over';c.drawImage(SHD,0,0);c.restore();if(!deep)shineBloom(c,sh,sp,r);return r}catch(e){}
     return shineRaw(c,S,sp,G,lay,sh0,geo)}
   function shineRaw(c,S,sp,G,lay,sh0,geo){
     const sh=sh0||S.shine,b=geo?geo.block:lay.block,em=geo?geo.em:lay.em,GL=geo?geo.glyphs:lay.glyphs,I=sh.int,col=sh.color;c.save();c.globalCompositeOperation='source-atop';
@@ -2276,6 +2286,8 @@ const Engine=(()=>{
       default:band(tr(E.inOutCubic(sp)),bw,I);
     }
     c.restore();
+    const meta={BL,cx,cy,R,light,em,col,I};if(sh._nob)return meta;shineBloom(c,sh,sp,meta);return meta}
+  function shineBloom(c,sh,sp,meta){if(!meta)return;const {BL,cx,cy,R,light,em,col,I}=meta;
     /* bloom: the part of the text under the band glows outward, like a light sweep in After Effects */
     if(BL.length&&!FAST&&(sh.bloom??(light?1:.55))>0)try{const W=c.canvas.width,H=c.canvas.height;if(!SHBL)SHBL=document.createElement('canvas');if(SHBL.width!==W||SHBL.height!==H){SHBL.width=W;SHBL.height=H}
       const k=SHBL.getContext('2d');k.setTransform(1,0,0,1,0,0);k.globalCompositeOperation='source-over';k.globalAlpha=1;k.clearRect(0,0,W,H);k.drawImage(c.canvas,0,0);k.globalCompositeOperation='destination-in';
@@ -2900,11 +2912,11 @@ function buildAnim(){const p=h('div',{class:'panel'});if(animTgt>=S.lines.length
         h('button',{type:'button',class:'pillbtn','aria-pressed':String(animSide==='in'),onclick:()=>{animSide='in';seekClip(0);setPlaying(true);rebuild('anim',true)}},'In: '+nm(curAnimId())),
         h('button',{type:'button',class:'pillbtn','aria-pressed':String(animSide==='out'),onclick:()=>{animSide='out';seekClip(Math.max(0,S.dur-(S.outDur||.6)-.5));setPlaying(true);rebuild('anim',true)}},'Out: '+(outId?nm(outId):S.outMode==='none'?'Hold (none)':'Automatic')),
         outId?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();if(tgtL)delete tgtL.outAnim;else{delete S.outAnim;S.lines.forEach(L=>delete L.outAnim)}changed();rebuild('anim',true);toast('Exit back to automatic')}},'Automatic exit'):null),
-      h('p',{class:'hint'},animSide==='in'?'Tap an animation below to set how '+(tgtL?'this line':'your text')+' comes in.':'Tap an animation below to set how '+(tgtL?'this line':'your text')+' leaves: it plays that animation backwards. Outro length (in Timing) sets how long it takes.'+(isCapC?' Captions use their style’s exit.':'')));
+      h('p',{class:'hint'},animSide==='in'?'Tap an animation below to set how '+(tgtL?'this line':'your text')+' comes in.':'Tap an animation below to set how '+(tgtL?'this line':'your text')+' leaves: it plays that animation backwards. Outro length (in Timing) sets how long it takes.'+(isCapC?' On captions it goes on every caption.':'')));
     p.append(side)}
   const mkAnim=(a,g)=>{const cat=CATS.find(c=>c.id===a.cat)||CATS[0];const cv=h('canvas',{class:'hov',width:300,height:200});const na=!!tgtL&&!lineAnimOK(a)||(animSide==='out'&&(a.overlay||a.custom||a.global||a.unit==='all'));const outCur=(tgtL&&tgtL.outAnim)||(!tgtL&&S.outAnim);const tile=h('button',{type:'button',class:'tile'+(na?' na':''),'data-anim':a.id,style:`--c:${cat.hex}`,'aria-pressed':String(animSide==='out'?outCur===a.id:curAnimId()===a.id),title:na?'This one moves the whole text block, so it’s only available for All lines':''},h('span',{class:'lbl'},a.name),cv,a.isNew?h('span',{class:'newtag'},'NEW'):null,h('span',{class:'dot',html:svg('check',3.5)}));
       tile.addEventListener('click',()=>{if(na){toast(animSide==='out'?'“'+a.name+'” can’t play as an exit. Pick another one for Out.':'“'+a.name+'” moves the whole text, so pick it under All lines');return}useRec('anim',a.id);commit();
-        if(animSide==='out'){if(tgtL)tgtL.outAnim=a.id;else{S.outAnim=a.id;S.lines.forEach(L=>delete L.outAnim)}S.outMode='smart';if(!(S.outDur>=.3))S.outDur=.6;
+        if(animSide==='out'){if(tgtL)tgtL.outAnim=a.id;else{S.outAnim=a.id;S.lines.forEach(L=>delete L.outAnim)}S.outMode='smart';if(!(S.outDur>=.5))S.outDur=Math.min(.7,Math.max(.3,S.dur*.3));
           seekClip(Math.max(0,S.dur-(S.outDur||.6)-.4));setPlaying(true);changed();rebuild('anim',true);toast('Out: '+a.name);return}
         if(tgtL){tgtL.anim=a.id}else{S.anim=a.id;if(a.fx)S.fx=a.fx;if(S.mg)S.mg.useAnim=1;
           /* All lines really means all lines: line overrides from a look are cleared, and a title made from a caption look stops following word timing, so the animation and the Timing sliders take over */
@@ -4920,8 +4932,8 @@ function buildCaptions(words,groups){const keepSel=selClip().kind!=='caption'?P.
     c.s=capState(c.words,c.start,Math.round((en-st)*1000)/1000,capCfg(c));capGen(c);P.clips.push(c)});
   linkProject();P.sel=keepSel&&P.clips.find(c=>c.id===keepSel)?keepSel:(capClips()[0]||P.clips[0]).id;S=selClip().s;sel=0;capTrack()}
 /* keep adjustments: every caption remembers what you changed on it (font, colours, material, glow…) and re-applies it after any rebuild */
-const KEEP_S=['anim','glow','shadow','d3','outMode','outDur','lineGap','cont','stopmo','easeIn','easeOut'];
-const KEEP_L=['font','weight','track','italic','cs','mat','c1','c2','c3','gAng','gH','metal','gm','gl','bevel','strokeW','strokeC','shine'];
+const KEEP_S=['anim','outAnim','glow','shadow','d3','outMode','outDur','lineGap','cont','stopmo','easeIn','easeOut'];
+const KEEP_L=['outAnim','font','weight','track','italic','cs','mat','c1','c2','c3','gAng','gH','metal','gm','gl','bevel','strokeW','strokeC','shine'];
 const kj=v=>JSON.stringify(v===undefined?null:v);
 function snapKeep(s){return{s:Object.fromEntries(KEEP_S.map(k=>[k,kj(s[k])])),l:s.lines.map(L=>Object.fromEntries(KEEP_L.map(k=>[k,kj(L[k])])))}}
 function diffKeep(s,gen){if(!gen||!gen.s)return null;const now=snapKeep(s);const o={s:{},l:[]};let any=false;
