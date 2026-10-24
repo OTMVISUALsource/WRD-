@@ -441,6 +441,9 @@ input,select,textarea{font:inherit;color:inherit}
 @media (max-width:1240px){#app{grid-template-columns:300px minmax(0,1fr) 300px}}
 @media (min-width:980px) and (max-height:820px){#app{grid-template-rows:50px minmax(0,1fr) 172px}}
 @media (min-width:980px) and (max-height:700px){#app{grid-template-rows:48px minmax(0,1fr) 150px}}
+@media (min-width:980px){#app:has(.tl-body.has-logo){grid-template-rows:52px minmax(0,1fr) 246px}#app:has(.tl-body.has-logo.has-sfx){grid-template-rows:52px minmax(0,1fr) 270px}}
+@media (min-width:980px) and (max-height:820px){#app:has(.tl-body.has-logo){grid-template-rows:50px minmax(0,1fr) 200px}#app:has(.tl-body.has-logo.has-sfx){grid-template-rows:50px minmax(0,1fr) 222px}}
+@media (min-width:980px) and (max-height:700px){#app:has(.tl-body.has-logo){grid-template-rows:48px minmax(0,1fr) 176px}#app:has(.tl-body.has-logo.has-sfx){grid-template-rows:48px minmax(0,1fr) 196px}}
 .fadeR{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent)}
 .fadeL{-webkit-mask-image:linear-gradient(270deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(270deg,#000 calc(100% - 36px),transparent)}
 .fadeL.fadeR{-webkit-mask-image:linear-gradient(90deg,transparent,#000 36px,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(90deg,transparent,#000 36px,#000 calc(100% - 36px),transparent)}
@@ -628,6 +631,7 @@ input,select,textarea{font:inherit;color:inherit}
 .linechips button{padding:7px 12px;border-radius:10px;border:1px solid var(--line);color:var(--muted);font-weight:600;font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .linechips button[aria-pressed="true"]{color:#fff;border-color:var(--accent);background:rgba(61,123,255,.12);box-shadow:0 0 14px -6px var(--accent)}
 .linechips .add{color:var(--text);border-style:dashed}
+.layerlist{display:flex;flex-direction:column;gap:6px;margin:0 0 10px}.layerlist .pillbtn{text-align:left;justify-content:flex-start}.layerlist .pillbtn[aria-pressed="true"]{border-color:var(--accent);color:#fff}
 .linechips.capcats{margin:0 0 10px}.linechips.capcats button{max-width:none}
 .ic{display:inline-flex;width:1.05em;height:1.05em;vertical-align:-.17em;margin-right:5px;flex:none}.ic svg{width:100%;height:100%}.ic.sm{width:.85em;height:.85em;margin:0 0 0 5px;opacity:.85}.icl{display:inline-flex;align-items:center;gap:5px}.icl svg{width:1.05em;height:1.05em;flex:none}.icl .ic{margin:0}.pillbtn.nudge{min-width:46px;display:inline-flex;align-items:center;justify-content:center}.pillbtn.nudge svg{width:18px;height:18px}.capown svg{width:11px;height:11px;vertical-align:-1px}.capok svg{width:12px;height:12px;vertical-align:-2px}.myfonts{display:grid;grid-template-columns:1fr 1fr;gap:7px}.mfslot{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:64px;padding:9px 10px;border-radius:12px;border:1px solid var(--line);background:#080a0f}.mfslot.empty{border-style:dashed;cursor:pointer;color:var(--muted);flex-direction:row;align-items:center;gap:7px;flex-wrap:wrap}.mfslot.empty small{width:100%;font-family:var(--f-mono);font-size:10px;opacity:.6}.mfslot.empty:hover{border-color:var(--line2)}.mfpick{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px;width:100%}.mfpick b{font-size:22px;font-weight:400;color:#fff}.mfpick small{font-family:var(--f-mono);font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}.mfpick[aria-pressed=true] b{color:#c9a2ff}.mfslot.on:has(.mfpick[aria-pressed=true]){border-color:#b44dff}.mfx{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:7px;border:1px solid var(--line);background:#11141b;color:var(--muted);display:grid;place-items:center;padding:0}.mfx svg{width:13px;height:13px}
 .tile.look.none{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:120px}.tile.look.none .nonei{width:46px;height:46px;color:rgba(255,255,255,.55)}.tile.look.none .nonei svg{width:100%;height:100%}.tile.look.none .name{position:static}
@@ -855,6 +859,12 @@ input,select,textarea{font:inherit;color:inherit}
 .sfxplay{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--c);color:#0a0c13;transition:transform .15s}.sfxplay svg{width:15px;height:15px;margin-left:2px}.sfxplay:active{transform:scale(.9)}.sfxplay.ping{box-shadow:0 0 0 7px color-mix(in srgb,var(--c) 30%,transparent);transition:box-shadow .2s}
 .sw-toggle.mini{padding:0!important;border:0!important;background:none!important;flex:none;gap:0}.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media (max-width:979px) and (min-width:600px){.sfxtiles{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.tk-logo,.trk-logo{display:none!important}.tl-body.has-logo .tk-logo,.tl-body.has-logo .trk-logo{display:flex!important}
+.clip.lgbar{background:linear-gradient(180deg,#ff73b4,#c92f78);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 6px 18px -8px rgba(255,95,162,.9);cursor:grab;touch-action:none}
+.clip.lgbar.sel{box-shadow:inset 0 0 0 2px #fff,0 6px 18px -8px rgba(255,95,162,.9)}
+.clip.lgbar .hl::after,.clip.lgbar .hr::after{content:"";position:absolute;top:25%;bottom:25%;left:4px;width:2px;border-radius:2px;background:#fff}
+.tl-off .clip.lgbar{opacity:.35;filter:grayscale(1)}
+@media (max-width:599px){.tl-body.has-logo{height:148px}}
 .tk-sfx,.trk-sfx{display:none!important}.tl-body.has-sfx .tk-sfx,.tl-body.has-sfx .trk-sfx{display:flex!important}
 .clip.sfxev{border-radius:7px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 55%,#0b0e18),color-mix(in srgb,var(--c) 18%,#0b0e18));border:1px solid color-mix(in srgb,var(--c) 70%,transparent);cursor:grab;overflow:hidden}
 .clip.sfxev .cl-l{font-size:10px;color:#fff;padding-left:9px}.clip.sfxev .pk{position:absolute;top:0;bottom:0;width:2px;background:#fff;opacity:.85;box-shadow:0 0 6px #fff}
@@ -1181,11 +1191,11 @@ label.pillbtn{cursor:pointer;display:inline-flex;align-items:center}
       <button type="button" class="iconbtn sm" id="zOut" aria-label="Zoom out">−</button><input type="range" id="tlZoom" class="rng zr" min="1" max="60" step="0.1" value="1" aria-label="Timeline zoom"><button type="button" class="iconbtn sm" id="zIn" aria-label="Zoom in">+</button></div>
     <div class="capallbar" id="capAllBar" hidden></div>
     <div class="tl-body">
-      <div class="tl-labels"><div class="rs"></div><div class="tk"><i style="background:#ff3d7f;color:#fff"><svg viewBox="0 0 24 24" width="12" height="12" fill="#fff"><path d="M8 5.5v13l10.5-6.5z"/></svg></i><span>Video</span></div><div class="tk"><i style="background:#3d7bff;color:#fff">T</i><span>Titles</span></div><div class="tk tk-cap"><i style="background:#7a3cff;color:#fff">CC</i><span>Captions</span></div><div class="tk"><i style="background:#ff8a1f"><svg viewBox="0 0 24 24" width="12" height="12" fill="#fff"><path d="M12 3c.6 4.2 2.8 6.4 7 7-4.2.6-6.4 2.8-7 7-.6-4.2-2.8-6.4-7-7 4.2-.6 6.4-2.8 7-7z"/></svg></i><span>Shine</span></div><div class="tk tk-sfx"><i style="background:#2ee6c8"><svg viewBox="0 0 24 24" fill="none" stroke="#06110f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></i><span>SFX</span></div></div>
+      <div class="tl-labels"><div class="rs"></div><div class="tk"><i style="background:#ff3d7f;color:#fff"><svg viewBox="0 0 24 24" width="12" height="12" fill="#fff"><path d="M8 5.5v13l10.5-6.5z"/></svg></i><span>Video</span></div><div class="tk"><i style="background:#3d7bff;color:#fff">T</i><span>Titles</span></div><div class="tk tk-cap"><i style="background:#7a3cff;color:#fff">CC</i><span>Captions</span></div><div class="tk"><i style="background:#ff8a1f"><svg viewBox="0 0 24 24" width="12" height="12" fill="#fff"><path d="M12 3c.6 4.2 2.8 6.4 7 7-4.2.6-6.4 2.8-7 7-.6-4.2-2.8-6.4-7-7 4.2-.6 6.4-2.8 7-7z"/></svg></i><span>Shine</span></div><div class="tk tk-logo"><i style="background:#ff5fa2"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 15l3-3 2 2 3-4"/></svg></i><span>Logo</span></div><div class="tk tk-sfx"><i style="background:#2ee6c8"><svg viewBox="0 0 24 24" fill="none" stroke="#06110f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></i><span>SFX</span></div></div>
       <div class="tl-scroll" id="tlScroll"><div class="tl-content" id="tlC">
         <div class="ruler" id="ruler"></div>
         <div class="trk" id="trkV"><canvas id="wave" hidden></canvas><span class="vname" id="vName"></span></div>
-        <div class="trk" id="trk0"></div><div class="trk" id="trk1"></div><div class="trk" id="trkS"></div><div class="trk trk-sfx" id="trkA"></div>
+        <div class="trk" id="trk0"></div><div class="trk" id="trk1"></div><div class="trk" id="trkS"></div><div class="trk trk-logo" id="trkL"></div><div class="trk trk-sfx" id="trkA"></div>
         <div class="playhead" id="ph"></div>
       </div></div>
     </div>
@@ -1576,6 +1586,10 @@ const ANIMS=[
  {id:'swing',name:'Swing',cat:'3d',unit:'line',fn(){return{}},global(p){return{rx:p>=1?0:-1.6*Math.exp(-4.5*p)*Math.cos(p*9),pivot:'top',a:clamp(p*5)}}},
 ];
 const ANIM_BY=Object.fromEntries(ANIMS.map(a=>[a.id,a]));
+/* where the logo sits on the clip's timeline: its start and end in seconds from the clip start */
+function logoSpan(S){const I0=S.img||{},D=Math.max(.2,S.dur||3),I=Math.max(.05,Math.min(S.inDur||1,D));const f={before:0,with:.3,after:.55}[I0.timing]??.55;
+  const custom=I0.t0!=null||I0.t1!=null;const t0=I0.t0!=null&&isFinite(+I0.t0)?clamp(+I0.t0,0,D-.1):clamp(I*f+(I0.delay||0),0,D-.05);
+  const t1=I0.t1!=null&&isFinite(+I0.t1)?clamp(+I0.t1,t0+.1,D):D;return{t0,t1,custom}}
 /* ---------- outros: each animation leaves with the exit that suits it ---------- */
 Object.entries({"blurpop": "blur", "swoosh": "swoosh", "neonrise": "flicker", "popwords": "pop", "typewriter": "untype", "strike": "flicker", "odometer": "blurUp", "countup": "blur", "riseblur": "blurUp", "softfade": "soft", "cloud": "blur", "shift": "shiftOut", "burst": "implode", "bounce1": "drop", "bounce2": "shrink", "grow": "shrink", "fall": "drop", "rise": "risebox", "slide1": "slideL", "slide2": "riseclip", "blur": "blur", "scatter": "scatter", "vhs": "flicker", "melt": "melt", "shatter": "shatter", "flip": "flip", "spin": "spin", "tumble": "zoom", "orbit": "shrink", "zoom": "zoom", "swing": "drop"}).forEach(([k,v])=>{if(ANIM_BY[k])ANIM_BY[k].out=v});
 const inBack=(t,c=1.9)=>t*t*((c+1)*t-c);
@@ -1910,7 +1924,7 @@ const Engine=(()=>{
 
   function layout(S,W,H,mc){
     if(S.mg)return mgLayout(S,W,H);
-    const key=JSON.stringify([S.lines,S.lineGap,S.autoFit,S.fitK,W,H,fontVer,S.img,imgVer,S.anchorTop],(k,v)=>k==='_hide'?undefined:v);
+    const key=JSON.stringify([S.lines,S.lineGap,S.autoFit,S.fitK,W,H,fontVer,S.img,imgVer,S.anchorTop,S.arr],(k,v)=>k==='_hide'?undefined:v);
     const hit=layCache.get(key);if(hit)return hit;
     let base=Math.min(W,H)/1080;let res=build(base);
     if(S.autoFit&&res.maxW>0){const fk=Math.max(1,S.fitK||1);const fit=Math.min(1,W*.9*fk/res.maxW,H*.86*fk/Math.max(1,res.h));if(fit<1)res=build(base*fit)}
@@ -1934,7 +1948,7 @@ const Engine=(()=>{
         const asc=Math.max(m.actualBoundingBoxAscent||0,px*.7),desc=Math.max(m.actualBoundingBoxDescent||0,px*.1);
         const f=FONT_BY[L.font]||FONTS[0];
         lines.push({li,L,px,txt,chars,xs,cw,width,asc,desc,just,skew:L.italic&&!f.italic?-.2:0});if(!L.float)maxW=Math.max(maxW,width)});
-      let total=0;{let nf=0;lines.forEach(ln=>{if(ln.L.float)return;total+=ln.asc+ln.desc+(nf?S.lineGap*b:0);nf++})}
+      const AR=S.arr&&typeof S.arr==='object'?S.arr:null,LG=S.lineGap+(AR?(+AR.gap||0):0);let total=0;{let nf=0;lines.forEach(ln=>{if(ln.L.float)return;total+=ln.asc+ln.desc+(nf?LG*b:0);nf++})}
       const im=imgSrc(S);let iw=0,ih=0,igap=0,ibox=null;
       if(im&&im.width&&im.height){ih=S.img.size*b;iw=ih*(im.width/im.height);igap=S.img.gap*b;if(S.img.pos==='below'||S.img.pos==='above')total+=ih+igap}
       let cur=S.anchorTop!=null?H*S.anchorTop:H/2-total/2;
@@ -1948,8 +1962,10 @@ const Engine=(()=>{
           w.glyphs.push(g);w.text+=ch;w.x1=g.x1});
         ln.words.forEach(w=>{w.cx=(w.x0+w.x1)/2});
         ln.unit={ln,isLine:1,x0:ln.x0,x1:ln.x1,top:ln.top,bottom:ln.bottom,cx:ln.cx,cy:ln.cy,em:ln.px,glyphs:ln.glyphs,gi:i}};
-      lines.forEach((ln,i)=>{if(ln.L.float)return;if(nf_)cur+=S.lineGap*b;nf_++;ln.top=cur+ln.L.dy*b;ln.base=ln.top+ln.asc;ln.bottom=ln.base+ln.desc;
-        {const al=ln.L.align||'center';ln.x0=(al==='left'?W/2-maxW/2:al==='right'?W/2+maxW/2-ln.width:W/2-ln.width/2)+ln.L.dx*b;}ln.x1=ln.x0+ln.width;ln.cy=(ln.top+ln.bottom)/2;ln.cx=(ln.x0+ln.x1)/2;cur+=ln.asc+ln.desc});
+      lines.forEach((ln,i)=>{if(ln.L.float)return;if(nf_)cur+=LG*b;const ai=nf_;nf_++;ln.top=cur+ln.L.dy*b;ln.base=ln.top+ln.asc;ln.bottom=ln.base+ln.desc;
+        /* Arrangement (Text tab): aligned, alternating zig-zag or scatter, on top of the look's own layout */
+        let adx=0;ln.arot=0;if(AR){const off=+AR.offset||0;if(AR.layout==='alternating')adx=(ai%2?1:-1)*off*(AR.start==='right'?-1:1);else if(AR.layout==='scatter'){const sd=(+AR.seed||0)*13.7;adx=(hash(sd+ai*3.7)-.5)*2*off;ln.arot=(hash(sd+ai*5.9)-.5)*.2*(+AR.tilt||0)}}
+        {const al=AR&&AR.align&&AR.align!=='auto'?AR.align:(ln.L.align||'center');ln.x0=(al==='left'?W/2-maxW/2:al==='right'?W/2+maxW/2-ln.width:W/2-ln.width/2)+ln.L.dx*b+adx*b;}ln.x1=ln.x0+ln.width;ln.cy=(ln.top+ln.bottom)/2;ln.cx=(ln.x0+ln.x1)/2;cur+=ln.asc+ln.desc});
       /* floating lines (decor such as a big outline word behind, or a number beside the text) sit on the block centre and take no room */
       if(lines.some(l=>l.L.float)){const nfl=lines.filter(l=>!l.L.float);const bx0=nfl.length?Math.min(...nfl.map(l=>l.x0)):W/2,bx1=nfl.length?Math.max(...nfl.map(l=>l.x1)):W/2,bt=nfl.length?Math.min(...nfl.map(l=>l.top)):H/2,bb=nfl.length?Math.max(...nfl.map(l=>l.bottom)):H/2;
         lines.forEach((ln,i)=>{if(!ln.L.float)return;const fx=(bx0+bx1)/2+(ln.L.fx||0)*b,fy=(bt+bb)/2+(ln.L.fy||0)*b;ln.top=fy-(ln.asc+ln.desc)/2;ln.base=ln.top+ln.asc;ln.bottom=ln.base+ln.desc;
@@ -1974,7 +1990,7 @@ const Engine=(()=>{
         const x0=ibox.x0+S.img.dx*b,top=ibox.top+S.img.dy*b;
         img={img:im,x0,x1:x0+iw,top,bottom:top+ih,cx:x0+iw/2,cy:top+ih/2,em:ih*.8,gi:999,r1:.37,r2:.62,r3:.21,glyphs:[],text:''};
         img.ln={li:0,px:ih*.8,skew:0,cx:img.cx,cy:img.cy,x0,x1:img.x1,top,bottom:img.bottom,width:iw,base:img.bottom,txt:'',L:{track:0}}}
-      const order=lines.some(l=>l.L.back)?lines.filter(l=>l.L.back).concat(lines.filter(l=>!l.L.back)):lines;
+      const zOf=l=>l.L.z!=null&&isFinite(+l.L.z)?+l.L.z:(l.L.back?-1:0);const order=lines.some(l=>l.L.back||l.L.z!=null)?lines.slice().sort((a,b)=>zOf(a)-zOf(b)||a.li-b.li):lines;
       return{lines,glyphs,words,block,em,maxW,h:total,img,order}
     }
   }
@@ -2072,7 +2088,8 @@ const Engine=(()=>{
     c.scale(Math.abs(st.sx)<1e-4?1e-4:st.sx,Math.abs(st.sy)<1e-4?1e-4:st.sy);c.translate(-px,-py);
     if(st.wordClip){c.beginPath();for(const r of st.wordClip)c.rect(r[0],r[1],r[2],r[3]);c.clip()}
     const A=st.a;let P,K=c;
-    if(u.img){P=(a,ox=0,oy=0)=>{K.globalAlpha=clamp(a);K.drawImage(u.img,u.x0+ox,u.top+oy,u.x1-u.x0,u.bottom-u.top)}}
+    if(u.img){P=(a,ox=0,oy=0)=>{K.globalAlpha=clamp(a);K.drawImage(u.img,u.x0+ox,u.top+oy,u.x1-u.x0,u.bottom-u.top)};
+      if(st.reveal!=null&&st.reveal<1){const P1=P,rv=clamp(st.reveal),w_=u.x1-u.x0;P=(a,ox=0,oy=0)=>{K.save();K.beginPath();K.rect(u.x0-2+ox,u.top-w_+oy,(w_+4)*rv,(u.bottom-u.top)+w_*2);K.clip();P1(a,ox,oy);K.restore()}}}
     else if(st.reel!=null){const step=(ln.bottom-ln.top)*1.1,fl=Math.floor(st.reel),fr=st.reel-fl;
       P=(a,ox=0,oy=0)=>{K.globalAlpha=clamp(a);K.save();K.beginPath();K.rect(u.x0-em*.25,ln.top-em*.1,u.x1-u.x0+em*.5,ln.bottom-ln.top+em*.2);K.clip();K.textAlign='center';
         for(const [d,o] of [[fl%10,-fr*step],[(fl+1)%10,(1-fr)*step]]){const y=ln.base+o+oy;if(sty.lw>0)K.strokeText(String(d),u.cx+ox,y);K.fillText(String(d),u.cx+ox,y)}K.restore()}}
@@ -2412,7 +2429,7 @@ const Engine=(()=>{
           if(OA&&SM&&outQ>0){const oi=own?ui:u.gi,on=own?units.length:n;let qu=outQ;if(on>1){const s_=clamp(OA.stag!=null?OA.stag*.8:S.stagger*.6,0,.9);const k_=orderIdx(oi,on,OA.order||S.order);qu=clamp((outQ-k_/(on-1)*s_)/Math.max(.05,1-s_))}
             if(qu>0){const keep=st;st=norm(OA.fn(EIN(clamp(1-qu)),u,G));if(keep.color&&!st.color)st.color=keep.color}}
           else if(SM&&outQ!==0){const OP=OUTS[AL.out]||OUTS.fade;const oi=own?ui:u.gi,on=own?units.length:n;let qu=outQ;if(on>1){const s_=OP.stag??Math.min(.55,S.stagger*.75);const k_=orderIdx(oi,on,OP.order||S.order);qu=outQ<0?outQ:clamp((outQ-k_/(on-1)*s_)/Math.max(.05,1-s_))}if(qu!==0)st=applyOut(st,OP.fn(qu,u,G))}
-          st=contMo(st,u,G,S,t);if(ln.L.rot)st.rot=(st.rot||0)+ln.L.rot;
+          st=contMo(st,u,G,S,t);if(ln.L.rot||ln.arot)st.rot=(st.rot||0)+(ln.L.rot||0)+(ln.arot||0);
           /* a negative word in one colour takes that colour, even if it is the highlighted or karaoke word */
           if(mL!=='line'&&!fc&&!ln.L._negFlat){const wi=mL==='word'?u.gi:u.wi;if(S.emph&&S.emph.includes(wi)&&!(gwS&&gwS.has(wi)))st.color=S.emphColor;if(S.karaoke&&WT){const ws=WT[wi]??0,we=WT[wi+1]??1e9;if(t>=ws&&t<we)st.color=S.karaokeColor}}}
         const pv_=mL==='all'?lay.block:u;
@@ -2423,12 +2440,25 @@ const Engine=(()=>{
       if(LR.x1>LR.x0){R.x0=Math.min(R.x0,LR.x0);R.y0=Math.min(R.y0,LR.y0);R.x1=Math.max(R.x1,LR.x1);R.y1=Math.max(R.y1,LR.y1)}
       if(needPost&&LR.x1>LR.x0){const r=reg(LR,W,H,4+ln.px*(ln.L.lglow?.9:.25));postLine(sc,ln,M,r);if(perLine){const es=effShine(ln.L,S);if(es&&es.on){const spL=shineP(es,t);if(spL>=0){const own=ln.L.shine&&ln.L.shine.mode==='own';const geo=own?{block:{x0:ln.x0,x1:ln.x1,top:ln.top,bottom:ln.bottom,cx:ln.cx,cy:ln.cy},em:ln.px,glyphs:ln.glyphs}:null;shine(L,S,spL,G,lay,es,geo);SX.push({sh:es,sp:spL,geo})}}}if(gmP&&LP>.002&&r.w>0){if(!PGu){PGc=small(sc,'PGc',W,H);PGc.x.setTransform(1,0,0,1,0,0);PGc.x.globalAlpha=1;PGc.x.globalCompositeOperation='source-over';PGc.x.clearRect(0,0,W,H);PGu=true}const a_=(ln.L.gm.amt??1);for(const [rr,al,key] of [[ln.px*.15*(1+.3*LP),.9,'gPw'],[ln.px*.045,.7,'gPt']]){const bl=blurred(sc,sc.L.c,W,H,Math.max(1,rr),null,key);PGc.x.globalAlpha=clamp(LP*a_*al);PGc.x.drawImage(bl,0,0,W,H)}PGc.x.globalAlpha=1}if(r.w>0&&r.h>0){const lg=ln.L.lglow;if(lg&&lg.int>0){for(const [rad,ia,key] of (FAST?[[lg.size*ln.px*1.1,lg.int*1.7,'lgW']]:[[lg.size*ln.px*1.3,lg.int*1.3,'lgW'],[lg.size*ln.px*.38,lg.int*1.0,'lgT']])){const bl=blurred(sc,sc.L.c,W,H,Math.max(1,rad),lg.color,key);let a=ia;while(a>.01){X.globalAlpha=Math.min(1,a);X.drawImage(bl,0,0,W,H);a-=1}}X.globalAlpha=1}X.drawImage(sc.L.c,r.x,r.y,r.w,r.h,r.x,r.y,r.w,r.h)}}
     }
-    if(lay.img){const u=lay.img;let st;
-      if(mode==='all')st=allSt;
+    if(lay.img){const u=lay.img;let st;const SP_=logoSpan(S);const okA=x=>x&&!x.custom&&!x.overlay&&!x.global;
+      let IA=S.img.anim&&ANIM_BY[S.img.anim];if(!okA(IA)&&SP_.custom)IA=okA(A)?A:ANIM_BY.blurpop;const IOA=ANIM_BY[S.img.outAnim||S.outAnim],ownI=okA(IA);
+      if(ownI){
+        /* the logo's own animation and its own span on the timeline (start / end), independent from the text */
+        const D=S.dur,t0=SP_.t0,tE=SP_.t1,early=tE<D-1e-3,Ii=clamp(S.img.inDur||Math.max(.35,I*.7),.1,6);
+        const Od=OM==='none'&&!S.img.outAnim&&!early?0:Math.max(.1,Math.min(S.outDur||.6,(tE-t0)*.5,D*.6)),q=Od>0&&t>tE-Od?clamp((t-(tE-Od))/Od):0;
+        const om=early&&(OM==='none'||OM==='fade')?'reverse':OM;
+        let pI=clamp((t-t0)/Ii);
+        const safe=(F,pp)=>{try{return norm(F.fn(pp,u,G))}catch(e){return norm({a:clamp(pp*1.6),reveal:pp,blur:(1-pp)*.06})}};
+        if(t>tE+1e-4||t<t0-1e-4)st=norm({a:0});
+        else if(q>0&&okA(IOA))st=safe(IOA,EIN(clamp(Math.min(pI,1-q))));
+        else{if(q>0&&(om==='reverse'||(om==='smart'&&!IA.out)))pI=Math.min(pI,1-q);st=safe(IA,EIN(pI));
+          if(q>0&&om==='smart'&&IA.out){const o_=Object.assign({},(OUTS[IA.out]||OUTS.fade).fn(EOUT(q),u,G));delete o_.slices;st=applyOut(st,o_)}}
+        st=Object.assign({},st,{slices:null,shatter:null,deco:null})}
+      else if(mode==='all')st=allSt;
       else{const f={before:0,with:.3,after:.55}[S.img.timing]??.55;const pI=clamp((tau-I*f)/Math.max(.05,I*(1-f)));
         st=(A.custom||A.noImg)?norm({a:clamp(pI*2),sx:.6+.4*E.outBack(pI,2),sy:.6+.4*E.outBack(pI,2),blur:(1-pI)*.1}):norm(A.fn(pI,u,G));if(SM&&outQ>0){const OP=OUTS[A.out]||OUTS.fade;const o_=Object.assign({},OP.fn(outQ,u,G));delete o_.slices;st=applyOut(st,o_)}}
       const st2=Object.assign({},st,{text:null,reel:null,center:false,flash:0});
-      X.globalCompositeOperation='source-over';drawUnit(X,u.ln,u,st2,{lw:0},mode==='all'?lay.block:u,R);X.globalAlpha=1}
+      X.globalCompositeOperation='source-over';drawUnit(X,u.ln,u,st2,{lw:0},mode==='all'&&!ownI?lay.block:u,R);X.globalAlpha=1}
     if(S.mg){const r=mgDraw(X,S,t,{W,H,fast:FAST,EIN});if(r){R.x0=Math.min(R.x0,r.x0);R.y0=Math.min(R.y0,r.y0);R.x1=Math.max(R.x1,r.x1);R.y1=Math.max(R.y1,r.y1)}}
     const drew=R.x1>R.x0;
     if(drew&&A.post==='vhs'){const amt=(1-gp)*1+(SM?outQ:0)+.14+(hash(Math.floor(t*8))>.86?.5:0);vhsPost(sc,amt,t,lay.em,W,H)}
@@ -2893,29 +2923,38 @@ function buildLooks(){const g=h('div',{class:'grid2'});const lkHint=capClips().l
   return h('div',{class:'panel'},tileLineToggle(),glowLineBox(),mine,recentBlock('looks',(id,gg)=>{const lk=LOOKS.find(l=>l.name===id);if(lk)mkLook(lk,gg)}),h('div',{class:'cat',style:'--c:#f2b33d'},h('div',{class:'cat-h'},h('span',{class:'cat-n'},String(LOOKS.length)),h('span',{class:'cat-t'},'looks · newest first')),lkHint,g),h('p',{class:'hint'},'A look replaces text, fonts, animation, shine and 3D. Your aspect ratio and background stay. None removes it.'))}
 let animTgt=-1,animSide='in';
 const lineAnimOK=a=>!(a.overlay||a.custom||a.unit==='all'||a.global);
-function curAnimId(){const L=animTgt>=0?S.lines[animTgt]:null;return L&&L.anim?L.anim:S.anim}
+function curAnimId(){if(animTgt===-2)return(S.img&&S.img.anim)||S.anim;const L=animTgt>=0?S.lines[animTgt]:null;return L&&L.anim?L.anim:S.anim}
+const imgAnimOK=a=>!(a.overlay||a.custom||a.global);
+function openLogoAnim(side){animTgt=-2;animSide=side||'in';if(isMob())mobTab='anim';else libTab='anim';placePanels();rebuild('anim');seekClip(0);setPlaying(true)}
 function buildAnim(){const p=h('div',{class:'panel'});if(animTgt>=S.lines.length)animTgt=-1;
-  if(S.mg)animTgt=-1;const multi=S.lines.length>1&&!S.mg,tgtL=animTgt>=0&&!S.mg?S.lines[animTgt]:null,own=!!(tgtL&&tgtL.anim);
+  const hasLogo=!S.mg&&!!imgSrc(S);if(animTgt===-2&&!hasLogo)animTgt=-1;
+  if(S.mg)animTgt=-1;const multi=S.lines.length>1&&!S.mg,tgtL=animTgt>=0&&!S.mg?S.lines[animTgt]:null,own=!!(tgtL&&tgtL.anim),logoT=animTgt===-2,LI=S.img;
   if(S.mg)p.append(h('p',{class:'hint',style:'color:#9fd0ff'},S.mg.useAnim?'This motion graphic moves with “'+((ANIM_BY[S.anim]||{}).name||'')+'”. Turn it off or switch its built-in motion in the Motion tab.':'Pick any animation below and the whole motion graphic moves with it, on top of its own motion.'));
-  if(multi){const chips=h('div',{class:'linechips'},h('button',{type:'button','aria-pressed':String(animTgt<0),onclick:()=>{animTgt=-1;rebuild('anim',true)}},'All lines'),
-      S.lines.map((L,i)=>h('button',{type:'button','aria-pressed':String(animTgt===i),onclick:()=>{animTgt=i;rebuild('anim',true)}},(L.text||'Line '+(i+1)).slice(0,18),L.anim?h('i',{class:'ic sm',html:svg('spark',2)}):null)));
+  if(multi||hasLogo){const chips=h('div',{class:'linechips'},h('button',{type:'button','aria-pressed':String(animTgt===-1),onclick:()=>{animTgt=-1;rebuild('anim',true)}},multi?'All lines':'Text'),
+      multi?S.lines.map((L,i)=>h('button',{type:'button','aria-pressed':String(animTgt===i),onclick:()=>{animTgt=i;rebuild('anim',true)}},(L.text||'Line '+(i+1)).slice(0,18),L.anim?h('i',{class:'ic sm',html:svg('spark',2)}):null)):null,
+      hasLogo?h('button',{type:'button','data-logo':'1','aria-pressed':String(logoT),onclick:()=>{animTgt=-2;rebuild('anim',true);seekClip(0);setPlaying(true)}},h('i',{class:'ic sm',html:svg('logo',2)}),'Logo',LI.anim||LI.outAnim?h('i',{class:'ic sm',html:svg('spark',2)}):null):null);
     const box=sec('Apply animation to',chips);
+    if(logoT){box.append(h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Logo')),seg([{v:'all',label:'Same as text'},{v:'own',label:'Own animation'}],()=>LI.anim?'own':'all',v=>{commit();if(v==='all'){delete LI.anim;delete LI.outAnim}else{const base=ANIM_BY[S.anim];LI.anim=base&&imgAnimOK(base)?S.anim:'blurpop'}changed();seekClip(0);setPlaying(true);rebuild('anim',true)},{label:'Logo animation'})),
+      h('p',{class:'hint'},LI.anim?'Your logo has its own animation. Pick any tile below to change it; the text keeps its own.':'Your logo follows the text animation. Pick any tile below to give the logo its own.'))}
     if(tgtL){box.append(h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'This line')),seg([{v:'all',label:'Same as all'},{v:'own',label:'Own animation'}],()=>tgtL.anim?'own':'all',v=>{commit();if(v==='all'){delete tgtL.anim;tgtL.delay=0}else{const base=ANIM_BY[S.anim];tgtL.anim=base&&lineAnimOK(base)?S.anim:'blurpop'}rebuild('anim',true)},{label:'Line animation'})),
       h('p',{class:'hint'},own?'This line has its own animation. Pick one below; the other lines keep theirs.':'This line follows the animation set for All lines. Pick one below to give it its own.'))}
     else if(S.lines.some(L=>L.anim||L.delay))box.append(h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();S.lines.forEach(L=>{delete L.anim;L.delay=0});changed();rebuild('anim',true);toast('Every line now uses the same animation')}},'Clear line overrides'));
     p.append(box)}
   /* In / Out: every tile can be the entrance, or the exit (the exit plays the animation backwards) */
-  {const isCapC=selClip().kind==='caption';const outId=(tgtL&&tgtL.outAnim)||(!tgtL&&S.outAnim)||null;const nm=id=>(ANIM_BY[id]||{}).name||id;
+  {const isCapC=selClip().kind==='caption';const outId=logoT?(LI.outAnim||null):(tgtL&&tgtL.outAnim)||(!tgtL&&S.outAnim)||null;const nm=id=>(ANIM_BY[id]||{}).name||id;
     const side=sec('In & out',
       seg([{v:'in',label:'In animation'},{v:'out',label:'Out animation'}],()=>animSide,v=>{animSide=v;rebuild('anim',true)},{label:'Pick the in or the out animation',opts:{tl:false}}),
       h('div',{class:'pillrow'},
         h('button',{type:'button',class:'pillbtn','aria-pressed':String(animSide==='in'),onclick:()=>{animSide='in';seekClip(0);setPlaying(true);rebuild('anim',true)}},'In: '+nm(curAnimId())),
         h('button',{type:'button',class:'pillbtn','aria-pressed':String(animSide==='out'),onclick:()=>{animSide='out';seekClip(Math.max(0,S.dur-(S.outDur||.6)-.5));setPlaying(true);rebuild('anim',true)}},'Out: '+(outId?nm(outId):S.outMode==='none'?'Hold (none)':'Automatic')),
-        outId?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();if(tgtL)delete tgtL.outAnim;else{delete S.outAnim;S.lines.forEach(L=>delete L.outAnim)}changed();rebuild('anim',true);toast('Exit back to automatic')}},'Automatic exit'):null),
-      h('p',{class:'hint'},animSide==='in'?'Tap an animation below to set how '+(tgtL?'this line':'your text')+' comes in.':'Tap an animation below to set how '+(tgtL?'this line':'your text')+' leaves: it plays that animation backwards. Outro length (in Timing) sets how long it takes.'+(isCapC?' On captions it goes on every caption.':'')));
+        outId?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();if(logoT)delete LI.outAnim;else if(tgtL)delete tgtL.outAnim;else{delete S.outAnim;S.lines.forEach(L=>delete L.outAnim)}changed();rebuild('anim',true);toast('Exit back to automatic')}},'Automatic exit'):null),
+      h('p',{class:'hint'},animSide==='in'?'Tap an animation below to set how '+(logoT?'your logo':tgtL?'this line':'your text')+' comes in.':'Tap an animation below to set how '+(logoT?'your logo':tgtL?'this line':'your text')+' leaves: it plays that animation backwards. Outro length (in Timing) sets how long it takes.'+(isCapC?' On captions it goes on every caption.':'')));
     p.append(side)}
-  const mkAnim=(a,g)=>{const cat=CATS.find(c=>c.id===a.cat)||CATS[0];const cv=h('canvas',{class:'hov',width:300,height:200});const na=!!tgtL&&!lineAnimOK(a)||(animSide==='out'&&(a.overlay||a.custom||a.global||a.unit==='all'));const outCur=(tgtL&&tgtL.outAnim)||(!tgtL&&S.outAnim);const tile=h('button',{type:'button',class:'tile'+(na?' na':''),'data-anim':a.id,style:`--c:${cat.hex}`,'aria-pressed':String(animSide==='out'?outCur===a.id:curAnimId()===a.id),title:na?'This one moves the whole text block, so it’s only available for All lines':''},h('span',{class:'lbl'},a.name),cv,a.isNew?h('span',{class:'newtag'},'NEW'):null,h('span',{class:'dot',html:svg('check',3.5)}));
-      tile.addEventListener('click',()=>{if(na){toast(animSide==='out'?'“'+a.name+'” can’t play as an exit. Pick another one for Out.':'“'+a.name+'” moves the whole text, so pick it under All lines');return}useRec('anim',a.id);commit();
+  const mkAnim=(a,g)=>{const cat=CATS.find(c=>c.id===a.cat)||CATS[0];const cv=h('canvas',{class:'hov',width:300,height:200});const na=logoT?!imgAnimOK(a):(!!tgtL&&!lineAnimOK(a)||(animSide==='out'&&(a.overlay||a.custom||a.global||a.unit==='all')));const outCur=logoT?LI.outAnim:(tgtL&&tgtL.outAnim)||(!tgtL&&S.outAnim);const tile=h('button',{type:'button',class:'tile'+(na?' na':''),'data-anim':a.id,style:`--c:${cat.hex}`,'aria-pressed':String(animSide==='out'?outCur===a.id:logoT?LI.anim===a.id:curAnimId()===a.id),title:na?'This one moves the whole text block, so it’s only available for All lines':''},h('span',{class:'lbl'},a.name),cv,a.isNew?h('span',{class:'newtag'},'NEW'):null,h('span',{class:'dot',html:svg('check',3.5)}));
+      tile.addEventListener('click',()=>{if(na&&logoT){toast('“'+a.name+'” draws its own scene, so it can’t move a logo. Pick another one.');return}
+        if(logoT){useRec('anim',a.id);commit();if(animSide==='out'){LI.outAnim=a.id;if(!LI.anim){const base=ANIM_BY[S.anim];LI.anim=base&&imgAnimOK(base)?S.anim:'blurpop'}if(!(S.outDur>=.3))S.outDur=.6;seekClip(Math.max(0,S.dur-(S.outDur||.6)-.4));toast('Logo out: '+a.name)}else{LI.anim=a.id;seekClip(0);toast('Logo in: '+a.name)}
+          setPlaying(true);changed();rebuild('anim',true);try{rebuild('logo',true)}catch(e){}return}
+        if(na){toast(animSide==='out'?'“'+a.name+'” can’t play as an exit. Pick another one for Out.':'“'+a.name+'” moves the whole text, so pick it under All lines');return}useRec('anim',a.id);commit();
         if(animSide==='out'){if(tgtL)tgtL.outAnim=a.id;else{S.outAnim=a.id;S.lines.forEach(L=>delete L.outAnim)}S.outMode='smart';if(!(S.outDur>=.5))S.outDur=Math.min(.7,Math.max(.3,S.dur*.3));
           seekClip(Math.max(0,S.dur-(S.outDur||.6)-.4));setPlaying(true);changed();rebuild('anim',true);toast('Out: '+a.name);return}
         if(tgtL){tgtL.anim=a.id}else{S.anim=a.id;if(a.fx)S.fx=a.fx;if(S.mg)S.mg.useAnim=1;
@@ -2945,6 +2984,11 @@ function buildAnim(){const p=h('div',{class:'panel'});if(animTgt>=S.lines.length
       h('p',{class:'hint'},'Waits this long before this line starts animating in. Clip length, intro, stagger and outro above are shared by every line.'),
       own?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();S.anim=tgtL.anim;S.lines.forEach(L=>delete L.anim);animTgt=-1;changed();rebuild('anim',true);toast('Animation applied to all lines')}},'Apply this animation to all lines'):null);
     p.insertBefore(box,p.children[multi?1:0]||null)}
+  if(logoT&&LI.anim){const box=sec('Logo timing',
+      LI.t0!=null?h('p',{class:'hint'},'Start time is set by the Logo bar on the timeline ('+logoSpan(S).t0.toFixed(2)+'s to '+logoSpan(S).t1.toFixed(2)+'s).'):slider('Start delay',{min:0,max:3,step:.01,get:()=>LI.delay||0,set:v=>LI.delay=v,fmt:v=>(+v).toFixed(2)+'s',reset:0}),
+      slider('Logo intro length',{min:.15,max:3,step:.01,get:()=>LI.inDur||Math.max(.35,Math.min(S.inDur,S.dur)*.7),set:v=>LI.inDur=v,fmt:v=>(+v).toFixed(2)+'s',reset:.7}),
+      h('p',{class:'hint'},'The logo starts with its Timing choice in the Logo tab (before, with or after the text), plus this delay. Outro length below sets how long its exit takes.'));
+    p.insertBefore(box,p.children[1]||null)}
   {const cs=curveSec();if(cs)p.insertBefore(cs,p.children[multi?1:0]||null)}
   p.append(easeSec(),contSec());
   return p}
@@ -3083,7 +3127,39 @@ function stackTitleSec(){const st=S.stack;if(!st||selClip().kind==='caption')ret
       if((k2==='keyword'||k2==='accent2'||k2==='key2')&&st.mode==='lines'){toast('In Each line myself the accent stays on the line you styled. Switch to auto stack to move it.')}
       redo(full)},['lines']),h('p',{class:'hint'},'Aligned, Alternating and Scatter rearrange the stack live. Scatter pattern shuffles the positions; Tilt and Size variety control how wild it looks.'));
   return[box,lay]}
-function buildText(){const L=cur();const p=h('div',{class:'panel'});if(S&&S.mg)p.append(h('p',{class:'hint',style:'color:#9fd0ff'},'This is a motion graphic. Its texts, fonts and colours are here; graphic colours, size and timing are in the Motion tab.'));if(selClip().draft)p.append(h('p',{class:'hint',style:'color:#9fd0ff'},'Your timeline is empty. Tap + Text, pick a Look, or generate captions in the Video tab. Settings here become the style for your next text.'));if(selClip().kind==='caption')p.append(h('p',{class:'hint',style:'color:#ffcf8a'},'This is a caption clip. Edit its words below — they keep their timing and stay exactly as you type them. '+(P.cap.styleAll!==false?'Style edits here apply to every caption and are kept.':'Style edits here change only this caption and are kept.')));
+/* Layer order: which line sits in front. Front = drawn last. Works on titles, looks and captions (the same line of every caption) */
+function lineZ(L,i){return L.z!=null&&isFinite(+L.z)?+L.z:(L.back?-1:0)}
+function layerStack(){return S.lines.map((L,i)=>({L,i})).sort((a,b)=>lineZ(a.L,a.i)-lineZ(b.L,b.i)||a.i-b.i)}
+function layerMove(i,how){const st=layerStack();const k=st.findIndex(x=>x.i===i);if(k<0)return;const it=st.splice(k,1)[0];
+  if(how==='front')st.push(it);else if(how==='back')st.unshift(it);else if(how==='fwd')st.splice(Math.min(st.length,k+1),0,it);else st.splice(Math.max(0,k-1),0,it);
+  commit();st.forEach((x,n)=>{x.L.z=n;delete x.L.back});changed();rebuild('text',true)}
+/* Arrangement: lay out the lines of any look or caption style. Works live; captions share it across every caption */
+const ARR0={layout:'aligned',gap:0,offset:40,tilt:1,seed:0,align:'auto',start:'left'};
+function arrSec(){const A=()=>S.arr&&typeof S.arr==='object'?S.arr:null;const get=k=>{const a=A();return a&&a[k]!=null?a[k]:ARR0[k]};
+  const set=(k,v)=>{if(!A())S.arr=Object.assign({},ARR0,{offset:0});if(k==='layout'&&v!=='aligned'&&!(+S.arr.offset))S.arr.offset=40;S.arr[k]=v;dirty=true};
+  const lay=get('layout');
+  const box=sec('Arrangement',
+    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Layout'),h('button',{type:'button',class:'pillbtn',style:'padding:4px 10px;font-size:11px',onclick:()=>{commit();delete S.arr;changed();rebuild('text',true);toast('Arrangement reset to the look’s original')}},'Reset')),
+      seg([{v:'aligned',label:'Aligned'},{v:'alternating',label:'Alternating'},{v:'scatter',label:'Scatter'}],()=>get('layout'),v=>{commit();set('layout',v);rebuild('text',true)},{label:'Layout'})),
+    slider('Line spacing',{min:-120,max:160,step:1,get:()=>+get('gap')||0,set:v=>set('gap',v),fmt:v=>(v>0?'+':'')+Math.round(v),reset:0}),
+    lay!=='aligned'?slider(lay==='scatter'?'Spread':'Offset',{min:0,max:260,step:1,get:()=>+get('offset')||0,set:v=>set('offset',v),fmt:v=>Math.round(v),reset:40}):null,
+    lay==='alternating'?h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'First line goes')),seg([{v:'left',label:'Left'},{v:'right',label:'Right'}],()=>get('start'),v=>{commit();set('start',v)},{label:'First line'})):null,
+    lay==='scatter'?slider('Tilt',{min:0,max:2,step:.01,get:()=>+get('tilt'),set:v=>set('tilt',v),fmt:v=>Math.round(v*100)+'%',reset:1}):null,
+    lay==='scatter'?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();set('seed',((+get('seed')||0)+1)%97);changed()}},'Shuffle scatter'):null,
+    h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Line alignment')),seg([{v:'auto',label:'Look'},{v:'left',label:'Left'},{v:'center',label:'Center'},{v:'right',label:'Right'}],()=>get('align'),v=>{commit();set('align',v)},{label:'Line alignment'})),
+    h('p',{class:'hint'},'Line spacing 0 keeps the look’s own spacing; below 0 the lines overlap. Offset sets how far each line moves left and right. '+(selClip().kind==='caption'?'On captions this applies to every caption.':'Works with any look that has more than one line.')));
+  return box}
+function layerSec(){const st=layerStack().reverse(),L=S.lines[sel]||S.lines[0],i=S.lines.indexOf(L),top=st[0]&&st[0].i===i,bot=st[st.length-1]&&st[st.length-1].i===i;const nm=x=>'“'+((x.L.text||'Line '+(x.i+1)).slice(0,16))+'”';
+  return sec('Layer order',
+    h('div',{class:'layerlist'},st.map((x,n)=>h('button',{type:'button',class:'pillbtn','aria-pressed':String(x.i===i),onclick:()=>{sel=x.i;rebuild('text',true);try{rebuild('style',true)}catch(e){}dirty=true}},(n===0?'Front · ':n===st.length-1?'Back · ':'')+nm(x)))),
+    h('div',{class:'pillrow'},
+      h('button',{type:'button',class:'pillbtn',disabled:top?true:null,onclick:()=>layerMove(i,'front')},'Bring to front'),
+      h('button',{type:'button',class:'pillbtn',disabled:top?true:null,onclick:()=>layerMove(i,'fwd')},'Forward'),
+      h('button',{type:'button',class:'pillbtn',disabled:bot?true:null,onclick:()=>layerMove(i,'bwd')},'Backward'),
+      h('button',{type:'button',class:'pillbtn',disabled:bot?true:null,onclick:()=>layerMove(i,'back')},'Send to back')),
+    h('p',{class:'hint'},'Pick a line, then bring it in front of the others or send it behind them. '+(selClip().kind==='caption'?'On captions it changes the same line of every caption.':'Lines that overlap show the change right away.')))}
+function buildText(){const p=buildText0();if(S&&S.lines&&S.lines.length>1&&!S.mg){p.append(arrSec(),layerSec())}return p}
+function buildText0(){const L=cur();const p=h('div',{class:'panel'});if(S&&S.mg)p.append(h('p',{class:'hint',style:'color:#9fd0ff'},'This is a motion graphic. Its texts, fonts and colours are here; graphic colours, size and timing are in the Motion tab.'));if(selClip().draft)p.append(h('p',{class:'hint',style:'color:#9fd0ff'},'Your timeline is empty. Tap + Text, pick a Look, or generate captions in the Video tab. Settings here become the style for your next text.'));if(selClip().kind==='caption')p.append(h('p',{class:'hint',style:'color:#ffcf8a'},'This is a caption clip. Edit its words below — they keep their timing and stay exactly as you type them. '+(P.cap.styleAll!==false?'Style edits here apply to every caption and are kept.':'Style edits here change only this caption and are kept.')));
   {const ss=stackTitleSec();if(ss)ss.forEach(x=>p.append(x))}
   const chips=h('div',{class:'linechips'},S.lines.map((ln,i)=>h('button',{type:'button','aria-pressed':String(i===sel),onclick:()=>{sel=i;rebuild('text');rebuild('style');dirty=true}},ln.text||'Line '+(i+1))),
     S.lines.length<(S.stack?14:4)&&selClip().kind!=='caption'?h('button',{type:'button',class:'add',onclick:()=>{const n=Ln(Object.assign({},cur(),{text:'New line',dx:0,dy:0}));S.lines.push(n);sel=S.lines.length-1;rebuild('text');rebuild('style');changed()}},'+ Add line'):null);
@@ -3347,6 +3423,16 @@ function buildStyle(){const L=cur();const p=h('div',{class:'panel'});const g=h('
   p.append(sec('Glow',toggle('Glow on',()=>S.glow.on,v=>S.glow.on=v),colorCtl('Glow color',()=>S.glow.color,v=>S.glow.color=v),
     slider('Size',{min:0,max:160,step:1,get:()=>S.glow.size,set:v=>S.glow.size=v,fmt:v=>Math.round(v),reset:40}),
     slider('Intensity',{min:0,max:2.5,step:.01,get:()=>S.glow.int,set:v=>S.glow.int=v,reset:.5})));
+  /* glow on one line / word (like the baby-blue glow on “Plugs”): its own colour, strength and size */
+  {const Li=S.lines[sel]||S.lines[0];const lg=Li&&Li.lglow;const box=sec('Word glow');
+    if(S.lines.length>1)box.append(h('div',{class:'linechips',style:'margin-bottom:8px'},S.lines.map((L_,i)=>h('button',{type:'button','aria-pressed':String(i===sel),onclick:()=>{sel=i;rebuild('style',true);try{rebuild('text',true)}catch(e){}}},(L_.text||'Line '+(i+1)).slice(0,18),L_.lglow?h('i',{class:'ic sm',html:svg('spark',2)}):null))));
+    box.append(toggle('Glow on “'+((Li&&Li.text)||'this line').slice(0,18)+'”',()=>!!(Li&&Li.lglow),v=>{if(!Li)return;if(v)Li.lglow=Object.assign({color:Li.mat==='flat'&&!/^#f{6}$/i.test(Li.c1||'')?Li.c1:'#4fd8ff',int:.9,size:.5},Li._lglowOff||{});else{Li._lglowOff=Li.lglow;delete Li.lglow}},{after:()=>rebuild('style',true)}));
+    if(lg)box.append(colorCtl('Glow colour',()=>Li.lglow.color,v=>{Li.lglow.color=v}),
+      slider('Glow strength',{min:0,max:3,step:.01,get:()=>Li.lglow.int,set:v=>{Li.lglow.int=v},fmt:v=>Math.round(v*100)+'%',reset:.9}),
+      slider('Glow size',{min:.05,max:1.6,step:.01,get:()=>Li.lglow.size,set:v=>{Li.lglow.size=v},fmt:v=>Math.round(v*100)+'%',reset:.5}),
+      S.lines.length>1?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();S.lines.forEach(L_=>{L_.lglow=Object.assign({},Li.lglow)});changed();rebuild('style',true);toast('This glow is now on every line')}},'Use this glow on every line'):null);
+    box.append(h('p',{class:'hint'},'Glow that hugs just this line, separate from the overall Glow above. On captions it applies to the same line of every caption.'));
+    p.append(box)}
   const SHP=[['Soft',{op:.45,blur:24,dx:0,dy:8}],['Lifted',{op:.6,blur:38,dx:0,dy:18}],['Crisp',{op:.75,blur:4,dx:4,dy:5}],['Long',{op:.5,blur:10,dx:16,dy:20}],['Halo',{op:.55,blur:44,dx:0,dy:0}]];
   p.append(sec('Drop shadow',h('p',{class:'hint',style:'margin-top:0'},'Clean shadows: pick a preset, then dial it in below.'),h('div',{class:'pillrow'},SHP.map(([n,o])=>h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();S.shadow=Object.assign({},S.shadow,o,{on:true,color:S.shadow.color||'#000000'});changed();rebuild('style',true)}},n))),toggle('Shadow on',()=>S.shadow.on,v=>S.shadow.on=v),colorCtl('Shadow color',()=>S.shadow.color,v=>S.shadow.color=v,{noChips:true}),
     slider('Opacity',{min:0,max:1,step:.01,get:()=>S.shadow.op,set:v=>S.shadow.op=v,reset:.6}),
@@ -3483,8 +3569,20 @@ function buildLogo(){const I=S.img;const p=h('div',{class:'panel'});
     slider('Gap',{min:-300,max:400,step:1,get:()=>I.gap,set:v=>I.gap=v,fmt:v=>Math.round(v),reset:40}),
     slider('Offset X',{min:-700,max:700,step:1,get:()=>I.dx,set:v=>I.dx=v,fmt:v=>Math.round(v),reset:0}),
     slider('Offset Y',{min:-900,max:900,step:1,get:()=>I.dy,set:v=>I.dy=v,fmt:v=>Math.round(v),reset:0})));
-  p.append(sec('Timing',seg([{v:'before',label:'Before text'},{v:'with',label:'With text'},{v:'after',label:'After text'}],()=>I.timing,v=>I.timing=v,{label:'Image timing'}),
-    h('p',{class:'hint'},'The image uses your animation, shine, glow, shadow and 3D, like the app-icon pop under a caption.')));
+  const SPn=logoSpan(S),R2=v=>Math.round(v*100)/100;
+  p.append(sec('Timing',seg([{v:'before',label:'Before text'},{v:'with',label:'With text'},{v:'after',label:'After text'}],()=>I.t0!=null?'':I.timing,v=>{I.timing=v;delete I.t0;rebuild('logo',true)},{label:'Image timing'}),
+    slider('Logo starts at',{min:0,max:Math.max(.1,S.dur-.2),step:.01,get:()=>logoSpan(S).t0,set:v=>{const q=logoSpan(S);I.t0=R2(Math.min(v,q.t1-.2));if(I.t1==null)I.t1=R2(q.t1)},fmt:v=>(+v).toFixed(2)+'s'}),
+    slider('Logo ends at',{min:.2,max:S.dur,step:.01,get:()=>logoSpan(S).t1,set:v=>{const q=logoSpan(S);I.t1=R2(Math.max(v,q.t0+.2));if(I.t0==null)I.t0=R2(q.t0)},fmt:v=>(+v).toFixed(2)+'s'}),
+    SPn.custom?h('button',{type:'button',class:'pillbtn',onclick:()=>{commit();delete I.t0;delete I.t1;changed();rebuild('logo',true);toast('Logo timing back to '+(I.timing||'after')+' text')}},'Reset logo timing'):null,
+    h('p',{class:'hint'},'The pink Logo bar on the timeline shows when your logo is on screen. Drag it to move the logo, or drag its edges to change when it comes in and when it leaves. Make the title clip longer to give the logo more room.'),
+    h('p',{class:'hint'},'The image uses your shine, glow, shadow and 3D, like the app-icon pop under a caption.')));
+  {const nm=id=>(ANIM_BY[id]||{}).name||id;
+    p.append(sec('Animation',
+      h('div',{class:'ctl'},h('div',{class:'ctl-h'},h('label',null,'Logo moves')),seg([{v:'all',label:'Same as text'},{v:'own',label:'Own animation'}],()=>I.anim?'own':'all',v=>{commit();if(v==='all'){delete I.anim;delete I.outAnim}else{const base=ANIM_BY[S.anim];I.anim=base&&imgAnimOK(base)?S.anim:'blurpop'}changed();seekClip(0);setPlaying(true);rebuild('logo',true)},{label:'Logo animation'})),
+      h('div',{class:'pillrow'},
+        h('button',{type:'button',class:'pillbtn','data-logoin':'1',onclick:()=>openLogoAnim('in')},'In: '+nm(I.anim||S.anim)),
+        h('button',{type:'button',class:'pillbtn','data-logoout':'1',onclick:()=>openLogoAnim('out')},'Out: '+(I.outAnim?nm(I.outAnim):S.outAnim?nm(S.outAnim):'Same as text'))),
+      h('p',{class:'hint'},'Tap In or Out to pick any animation from the Animate tab for your logo only. The text keeps its own.')))}
   return p}
 
 /* ---------- chroma key recommendation ---------- */
@@ -3912,6 +4010,7 @@ function updTimeline(){if(tlDragging)return;
     for(let s0=sh.start,i=0;s0<c.s.dur&&i<40;s0+=lp||1e9,i++){const el=h('div',{class:'clip shine'+(i?' ghost':''),style:`left:${tx(c.start+s0)}px;width:${Math.max(10,Math.min(sh.dur,c.s.dur-s0)*k)}px`},h('div',{class:'cl-l'},i?'':(SHINES.find(x=>x.id===sh.type)||{}).name||''),i?null:h('div',{class:'hr'}));
       if(!i)dragOn(el,e=>({start:sh.start,dur:sh.dur,mode:e.target.classList.contains('hr')?'r':'move'}),(d,s0_)=>{if(s0_.mode==='r')sh.dur=clamp(Math.round((s0_.dur+d)*100)/100,.15,3);else sh.start=clamp(Math.round((s0_.start+d)*100)/100,0,Math.max(0,c.s.dur-.05));el.style.left=tx(c.start+sh.start)+'px';el.style.width=Math.max(10,sh.dur*pps())+'px'},()=>rebuild('shine',true));
       ss.append(el)}}
+  try{updLogoTrack(c,k)}catch(e){console.warn('logo lane',e)}
   drawWave(Wc);try{updSfxTrack()}catch(e){}
   $('#vName').textContent=P.video?(P.video.name+(vidURL?'':' · add it again in Video to preview')):'Add a video in the Video tab to line overlays up with it';
   $('#tlInfo').textContent=`${P.clips.length} clip${P.clips.length!==1?'s':''} · ${fmtT(D)}`;
@@ -3963,6 +4062,16 @@ function capAllEl(c){const k=pps(),on=capIsSel(c),L=capLanes();const el=h('div',
   return el}
 function snapT(t,c,dur){const k=pps(),thr=8/k;const pts=[T,0];P.clips.forEach(x=>{if(x!==c){pts.push(x.start,x.start+x.s.dur)}});
   for(const p of pts){if(Math.abs(t-p)<thr)return p;if(Math.abs(t+dur-p)<thr)return p-dur}return t}
+/* Logo lane: the logo as its own bar, dragged anywhere inside its clip; the edges set when it comes in and when it leaves */
+function updLogoTrack(c,k){const tr=$('#trkL'),body=tr&&tr.closest('.tl-body');if(!tr)return;const on=!!(c&&!c.draft&&c.s&&!c.s.mg&&imgSrc(c.s));body.classList.toggle('has-logo',on);tr.replaceChildren();if(!on)return;
+  const S_=c.s,I_=S_.img,sp=logoSpan(S_),D=S_.dur,MIN=.2,R2=v=>Math.round(v*100)/100;
+  const el=h('div',{class:'clip lgbar','data-logo':'1',title:'Logo · drag to move it, drag an edge to change when it starts or ends',style:`left:${tx(c.start+sp.t0)}px;width:${Math.max(12,(sp.t1-sp.t0)*k)}px`},h('div',{class:'hl'}),h('div',{class:'cl-l'},'Logo'+(I_.anim?' · '+((ANIM_BY[I_.anim]||{}).name||''):'')),h('div',{class:'hr'}));
+  const place=()=>{const q=logoSpan(S_);el.style.left=tx(c.start+q.t0)+'px';el.style.width=Math.max(12,(q.t1-q.t0)*pps())+'px'};
+  dragOn(el,e=>{commit();const q=logoSpan(S_);return{t0:q.t0,t1:q.t1,mode:e.target.classList.contains('hr')?'r':e.target.classList.contains('hl')?'l':'move'}},
+    (d,o)=>{let a=o.t0,b=o.t1;if(o.mode==='move'){const len=b-a;a=clamp(a+d,0,Math.max(0,D-len));b=a+len}else if(o.mode==='l')a=clamp(a+d,0,b-MIN);else b=clamp(b+d,a+MIN,D);
+      I_.t0=R2(a);I_.t1=R2(b);place()},
+    (moved)=>{if(moved){toast('Logo '+fmtS(I_.t0)+' to '+fmtS(I_.t1));try{rebuild('logo',true)}catch(e){}}else{if(isMob())mobTab='logo';else inspTab='logo';placePanels()}});
+  tr.append(el)}
 function dragOn(el,start,move,end,opt){el.addEventListener('pointerdown',e=>{if(e.button>0)return;e.stopPropagation();e.preventDefault();const o=start(e);if(o===false)return;tlDragging=true;try{el.setPointerCapture(e.pointerId)}catch(_){}let moved=false;const x0=e.clientX,y0=e.clientY;
   const mv=ev=>{if(Math.abs(ev.clientX-x0)>3||(opt&&opt.y&&Math.abs(ev.clientY-y0)>6))moved=true;if(moved){move((ev.clientX-x0)/pps(),o,ev);dirty=true}};
   const up=()=>{el.removeEventListener('pointermove',mv);el.removeEventListener('pointerup',up);el.removeEventListener('pointercancel',up);tlDragging=false;end&&end(moved,o);updTimeline();changed()};
@@ -4932,8 +5041,8 @@ function buildCaptions(words,groups){const keepSel=selClip().kind!=='caption'?P.
     c.s=capState(c.words,c.start,Math.round((en-st)*1000)/1000,capCfg(c));capGen(c);P.clips.push(c)});
   linkProject();P.sel=keepSel&&P.clips.find(c=>c.id===keepSel)?keepSel:(capClips()[0]||P.clips[0]).id;S=selClip().s;sel=0;capTrack()}
 /* keep adjustments: every caption remembers what you changed on it (font, colours, material, glow…) and re-applies it after any rebuild */
-const KEEP_S=['anim','outAnim','glow','shadow','d3','outMode','outDur','lineGap','cont','stopmo','easeIn','easeOut'];
-const KEEP_L=['outAnim','font','weight','track','italic','cs','mat','c1','c2','c3','gAng','gH','metal','gm','gl','bevel','strokeW','strokeC','shine'];
+const KEEP_S=['arr','anim','outAnim','glow','shadow','d3','outMode','outDur','lineGap','cont','stopmo','easeIn','easeOut'];
+const KEEP_L=['z','back','outAnim','lglow','font','weight','track','italic','cs','mat','c1','c2','c3','gAng','gH','metal','gm','gl','bevel','strokeW','strokeC','shine'];
 const kj=v=>JSON.stringify(v===undefined?null:v);
 function snapKeep(s){return{s:Object.fromEntries(KEEP_S.map(k=>[k,kj(s[k])])),l:s.lines.map(L=>Object.fromEntries(KEEP_L.map(k=>[k,kj(L[k])])))}}
 function diffKeep(s,gen){if(!gen||!gen.s)return null;const now=snapKeep(s);const o={s:{},l:[]};let any=false;
@@ -5421,8 +5530,8 @@ function buildVideo(){const p=h('div',{class:'panel'});const C=P.cap;
   const capList=CAPSTYLES.filter(cs=>cs.pack).concat(CAPSTYLES.filter(cs=>!cs.pack)).filter(cs=>capCatV==='all'||(capCatV==='pack'?cs.pack:cs.cat===capCatV)||cs.id===curStyle);
   const capChips=h('div',{class:'linechips capcats',role:'tablist','aria-label':'Caption style categories'},PK_CATS.map(([v,t])=>{const n=v==='all'?CAPSTYLES.length:v==='pack'?CAPSTYLES.filter(c=>c.pack).length:CAPSTYLES.filter(c=>c.cat===v).length;return h('button',{type:'button',role:'tab','aria-pressed':String(capCatV===v),'aria-selected':String(capCatV===v),onclick:()=>{try{localStorage.setItem('wrd.capcat',v)}catch(e){}rebuild('video',true)}},t+' · '+n)}));
   capList.forEach(cs=>{const cv=h('canvas',{width:300,height:200});const tile=h('button',{type:'button',class:'tile','data-cap':cs.id,style:'--c:#ff3d7f','aria-pressed':String(curStyle===cs.id),'aria-label':cs.name+' captions'},cv,h('span',{class:'name',style:'position:absolute;left:0;right:0;bottom:6px;z-index:3;text-align:center;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.08em;color:rgba(255,255,255,.75);text-transform:uppercase'},cs.name),cs.isNew?h('span',{class:'newtag'},'NEW'):null,h('span',{class:'dot',html:svg('check',3.5)}));
-    const mk=()=>{if(cs.pack){const ws=splitTimed(cs.sample,0,1.3);const c2=Object.assign({},C,{style:cs.id,pos:.5,size:1.25,autoFit:true,upper:false,capGroups:cs.groups,color:C.style===cs.id&&C.color?C.color:cs.color,wordDur:cs.wordDur||.3});delete c2.gradW;delete c2.gradAll;delete c2.gradAllW;delete c2.gradWords;delete c2.negMode;const s=capState(ws,0,2.2,c2);s.aspect='3:2';s.autoFit=true;s.bg={mode:'transparent'};return s}
-      const ws=splitTimed(cs.id==='block'?'digging through my entire closet':'how I post four times a week',0,1.6);const c2=Object.assign({},C,{style:cs.id,pos:cs.id==='block'?.32:.5,size:cs.id==='block'?1:1.35,autoFit:true},cs.color&&C.style!==cs.id?{color:cs.color}:{},cs.wordDur?{wordDur:cs.wordDur}:{});const s=capState(cs.max<4?ws.slice(2,4):ws.slice(0,cs.max),0,2,c2);s.aspect='3:2';s.autoFit=true;s.bg={mode:'transparent'};return s};
+    const mk=()=>{if(cs.pack){const ws=splitTimed(cs.sample,0,1.3);const c2=Object.assign({},CAP0,{style:cs.id,pos:.5,size:1.25,autoFit:true,upper:false,capGroups:cs.groups,color:cs.color,wordDur:cs.wordDur||.3,shine:{on:false}});const s=capState(ws,0,2.2,c2);s.aspect='3:2';s.autoFit=true;s.bg={mode:'transparent'};return s}
+      const ws=splitTimed(cs.id==='block'?'digging through my entire closet':'how I post four times a week',0,1.6);const c2=Object.assign({},CAP0,{style:cs.id,pos:cs.id==='block'?.32:.5,size:cs.id==='block'?1:1.35,autoFit:true,shine:{on:false}},cs.color?{color:cs.color}:{},cs.wordDur?{wordDur:cs.wordDur}:{});const s=capState(cs.max<4?ws.slice(2,4):ws.slice(0,cs.max),0,2,c2);s.aspect='3:2';s.autoFit=true;s.bg={mode:'transparent'};return s};
     queueRender(()=>renderMini(cv,mk(),1.7));hoverPlay(tile,cv,mk,2);tile.addEventListener('pointerleave',()=>queueRender(()=>renderMini(cv,mk(),1.7)));
     tile.addEventListener('click',()=>{commit();
       if(capScope==='one'){const c=selClip();if(!c||c.kind!=='caption'){toast('Tap a caption on the timeline first');return}
